@@ -1,0 +1,129 @@
+/* Layout */
+.custom-navbar {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #eee;
+}
+
+/* Brand */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.brand-logo {
+  width: 40px;
+  height: 40px;
+}
+
+.brand-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Menu */
+.navbar-menu {
+  display: flex;
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #6b7280;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.nav-item img {
+  width: 18px;
+  height: 18px;
+}
+
+.nav-item:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* ACTIVE (NavLink magic) */
+.nav-item.active {
+  background: #7c3aed;
+  color: white;
+}
+
+.nav-item.active img {
+  filter: brightness(0) invert(1);
+}
+
+/* Profile */
+.profile {
+  position: relative;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Dropdown */
+.dropdown {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  overflow: hidden;
+  z-index: 1000;
+  padding: 10px;
+}
+
+.dropdown a,
+.dropdown button {
+  display: block;
+  padding: 10px 14px;
+  text-decoration: none;
+  color: #111827;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dropdown a:hover,
+.dropdown button:hover {
+  background: #f3f4f6;
+}
+
+.logout {
+  color: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .navbar-menu {
+    display: none;
+  }
+
+  .brand-text {
+    display: none;
+  }
+}
