@@ -1,0 +1,19 @@
+/* Empty state when no batch is selected */
+.empty-state {
+  height: calc(100vh - 64px); /* minus navbar height */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #6b7280;
+}
+
+.empty-state h2 {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  font-size: 14px;
+}

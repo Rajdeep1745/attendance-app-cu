@@ -9,6 +9,25 @@
   border-bottom: 1px solid #eee;
 }
 
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.sidebar-toggle:hover {
+  background-color: #f1f3ff;
+}
+
 /* Brand */
 .brand {
   display: flex;

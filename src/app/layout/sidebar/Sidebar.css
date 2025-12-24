@@ -1,0 +1,109 @@
+/* ===== Sidebar container ===== */
+.sidebar {
+  height: calc(100vh - 64px);
+  position: fixed;
+  top: 64px;
+  left: 0;
+  background: #fff;
+  border-right: 1px solid #e5e7eb;
+  padding: 10px;
+
+  display: flex;
+  flex-direction: column;
+
+  transition: width 0.3s ease;
+  overflow: hidden;
+}
+
+/* open / close states */
+.sidebar.open {
+  width: 280px;
+}
+
+.sidebar.closed {
+  width: 0;
+}
+
+/* ===== Content area (scrollable) ===== */
+.sidebar-content,
+.sidebar-footer {
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.sidebar-content {
+  flex-grow: 1;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+/* fixed footer */
+.sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid #eee;
+}
+
+/* hide content when collapsed */
+.sidebar.closed .sidebar-content,
+.sidebar.closed .sidebar-footer {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.sidebar.open .sidebar-content,
+.sidebar.open .sidebar-footer {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ===== List items ===== */
+.list-group-item {
+  border: none;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  color: #333;
+
+  /* ✅ allow wrapping */
+  white-space: normal;
+  word-break: break-word;
+}
+
+.sidebar.closed .list-group-item {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.list-group-item.active {
+  background-color: #f1f3ff;
+  color: #7c3aed;
+  font-weight: 500;
+}
+
+.list-group-item:hover {
+  background-color: #f5f6fa;
+}
+
+/* ===== Bottom button ===== */
+.sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid #eee;
+}
+
+.addBatchButton {
+  background-color: #7c3aed;
+  color: white;
+  font-weight: 500;
+  border-radius: 10px;
+}
+
+.addBatchButton:hover {
+  background-color: #6d28d9;
+}
+
+/* ===== Toggle button (navbar) ===== */
+.sidebar-toggle {
+  background: none;
+  border: none;
+  font-size: 22px;
+  margin-right: 12px;
+  cursor: pointer;
+}
