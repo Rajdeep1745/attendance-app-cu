@@ -1,10 +1,12 @@
 import { useState, useContext, useEffect } from "react";
 import BatchContext from "../../context/batch/BatchContext";
+import AlertContext from "../../context/alert/AlertContext";
 
 import "./Dashboard.css";
 
 const Dashboard = () => {
   const { activeBatch } = useContext(BatchContext);
+  const { showAlert } = useContext(AlertContext);
 
   // Attendance code
   const [code, setCode] = useState("");
@@ -12,7 +14,6 @@ const Dashboard = () => {
   // Threshold
   const [threshold, setThreshold] = useState(75);
   const [savedThreshold, setSavedThreshold] = useState(75);
-  const [saved, setSaved] = useState(false);
 
   // Mode
   const [mode, setMode] = useState("manual");
@@ -26,7 +27,7 @@ const Dashboard = () => {
 
   const copyCode = () => {
     navigator.clipboard.writeText(code);
-    alert("Attendance code copied!");
+    showAlert("Copied successfully", "success");
   };
 
   const batchName = activeBatch ? activeBatch.name : "";
@@ -153,12 +154,11 @@ const Dashboard = () => {
                   disabled={threshold === savedThreshold}
                   onClick={() => {
                     setSavedThreshold(threshold);
-                    setSaved(true);
+                    showAlert("Saved successfully", "success");
                   }}
                 >
                   Save
                 </button>
-                {saved && console.log(savedThreshold)}
               </div>
             </div>
           </div>

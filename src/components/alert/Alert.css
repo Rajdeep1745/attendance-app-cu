@@ -1,0 +1,51 @@
+/* ===== Toast base ===== */
+.toast-alert {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+
+  width: 320px;
+  padding: 14px 16px;
+  border-radius: 14px;
+
+  background: #ffffff;
+  color: #111827;
+
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+
+  animation: toast-in 0.35s ease-out;
+}
+
+/* ===== Variants ===== */
+.toast-success {
+  border-left: 5px solid #22c55e;
+}
+
+.toast-danger {
+  border-left: 5px solid #ef4444;
+}
+
+.toast-alert strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.toast-alert p {
+  margin: 0;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+/* ===== Slide in from bottom-right ===== */
+@keyframes toast-in {
+  from {
+    transform: translateX(40px) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) translateY(0);
+    opacity: 1;
+  }
+}

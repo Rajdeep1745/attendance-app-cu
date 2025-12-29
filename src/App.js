@@ -11,6 +11,7 @@ import Attendance from "./app/attendance/Attendance";
 import Students from "./app/students/Students";
 import Reports from "./app/reports/Reports";
 import Lectures from "./app/lectures/Lectures";
+import Alert from "./components/alert/Alert";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           </Route>
         </Route>
       </Routes>
+      <Alert />
     </Router>
   );
 }

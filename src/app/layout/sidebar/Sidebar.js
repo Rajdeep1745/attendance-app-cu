@@ -3,7 +3,7 @@ import { useState, useEffect, useContext } from "react";
 import BatchContext from "../../../context/batch/BatchContext";
 
 import "./Sidebar.css";
-import BatchModal from "../../../components/BatchModal/BatchModal";
+import BatchModal from "../../../components/batchModal/BatchModal";
 
 const Sidebar = ({ isOpen }) => {
   const { batchId } = useParams();
