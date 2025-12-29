@@ -1,14 +1,27 @@
 /* ===============================
-   Page title
+   Base typography (GLOBAL SCALE)
 ================================ */
-.dashboard-title {
-  font-size: 24px;
-  font-weight: 600;
+.dashboard {
+  font-size: 16px; /* whole document base */
   color: #111827;
 }
 
 /* ===============================
-   Cards 
+   Page titles & subtitles
+================================ */
+.dashboard-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.dashboard-subtitle {
+  font-size: 17px;
+  color: #6b7280;
+}
+
+/* ===============================
+   Cards
 ================================ */
 .dashboard-card {
   border: none;
@@ -17,13 +30,18 @@
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
 }
 
-.dashboard-card .card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #111827;
+.dashboard-card .card-body {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 1.25rem;
 }
 
-.dashboard-card .text-muted {
+.dashboard-card .card-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.dashboard-card .dashboard-subtitle {
   color: #6b7280 !important;
 }
 
@@ -37,6 +55,7 @@
 
 .dashboard-card .form-control {
   border: 1px solid #e5e7eb;
+  font-size: 16px;
 }
 
 .dashboard-card .form-control:focus {
@@ -44,7 +63,6 @@
   box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
 }
 
-/* Code input emphasis */
 .dashboard-card input[readonly] {
   letter-spacing: 2px;
   font-size: 18px;
@@ -59,6 +77,7 @@
   border-color: #7c3aed;
   font-weight: 500;
   border-radius: 10px;
+  font-size: 16px;
 }
 
 .btn-primary:hover {
@@ -66,13 +85,14 @@
   border-color: #6d28d9;
 }
 
-/* ===============================
-   Range Slider (accent color)
-================================ */
-.form-range::-webkit-slider-thumb {
-  background-color: #7c3aed;
+.card-actions {
+  margin-top: auto;
 }
 
+/* ===============================
+   Range slider
+================================ */
+.form-range::-webkit-slider-thumb,
 .form-range::-moz-range-thumb {
   background-color: #7c3aed;
 }
@@ -87,28 +107,32 @@
 
 .form-check-label {
   font-weight: 500;
+  font-size: 16px;
   color: #374151;
 }
 
 /* ===============================
-   Alerts (softened)
+   Alerts
 ================================ */
 .alert-info {
   background-color: #eef2ff;
-  border: none;
   color: #4338ca;
-  border-radius: 10px;
 }
 
 .alert-success {
   background-color: #ecfdf5;
-  border: none;
   color: #047857;
+}
+
+.alert-info,
+.alert-success {
+  border: none;
   border-radius: 10px;
+  font-size: 15px;
 }
 
 /* ===============================
-   Threshold input box
+   Threshold input
 ================================ */
 .threshold-input-wrapper {
   position: relative;
@@ -131,44 +155,40 @@
 }
 
 /* ===============================
-   Warning message (inspiration style)
+   Stats cards
 ================================ */
-.threshold-warning {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: #f3f4f6;
-  color: #374151;
-  padding: 12px 14px;
-  border-radius: 10px;
-  font-size: 14px;
-}
-
-.threshold-warning i {
-  color: #f05656;
-  margin-top: 2px;
-}
-
-/* ===============================
-   Save button emphasis
-================================ */
-.dashboard-card .btn-primary i {
-  font-size: 14px;
-}
-
-.dashboard-card .card-body {
-  padding-bottom: 1.25rem;
-}
-
-/* ===============================
-   Card layout helpers
-================================ */
-.dashboard-card .card-body {
+.stats-card-body {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  gap: 8px;
 }
 
-/* Use this wrapper to push actions to bottom */
-.card-actions {
-  margin-top: auto;
+.stats-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.stats-value {
+  font-size: 40px; /* ⬆ closer to hero metric */
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Icon background */
+.stats-icon {
+  font-size: 22px;
+  color: #7c3aed;
+  background: #f3f4f6;
+  width: 50px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  padding-top: 10px;
 }

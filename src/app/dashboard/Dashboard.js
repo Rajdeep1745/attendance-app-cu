@@ -11,9 +11,12 @@ const Dashboard = () => {
 
   // Threshold
   const [threshold, setThreshold] = useState(75);
+  const [savedThreshold, setSavedThreshold] = useState(75);
+  const [saved, setSaved] = useState(false);
 
   // Mode
   const [mode, setMode] = useState("manual");
+  //eslint-disable-next-line
   const [image, setImage] = useState(null);
 
   const generateCode = () => {
@@ -36,14 +39,41 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="container-fluid">
+    <div className="container-fluid dashboard">
       {/* PAGE TITLE */}
       <div className="mb-4">
         <h3 className="text-center fw-semibold mb-1">{batchName}</h3>
 
         <h2 className="dashboard-title mt-3 mb-2">Dashboard</h2>
 
-        <p className="text-muted mb-0">Configure attendance for this batch</p>
+        <p className="dashboard-subtitle mb-0">
+          Configure attendance for this batch
+        </p>
+      </div>
+
+      {/* STATS ROW */}
+      <div className="row g-4 mb-4">
+        {/* Studnets in batch */}
+        <div className="col">
+          <div className="card dashboard-card h-100">
+            <div className="card-body stats-card-body">
+              <p className="stats-title">Students in Batch</p>
+              <h2 className="stats-value">42</h2>
+              <i className="fa-solid fa-users stats-icon"></i>
+            </div>
+          </div>
+        </div>
+
+        {/* Average attendance */}
+        <div className="col">
+          <div className="card dashboard-card h-100">
+            <div className="card-body stats-card-body">
+              <p className="stats-title">Average Attendance</p>
+              <h2 className="stats-value">87%</h2>
+              <i className="fa-solid fa-percent stats-icon"></i>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* TOP ROW */}
@@ -53,7 +83,7 @@ const Dashboard = () => {
           <div className="card dashboard-card d-flex flex-column h-100">
             <div className="card-body d-flex flex-column">
               <h5 className="card-title">Batch Join Code</h5>
-              <p className="text-muted small">
+              <p className="dashboard-subtitle small">
                 Generate a unique code for students
               </p>
 
@@ -83,7 +113,7 @@ const Dashboard = () => {
           <div className="card dashboard-card h-100">
             <div className="card-body">
               <h5 className="card-title">Attendance Warning Threshold</h5>
-              <p className="text-muted small mb-4">
+              <p className="dashboard-subtitle small mb-4">
                 Set the minimum required attendance percentage. Students below
                 this threshold will be flagged.
               </p>
@@ -120,11 +150,15 @@ const Dashboard = () => {
               <div className="d-flex gap-2 card-actions">
                 <button
                   className="btn btn-primary"
-                  disabled={threshold === 75}
-                  onClick={() => setThreshold(75)}
+                  disabled={threshold === savedThreshold}
+                  onClick={() => {
+                    setSavedThreshold(threshold);
+                    setSaved(true);
+                  }}
                 >
-                  Reset
+                  Save
                 </button>
+                {saved && console.log(savedThreshold)}
               </div>
             </div>
           </div>
@@ -137,7 +171,7 @@ const Dashboard = () => {
           <div className="card shadow-sm">
             <div className="card-body">
               <h5 className="card-title">Attendance Mode</h5>
-              <p className="text-muted small">
+              <p className="dashboard-subtitle small">
                 Choose how attendance will be taken
               </p>
 
@@ -165,12 +199,6 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {mode === "manual" && (
-                <div className="alert alert-info mb-0">
-                  Teacher will manually mark attendance.
-                </div>
-              )}
-
               {mode === "auto" && (
                 <div>
                   <input
@@ -179,12 +207,6 @@ const Dashboard = () => {
                     accept="image/*"
                     onChange={(e) => setImage(e.target.files[0])}
                   />
-
-                  {image && (
-                    <div className="alert alert-success mt-3">
-                      Image selected: <strong>{image.name}</strong>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
