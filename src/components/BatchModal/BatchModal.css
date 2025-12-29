@@ -1,0 +1,69 @@
+/* Dark overlay */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+
+/* Modal box */
+.modal-container {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Title */
+.modal-container h3 {
+  margin-bottom: 16px;
+}
+
+/* Input */
+.modal-container input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+/* Actions */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-actions button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.modal-actions .cancel {
+  background: #f3f4f6;
+}
+
+.modal-actions .primary {
+  background: #7c3aed;
+  color: white;
+}
+
+.delete-text {
+  margin: 16px 0;
+  font-size: 14px;
+  color: #374151;
+}
+
+.primary.danger {
+  background: #dc2626;
+  color: white;
+}
