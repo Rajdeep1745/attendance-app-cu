@@ -1,11 +1,15 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import BatchContext from "../../../context/batch/BatchContext";
+
 import "./Sidebar.css";
 import BatchModal from "../../../components/BatchModal/BatchModal";
 
 const Sidebar = ({ isOpen }) => {
   const { batchId } = useParams();
   const navigate = useNavigate();
+  const { setActiveBatch } = useContext(BatchContext);
+
   const [openMenuId, setOpenMenuId] = useState(null);
 
   // Modal controls
@@ -62,6 +66,13 @@ const Sidebar = ({ isOpen }) => {
     }
   };
 
+  useEffect(() => {
+    const found = batches.find((b) => b.id === batchId);
+    if (found) {
+      setActiveBatch(found);
+    }
+  }, [batchId, batches, setActiveBatch]);
+
   return (
     <aside className={`sidebar ${isOpen ? "open" : "closed"}`}>
       <div className="sidebar-content">
@@ -79,7 +90,10 @@ const Sidebar = ({ isOpen }) => {
               {/* Batch name */}
               <span
                 className="batch-name"
-                onClick={() => navigate(`/user/${batch.id}/dashboard`)}
+                onClick={() => {
+                  setActiveBatch(batch); // sync context
+                  navigate(`/user/${batch.id}/dashboard`);
+                }}
               >
                 {batch.name}
               </span>

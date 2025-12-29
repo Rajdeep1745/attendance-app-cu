@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
 import Layout from "./app/layout/Layout";
 import Dashboard from "./app/dashboard/Dashboard";
@@ -11,16 +16,20 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* ✅ NO batch selected */}
-        <Route path="/" element={<Layout />} />
+        {/* 🔹 Layout wraps EVERYTHING */}
+        <Route element={<Layout />}>
+          {/* Empty state (no batch selected) */}
+          <Route path="/" element={null} />
 
-        {/* ✅ Batch selected */}
-        <Route path="/user/:batchId" element={<Layout />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="attendance" element={<Attendance />} />
-          <Route path="students" element={<Students />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="lectures" element={<Lectures />} />
+          {/* Batch routes */}
+          <Route path="/user/:batchId">
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="attendance" element={<Attendance />} />
+            <Route path="students" element={<Students />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="lectures" element={<Lectures />} />
+          </Route>
         </Route>
       </Routes>
     </Router>

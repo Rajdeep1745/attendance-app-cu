@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import "./BatchModal.css";
+
+const modalRoot = document.getElementById("modal-root");
 
 const BatchModal = ({ isOpen, onClose, mode, batch, onSubmit }) => {
   const [name, setName] = useState("");
@@ -10,17 +13,15 @@ const BatchModal = ({ isOpen, onClose, mode, batch, onSubmit }) => {
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-        {/* TITLE */}
         <h3>
           {mode === "add" && "Add New Batch"}
           {mode === "rename" && "Rename Batch"}
           {mode === "delete" && "Delete Batch"}
         </h3>
 
-        {/* BODY */}
         {mode === "delete" ? (
           <p className="delete-text">
             Are you sure you want to delete <strong>{batch?.name}</strong>?
@@ -31,18 +32,16 @@ const BatchModal = ({ isOpen, onClose, mode, batch, onSubmit }) => {
           <input
             type="text"
             value={name}
-            placeholder="Batch name"
             onChange={(e) => setName(e.target.value)}
+            placeholder="Batch name"
             autoFocus
           />
         )}
 
-        {/* ACTIONS */}
         <div className="modal-actions">
           <button className="cancel" onClick={onClose}>
             Cancel
           </button>
-
           <button
             className={`primary ${mode === "delete" ? "danger" : ""}`}
             disabled={mode !== "delete" && !name.trim()}
@@ -54,7 +53,8 @@ const BatchModal = ({ isOpen, onClose, mode, batch, onSubmit }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    modalRoot
   );
 };
 

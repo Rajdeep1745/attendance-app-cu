@@ -1,0 +1,174 @@
+/* ===============================
+   Page title
+================================ */
+.dashboard-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ===============================
+   Cards 
+================================ */
+.dashboard-card {
+  border: none;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-card .card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dashboard-card .text-muted {
+  color: #6b7280 !important;
+}
+
+/* ===============================
+   Inputs
+================================ */
+.dashboard-card .form-control,
+.dashboard-card .form-range {
+  border-radius: 10px;
+}
+
+.dashboard-card .form-control {
+  border: 1px solid #e5e7eb;
+}
+
+.dashboard-card .form-control:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+
+/* Code input emphasis */
+.dashboard-card input[readonly] {
+  letter-spacing: 2px;
+  font-size: 18px;
+}
+
+/* ===============================
+   Buttons
+================================ */
+.btn-primary,
+.btn-primary:disabled {
+  background-color: #7c3aed;
+  border-color: #7c3aed;
+  font-weight: 500;
+  border-radius: 10px;
+}
+
+.btn-primary:hover {
+  background-color: #6d28d9;
+  border-color: #6d28d9;
+}
+
+/* ===============================
+   Range Slider (accent color)
+================================ */
+.form-range::-webkit-slider-thumb {
+  background-color: #7c3aed;
+}
+
+.form-range::-moz-range-thumb {
+  background-color: #7c3aed;
+}
+
+/* ===============================
+   Mode selector
+================================ */
+.form-check-input:checked {
+  background-color: #7c3aed;
+  border-color: #7c3aed;
+}
+
+.form-check-label {
+  font-weight: 500;
+  color: #374151;
+}
+
+/* ===============================
+   Alerts (softened)
+================================ */
+.alert-info {
+  background-color: #eef2ff;
+  border: none;
+  color: #4338ca;
+  border-radius: 10px;
+}
+
+.alert-success {
+  background-color: #ecfdf5;
+  border: none;
+  color: #047857;
+  border-radius: 10px;
+}
+
+/* ===============================
+   Threshold input box
+================================ */
+.threshold-input-wrapper {
+  position: relative;
+  width: 90px;
+}
+
+.threshold-input-wrapper input {
+  padding-right: 28px;
+  border-radius: 10px;
+}
+
+.percent-sign {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: 500;
+  color: #6b7280;
+  pointer-events: none;
+}
+
+/* ===============================
+   Warning message (inspiration style)
+================================ */
+.threshold-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #f3f4f6;
+  color: #374151;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.threshold-warning i {
+  color: #f05656;
+  margin-top: 2px;
+}
+
+/* ===============================
+   Save button emphasis
+================================ */
+.dashboard-card .btn-primary i {
+  font-size: 14px;
+}
+
+.dashboard-card .card-body {
+  padding-bottom: 1.25rem;
+}
+
+/* ===============================
+   Card layout helpers
+================================ */
+.dashboard-card .card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Use this wrapper to push actions to bottom */
+.card-actions {
+  margin-top: auto;
+}

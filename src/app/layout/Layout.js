@@ -5,7 +5,7 @@ import Sidebar from "./sidebar/Sidebar";
 import "./Layout.css";
 
 const Layout = () => {
-  const { batchId } = useParams(); // 👈 key
+  const { batchId } = useParams(); // 🔑 source of truth
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
@@ -25,7 +25,7 @@ const Layout = () => {
             transition: "margin 0.3s ease",
           }}
         >
-          {/* ✅ CONDITIONAL RENDER */}
+          {/* ✅ CONDITIONAL RENDER BASED ON URL */}
           {!batchId ? (
             <div className="empty-state">
               <h2>Select a batch</h2>
