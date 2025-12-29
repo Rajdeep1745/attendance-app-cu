@@ -1,4 +1,6 @@
-/* Layout */
+/* ===============================
+   Layout
+================================ */
 .custom-navbar {
   height: 72px;
   display: flex;
@@ -7,6 +9,11 @@
   padding: 0 24px;
   background: #ffffff;
   border-bottom: 1px solid #eee;
+
+  /* keep navbar always visible */
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .navbar-left {
@@ -15,6 +22,9 @@
   gap: 10px;
 }
 
+/* ===============================
+   Sidebar Toggle
+================================ */
 .sidebar-toggle {
   background: none;
   border: none;
@@ -22,13 +32,21 @@
   cursor: pointer;
   padding: 4px 6px;
   border-radius: 6px;
+  transition: background-color 0.2s ease;
 }
 
-.sidebar-toggle:hover {
-  background-color: #f1f3ff;
+.sidebar-toggle:hover:not(:disabled) {
+  background-color: #f3f4f6;
 }
 
-/* Brand */
+.sidebar-toggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===============================
+   Brand
+================================ */
 .brand {
   display: flex;
   align-items: center;
@@ -47,7 +65,9 @@
   color: #111827;
 }
 
-/* Menu */
+/* ===============================
+   Menu
+================================ */
 .navbar-menu {
   display: flex;
   gap: 12px;
@@ -65,12 +85,12 @@
   text-decoration: none;
   color: #6b7280;
   font-weight: 500;
-  transition: 0.2s;
+  background: transparent;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.nav-item img {
-  width: 18px;
-  height: 18px;
+.nav-item i {
+  font-size: 16px;
 }
 
 .nav-item:hover {
@@ -78,17 +98,22 @@
   color: #111827;
 }
 
-/* ACTIVE (NavLink magic) */
+/* ACTIVE (NavLink) */
 .nav-item.active {
   background: #7c3aed;
-  color: white;
+  color: #ffffff;
 }
 
-.nav-item.active img {
-  filter: brightness(0) invert(1);
+/* DISABLED */
+.nav-item.disabled {
+  pointer-events: none;
+  opacity: 0.4;
+  filter: grayscale(0.6);
 }
 
-/* Profile */
+/* ===============================
+   Profile
+================================ */
 .profile {
   position: relative;
 }
@@ -100,12 +125,14 @@
   cursor: pointer;
 }
 
-/* Dropdown */
+/* ===============================
+   Dropdown
+================================ */
 .dropdown {
   position: absolute;
   top: 50px;
   right: 0;
-  background: white;
+  background: #ffffff;
   border-radius: 10px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   min-width: 200px;
@@ -136,7 +163,19 @@
   color: #dc2626;
 }
 
-/* Responsive */
+/* ===============================
+   Accessibility
+================================ */
+.nav-item:focus-visible,
+.sidebar-toggle:focus-visible,
+.avatar:focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+/* ===============================
+   Responsive
+================================ */
 @media (max-width: 900px) {
   .navbar-menu {
     display: none;
@@ -144,5 +183,14 @@
 
   .brand-text {
     display: none;
+  }
+}
+
+/* ===============================
+   Reduced Motion
+================================ */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
   }
 }

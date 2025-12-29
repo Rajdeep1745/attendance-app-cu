@@ -2,25 +2,21 @@ import React, { useState, useRef, useEffect } from "react";
 import { NavLink, useParams } from "react-router-dom";
 
 import AppLogo from "./assets/Logo.png";
-import dashboardLogo from "./assets/dashboardLogo.svg";
-import attendanceLogo from "./assets/attendanceLogo.svg";
-import studentsLogo from "./assets/studentsLogo.svg";
-import reportsLogo from "./assets/reportsLogo.svg";
-import lectureLogo from "./assets/lectureLogo.svg";
 
 import "./Navbar.css";
 
 const Navbar = (props) => {
-  const { toggleSidebar } = props;
-  const [open, setOpen] = useState(false);
+  const { toggleSidebar, isSidebarOpen } = props;
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const { batchId } = useParams();
+  const basePath = batchId ? `/user/${batchId}` : null;
 
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setOpen(false);
+        setDropdownOpen(false);
       }
     };
 
@@ -41,45 +37,85 @@ const Navbar = (props) => {
         <button
           className="sidebar-toggle"
           onClick={toggleSidebar}
+          disabled={!batchId}
           aria-label="Toggle Sidebar"
         >
-          ☰
+          {isSidebarOpen ? (
+            <i className="fa-solid fa-angles-left"></i>
+          ) : (
+            <i className="fa-solid fa-angles-right"></i>
+          )}
         </button>
       </div>
 
       {/* CENTER */}
       <ul className="navbar-menu">
         <li>
-          <NavLink to={`/user/${batchId}/dashboard`} end className="nav-item">
-            <img src={dashboardLogo} alt="Dashvoard Logo" />
+          <NavLink
+            to={basePath ? `${basePath}/dashboard` : "#"}
+            className={({ isActive }) =>
+              `nav-item ${isActive ? "active" : ""} ${
+                !batchId ? "disabled" : ""
+              }`
+            }
+          >
+            <i className="fa-solid fa-display"></i>
             Dashboard
           </NavLink>
         </li>
 
         <li>
-          <NavLink to={`/user/${batchId}/attendance`} className="nav-item">
-            <img src={attendanceLogo} alt="Attendance Logo" />
+          <NavLink
+            to={basePath ? `${basePath}/attendance` : "#"}
+            className={({ isActive }) =>
+              `nav-item ${isActive ? "active" : ""} ${
+                !batchId ? "disabled" : ""
+              }`
+            }
+          >
+            <i className="fa-solid fa-clipboard-check"></i>
             Attendance
           </NavLink>
         </li>
 
         <li>
-          <NavLink to={`/user/${batchId}/students`} className="nav-item">
-            <img src={studentsLogo} alt="Students Logo" />
+          <NavLink
+            to={basePath ? `${basePath}/students` : "#"}
+            className={({ isActive }) =>
+              `nav-item ${isActive ? "active" : ""} ${
+                !batchId ? "disabled" : ""
+              }`
+            }
+          >
+            <i className="fa-solid fa-child"></i>
             Students
           </NavLink>
         </li>
 
         <li>
-          <NavLink to={`/user/${batchId}/reports`} className="nav-item">
-            <img src={reportsLogo} alt="Reports Logo" />
+          <NavLink
+            to={basePath ? `${basePath}/reports` : "#"}
+            className={({ isActive }) =>
+              `nav-item ${isActive ? "active" : ""} ${
+                !batchId ? "disabled" : ""
+              }`
+            }
+          >
+            <i className="fa-solid fa-chart-line"></i>
             Reports
           </NavLink>
         </li>
 
         <li>
-          <NavLink to={`/user/${batchId}/lectures`} className="nav-item">
-            <img src={lectureLogo} alt="Lecture Logo" />
+          <NavLink
+            to={basePath ? `${basePath}/lectures` : "#"}
+            className={({ isActive }) =>
+              `nav-item ${isActive ? "active" : ""} ${
+                !batchId ? "disabled" : ""
+              }`
+            }
+          >
+            <i className="fa-solid fa-book-open"></i>
             Lecture Topics
           </NavLink>
         </li>
@@ -87,19 +123,22 @@ const Navbar = (props) => {
 
       {/* RIGHT */}
       <div className="navbar-right" ref={dropdownRef}>
-        <div className="profile" onClick={() => setOpen((prev) => !prev)}>
+        <div
+          className="profile"
+          onClick={() => setDropdownOpen((prev) => !prev)}
+        >
           <img
             src="https://i.pravatar.cc/40"
             alt="profile"
             className="avatar"
           />
 
-          {open && (
+          {dropdownOpen && (
             <div className="dropdown">
               {/* To be made dynamic with each user and role */}
               <h6>Rajdeep - Teacher</h6>
               <p>example@gmail.com</p>
-              <NavLink to="/profile" onClick={() => setOpen(false)}>
+              <NavLink to="/profile" onClick={() => setDropdownOpen(false)}>
                 Profile
               </NavLink>
               <button className="logout">Logout</button>

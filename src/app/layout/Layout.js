@@ -10,7 +10,10 @@ const Layout = () => {
 
   return (
     <>
-      <Navbar toggleSidebar={() => setSidebarOpen((p) => !p)} />
+      <Navbar
+        toggleSidebar={() => setSidebarOpen((p) => !p)}
+        isSidebarOpen={sidebarOpen}
+      />
 
       <div className="d-flex">
         <Sidebar isOpen={sidebarOpen} />

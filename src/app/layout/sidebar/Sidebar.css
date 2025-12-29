@@ -107,3 +107,63 @@
   margin-right: 12px;
   cursor: pointer;
 }
+
+/* ===== Batch item layout ===== */
+.batch-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.batch-name {
+  flex: 1;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+/* ===== 3-dot menu ===== */
+.batch-menu {
+  position: relative;
+}
+
+.batch-menu i {
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.batch-item:hover .batch-menu i {
+  opacity: 1;
+}
+
+/* ===== Dropdown ===== */
+.batch-dropdown {
+  position: absolute;
+  top: 18px;
+  right: 0;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  min-width: 140px;
+  overflow: hidden;
+  z-index: 2000;
+}
+
+.batch-dropdown button {
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.batch-dropdown button:hover {
+  background: #f3f4f6;
+}
+
+.batch-dropdown .danger {
+  color: #dc2626;
+}
