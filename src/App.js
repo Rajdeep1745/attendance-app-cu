@@ -15,7 +15,10 @@ import Alert from "./components/alert/Alert";
 import Profile from "./app/profile/Profile";
 import Login from "./app/login/Login";
 import Signup from "./app/login/Signup";
-
+import { AuthProvider } from "./context/auth/AuthContext";
+import JoinBatch from "./app/student/JoinBatch";
+import ProtectedRoute from "./components/ProtectedRoute";
+import StudentDashboard from "./app/student/StudentBoard";
 function App() {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -31,7 +34,16 @@ function App() {
         {/* Protected */}
         <Route
           path="/"
-          element={<Navigate to={token ? defaultUserPath : "/login"} />}
+          element={<Navigate to={token ? defaultUserPath : "/login"} />}          <Route path="/join" element={<JoinBatch />} />
+
+          <Route
+          path="/user/:batchId/dashboard"
+          element={
+            <ProtectedRoute>
+              <StudentDashboard />
+            </ProtectedRoute>
+          }
+          />
         />
         <Route
           path="/:userId"
