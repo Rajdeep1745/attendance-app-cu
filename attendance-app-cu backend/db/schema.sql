@@ -108,6 +108,17 @@ begin
 end;
 $$;
 
+create or replace function decrement_student_count(batch_id uuid)
+returns void
+language plpgsql
+as $$
+begin
+  update batches
+  set total_students = greatest(total_students - 1, 0)
+  where id = batch_id;
+end;
+$$;
+
 create or replace function frequent_absentees(batch_id_input uuid)
 returns table (
   id uuid,

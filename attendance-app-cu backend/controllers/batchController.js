@@ -42,7 +42,7 @@ exports.getSelectedBatches = async (req, res) => {
 
 // ADD BATCH
 exports.addBatch = async (req, res) => {
-  const { name } = req.body;
+  const { name, defaultThreshold } = req.body;
 
   let data = null;
   let error = null;
@@ -55,7 +55,7 @@ exports.addBatch = async (req, res) => {
           name,
           batch_code: generateCode(),
           teacher_id: req.user.id,
-          threshold: 75,
+          threshold: defaultThreshold,
           total_students: 0,
         },
       ])

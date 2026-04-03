@@ -78,58 +78,167 @@ exports.addStudent = async (req, res) => {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    // 1. Create user
-    const { data: user, error: userError } = await supabase
+    let userId, studentId;
+    let isNewEnrollment = true;
+
+    // 1. Check if user with email exists
+    const { data: existingUser, error: userCheckError } = await supabase
       .from("users")
-      .insert([
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (userCheckError) throw userCheckError;
+
+    if (existingUser) {
+      // User exists - check if they have a student record
+      userId = existingUser.id;
+
+      const { data: existingStudent, error: studentCheckError } = await supabase
+        .from("students")
+        .select("student_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (studentCheckError) throw studentCheckError;
+
+      if (existingStudent) {
+        // Student exists - just enroll them if not already enrolled
+        studentId = existingStudent.student_id;
+
+        // Check if already enrolled
+        const { data: existingEnrollment, error: enrollCheckError } =
+          await supabase
+            .from("enrollments")
+            .select("id")
+            .eq("student_id", studentId)
+            .eq("batch_id", batchId)
+            .maybeSingle();
+
+        if (enrollCheckError) throw enrollCheckError;
+
+        if (existingEnrollment) {
+          // Already enrolled
+          isNewEnrollment = false;
+          return res.json({
+            id: studentId,
+            name: existingUser.name,
+            roll,
+            attendance: 0,
+            faceRegistered: false,
+            message: "Student already enrolled in this batch",
+          });
+        }
+      } else {
+        // User exists but no student record - create student record
+        const { data: newStudent, error: studentError } = await supabase
+          .from("students")
+          .insert([
+            {
+              user_id: userId,
+              roll_no: roll,
+              attendance_percentage: 0,
+            },
+          ])
+          .select()
+          .single();
+
+        if (studentError) throw studentError;
+        studentId = newStudent.student_id;
+      }
+    } else {
+      // User doesn't exist - create new user and student
+      const { data: user, error: userError } = await supabase
+        .from("users")
+        .insert([
+          {
+            name,
+            email,
+            department,
+            institution,
+            role: "student",
+            avatar: "https://i.pravatar.cc/150",
+          },
+        ])
+        .select()
+        .single();
+
+      if (userError) throw userError;
+      userId = user.id;
+
+      // 2. Create student
+      const { data: student, error: studentError } = await supabase
+        .from("students")
+        .insert([
+          {
+            user_id: userId,
+            roll_no: roll,
+            attendance_percentage: 0,
+          },
+        ])
+        .select()
+        .single();
+
+      if (studentError) throw studentError;
+      studentId = student.student_id;
+    }
+
+    // 3. Enroll student in batch (if not already enrolled)
+    if (isNewEnrollment) {
+      const { error: enrollError } = await supabase.from("enrollments").insert([
         {
-          name,
-          email,
-          department,
-          institution,
-          role: "student",
-          avatar: "https://i.pravatar.cc/150",
+          student_id: studentId,
+          batch_id: batchId,
         },
-      ])
-      .select()
+      ]);
+
+      if (enrollError) {
+        // Check if it's a duplicate error
+        if (enrollError.code !== "23505") {
+          throw enrollError;
+        }
+        // Already enrolled, no action needed
+        isNewEnrollment = false;
+      }
+    }
+
+    // 4. Increase batch student count (only if new enrollment)
+    if (isNewEnrollment) {
+      const { error: incrementError } = await supabase.rpc(
+        "increment_student_count",
+        { batch_id: batchId },
+      );
+
+      if (incrementError) {
+        console.error("Error incrementing student count:", incrementError);
+        // Fallback: manually increment if RPC fails
+        const { data: batch } = await supabase
+          .from("batches")
+          .select("total_students")
+          .eq("id", batchId)
+          .single();
+
+        await supabase
+          .from("batches")
+          .update({ total_students: (batch?.total_students || 0) + 1 })
+          .eq("id", batchId);
+      }
+    }
+
+    // Get student data to return
+    const { data: userData } = await supabase
+      .from("users")
+      .select("name, email, department, institution, avatar")
+      .eq("id", userId)
       .single();
-
-    if (userError) throw userError;
-
-    // 2. Create student
-    const { data: student, error: studentError } = await supabase
-      .from("students")
-      .insert([
-        {
-          user_id: user.id,
-          roll_no: roll,
-          attendance_percentage: 0,
-        },
-      ])
-      .select()
-      .single();
-
-    if (studentError) throw studentError;
-
-    // 3. Enroll student in batch
-    const { error: enrollError } = await supabase.from("enrollments").insert([
-      {
-        student_id: student.student_id,
-        batch_id: batchId,
-      },
-    ]);
-
-    if (enrollError) throw enrollError;
-
-    // 4. Increase batch student count
-    await supabase.rpc("increment_student_count", { batch_id: batchId });
 
     res.json({
-      id: student.student_id,
-      name,
+      id: studentId,
+      name: userData?.name || name,
       roll,
       attendance: 0,
       faceRegistered: false,
+      isNew: isNewEnrollment,
     });
   } catch (err) {
     console.log(err);
@@ -162,16 +271,27 @@ exports.removeStudentFromBatch = async (req, res) => {
     }
 
     // Decrement batch student count
-    const { data: batch } = await supabase
-      .from("batches")
-      .select("total_students")
-      .eq("id", batchId)
-      .single();
+    const { error: decrementError } = await supabase.rpc(
+      "decrement_student_count",
+      { batch_id: batchId },
+    );
 
-    await supabase
-      .from("batches")
-      .update({ total_students: Math.max((batch?.total_students || 0) - 1, 0) })
-      .eq("id", batchId);
+    if (decrementError) {
+      console.error("Error decrementing student count:", decrementError);
+      // Fallback: manually decrement if RPC fails
+      const { data: batch } = await supabase
+        .from("batches")
+        .select("total_students")
+        .eq("id", batchId)
+        .single();
+
+      await supabase
+        .from("batches")
+        .update({
+          total_students: Math.max((batch?.total_students || 0) - 1, 0),
+        })
+        .eq("id", batchId);
+    }
 
     res.json({ message: "Student removed from batch" });
   } catch (err) {

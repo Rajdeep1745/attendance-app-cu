@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import BatchContext from "./BatchContext";
 
 const BatchState = ({ children }) => {
   const [activeBatch, setActiveBatch] = useState(null);
 
-  const fetchBatchById = async (id) => {
+  const fetchBatchById = useCallback(async (id) => {
     if (!id) {
       setActiveBatch(null);
       return;
@@ -32,7 +32,7 @@ const BatchState = ({ children }) => {
     } catch (err) {
       console.error("Error fetching batch:", err);
     }
-  };
+  }, []);
 
   return (
     <BatchContext.Provider

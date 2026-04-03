@@ -1,16 +1,22 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BatchContext from "../../context/batch/BatchContext";
+import AlertContext from "../../context/alert/AlertContext";
 import { LAST_ACTIVE_BATCH_ID_KEY } from "../student/mockStudentData";
 import "./Profile.css";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { activeBatch } = useContext(BatchContext);
+  const { showAlert } = useContext(AlertContext);
   const storedUser = JSON.parse(localStorage.getItem("user") || "null");
   const isTeacher = storedUser?.role === "teacher";
 
   const [activeTab, setActiveTab] = useState("profile");
+  const [preferences, setPreferences] = useState({
+    defaultMode: "manual",
+    threshold: 75,
+  });
 
   const [profile, setProfile] = useState({
     name: storedUser?.name || "",
@@ -23,14 +29,41 @@ const Profile = () => {
     avatar: storedUser?.avatar || "https://i.pravatar.cc/150",
   });
 
-  const [preferences, setPreferences] = useState({
-    defaultMode: "manual",
-    threshold: 75,
-  });
+  const handleSave = async () => {
+    try {
+      const token = localStorage.getItem("token");
 
-  const handleSave = () => {
-    console.log("Profile:", profile);
-    console.log("Preferences:", preferences);
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/users/me`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: profile.name,
+            department: profile.department,
+            institution: profile.institution,
+            avatar: profile.avatar,
+            defaultMode: preferences.defaultMode,
+            defaultThreshold: preferences.threshold,
+          }),
+        },
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      // update localStorage user
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      localStorage.setItem("user", JSON.stringify({ ...storedUser, ...data }));
+
+      showAlert("Updated", "Your profile has been updated", "primary");
+    } catch (err) {
+      console.error(err);
+      showAlert("Failed", "Failed to update your profile", "danger");
+    }
   };
 
   const handleBackToDashboard = () => {
@@ -43,6 +76,45 @@ const Profile = () => {
       navigate(storedUser?.id ? `/${storedUser.id}` : "/");
     }
   };
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}api/users/me`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        setProfile({
+          name: data.name || "",
+          email: data.email || "",
+          department: data.department || "",
+          institution: data.institution || "",
+          role: data.role,
+          avatar: data.avatar || "https://i.pravatar.cc/150",
+        });
+
+        // ADD THIS
+        setPreferences({
+          defaultMode: data.default_mode || "manual",
+          threshold: data.default_threshold || 75,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   return (
     <div className="container-fluid profile-page">

@@ -23,6 +23,7 @@ const TeacherSidebar = ({ isOpen }) => {
   const [selectedBatch, setSelectedBatch] = useState(null);
 
   const [batches, setBatches] = useState([]);
+  const [defaultThreshold, setDefaultThreshold] = useState(75);
 
   // close menu on outside click
   useEffect(() => {
@@ -49,7 +50,7 @@ const TeacherSidebar = ({ isOpen }) => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ name }),
+          body: JSON.stringify({ name, defaultThreshold }),
         },
       );
 
@@ -178,7 +179,30 @@ const TeacherSidebar = ({ isOpen }) => {
   };
 
   useEffect(() => {
+    const fetchPreferences = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}api/users/me`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        setDefaultThreshold(data.default_threshold || 75);
+      } catch (err) {
+        console.error("Failed to load default threshold", err);
+      }
+    };
+
     fetchBatches();
+    fetchPreferences();
   }, []);
 
   return (

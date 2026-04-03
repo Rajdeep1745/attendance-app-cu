@@ -95,8 +95,9 @@ const Dashboard = () => {
   useEffect(() => {
     if (!batchId) return;
 
+    fetchBatchById(batchId);
     fetchAverageAttendance(batchId);
-  }, [batchId]);
+  }, [batchId, fetchBatchById]);
 
   useEffect(() => {
     if (activeBatch?.threshold !== undefined) {
