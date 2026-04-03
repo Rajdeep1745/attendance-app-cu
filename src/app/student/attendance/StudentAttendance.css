@@ -1,0 +1,243 @@
+@import "../../teacher/attendance/TeacherAttendance.css";
+
+.student-attendance-page .attendance-card {
+  border-radius: 18px;
+}
+
+.student-date-card {
+  display: grid;
+  grid-template-columns: minmax(340px, 420px) minmax(320px, 1fr);
+  gap: 40px;
+  align-items: center;
+  min-height: 360px;
+}
+
+.student-date-copy h3,
+.student-attendance-header h3 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.student-section-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 10px 18px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-weight: 600;
+}
+
+.student-date-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100%;
+}
+
+.student-date-copy .attendance-subtitle {
+  max-width: 560px;
+}
+
+.student-date-stats {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+.date-stat-card {
+  min-width: 126px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.date-stat-card span {
+  display: block;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.date-stat-card strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 28px;
+  line-height: 1;
+  color: #0f172a;
+}
+
+.student-date-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 22px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  color: #475569;
+  max-width: 560px;
+}
+
+.student-date-note i {
+  margin-top: 2px;
+  color: #7c3aed;
+}
+
+.student-calendar-shell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 16px;
+}
+
+.student-attendance-page .rdp {
+  --rdp-accent-color: #7c3aed;
+  --rdp-background-color: #efe8ff;
+  margin: 0;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
+}
+
+.student-attendance-page .rdp-day_selected {
+  border-radius: 12px;
+}
+
+.student-attendance-header {
+  display: flex;
+  justify-content: flex-start;
+  gap: 20px;
+  align-items: flex-start;
+  margin-bottom: 28px;
+}
+
+.student-status-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.student-status-head,
+.student-status-row {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 140px 160px;
+  gap: 16px;
+  align-items: center;
+}
+
+.student-status-head {
+  padding: 0 16px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.student-status-row {
+  padding: 18px 16px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.student-status-row:last-child {
+  border-bottom: none;
+}
+
+.student-batch-cell strong {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.student-time-cell {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.student-status-cell {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.student-attendance-page .status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 132px;
+}
+
+.student-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 220px;
+  text-align: center;
+  color: #64748b;
+}
+
+.student-empty-state i {
+  font-size: 34px;
+  color: #7c3aed;
+}
+
+@media (max-width: 991px) {
+  .student-date-card {
+    grid-template-columns: 1fr;
+  }
+
+  .student-calendar-shell {
+    padding: 0 0 12px;
+  }
+
+  .student-date-copy {
+    text-align: center;
+  }
+
+  .student-section-pill {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .student-date-stats {
+    justify-content: center;
+  }
+
+  .student-date-note {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+  }
+
+  .student-attendance-header {
+    flex-direction: column;
+  }
+
+  .student-status-head,
+  .student-status-row {
+    grid-template-columns: 1fr;
+  }
+
+  .student-status-head {
+    display: none;
+  }
+
+  .student-status-row {
+    padding: 16px;
+    border: 1px solid #eef2f7;
+    border-radius: 14px;
+    margin-bottom: 12px;
+  }
+
+  .student-time-cell,
+  .student-status-cell {
+    justify-content: flex-start;
+  }
+}

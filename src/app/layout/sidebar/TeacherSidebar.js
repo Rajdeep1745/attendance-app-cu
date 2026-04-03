@@ -4,10 +4,9 @@ import AlertContext from "../../../context/alert/AlertContext";
 import BatchContext from "../../../context/batch/BatchContext";
 
 import "./Sidebar.css";
-import BatchModal from "../../../components/BatchModal/BatchModal";
+import BatchModal from "../../../components/batchModal/BatchModal";
 
-const Sidebar = ({ isOpen }) => {
-  const backendUrl = "http://localhost:5000/";
+const TeacherSidebar = ({ isOpen }) => {
   const { userId, batchId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,14 +41,17 @@ const Sidebar = ({ isOpen }) => {
   const handleAddBatch = async (name) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${backendUrl}api/batches`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/batches`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name }),
         },
-        body: JSON.stringify({ name }),
-      });
+      );
 
       const data = await res.json();
 
@@ -72,14 +74,17 @@ const Sidebar = ({ isOpen }) => {
   const handleRenameBatch = async (name, id) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${backendUrl}api/batches/${id}`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/batches/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name }),
         },
-        body: JSON.stringify({ name }),
-      });
+      );
 
       const updated = await res.json();
 
@@ -104,12 +109,15 @@ const Sidebar = ({ isOpen }) => {
   const handleDeleteBatch = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${backendUrl}api/batches/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/batches/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       const data = await res.json();
 
@@ -138,11 +146,14 @@ const Sidebar = ({ isOpen }) => {
   const fetchBatches = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${backendUrl}api/batches`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/batches`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       const data = await res.json();
 
@@ -189,7 +200,7 @@ const Sidebar = ({ isOpen }) => {
                 className="batch-name"
                 onClick={() => {
                   const parts = location.pathname.split("/");
-                  const currentPage = parts[4] || "dashboard";
+                  const currentPage = parts[3] || "dashboard";
                   navigate(`/${userId}/${batch.id}/${currentPage}`);
                 }}
               >
@@ -268,4 +279,4 @@ const Sidebar = ({ isOpen }) => {
   );
 };
 
-export default Sidebar;
+export default TeacherSidebar;

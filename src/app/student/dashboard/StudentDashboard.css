@@ -1,0 +1,45 @@
+@import "../../teacher/dashboard/TeacherDashboard.css";
+
+.student-dashboard .form-range:disabled {
+  opacity: 0.8;
+}
+
+.student-detail-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.student-card-meta {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #e9edf5;
+}
+
+.student-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.student-meta-row + .student-meta-row {
+  margin-top: 10px;
+}
+
+.student-meta-row strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.student-threshold-note {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.45;
+}

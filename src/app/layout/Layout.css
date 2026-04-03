@@ -1,3 +1,12 @@
+.app-main {
+  margin-left: 0;
+  transition: margin 0.3s ease;
+}
+
+.app-main.sidebar-visible {
+  margin-left: 300px;
+}
+
 /* Empty state when no batch is selected */
 .empty-state {
   height: calc(100vh - 64px); /* minus navbar height */
@@ -16,4 +25,10 @@
 
 .empty-state p {
   font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .app-main.sidebar-visible {
+    margin-left: 280px;
+  }
 }

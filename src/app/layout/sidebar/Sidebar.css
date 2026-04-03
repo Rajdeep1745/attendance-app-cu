@@ -4,65 +4,103 @@
   position: fixed;
   top: 64px;
   left: 0;
-  background: #fff;
-  border-right: 1px solid #e5e7eb;
-  padding: 10px;
-
   display: flex;
   flex-direction: column;
-
-  transition: width 0.3s ease;
+  padding: 14px;
   overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(124, 58, 237, 0.08), transparent 38%),
+    linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
+  border-right: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 18px 0 40px rgba(15, 23, 42, 0.06);
+  transition: width 0.3s ease;
 }
 
-/* open / close states */
 .sidebar.open {
-  width: 280px;
+  width: 300px;
 }
 
 .sidebar.closed {
   width: 0;
+  padding-left: 0;
+  padding-right: 0;
 }
 
-/* ===== Content area (scrollable) ===== */
+/* ===== Content ===== */
 .sidebar-content,
 .sidebar-footer {
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
 }
 
 .sidebar-content {
   flex-grow: 1;
-  padding: 12px;
+  padding: 18px 16px 8px;
   overflow-y: auto;
 }
 
-/* fixed footer */
-.sidebar-footer {
-  padding: 12px;
-  border-top: 1px solid #eee;
+.sidebar-content h6 {
+  margin-bottom: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0f172a;
 }
 
-/* hide content when collapsed */
+.sidebar-content .text-muted {
+  color: #64748b !important;
+}
+
+.sidebar-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.sidebar-footer {
+  padding: 14px 16px 16px;
+  border-top: 1px solid rgba(226, 232, 240, 0.95);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+}
+
 .sidebar.closed .sidebar-content,
 .sidebar.closed .sidebar-footer {
   opacity: 0;
   visibility: hidden;
+  transform: translateX(-10px);
 }
 
 .sidebar.open .sidebar-content,
 .sidebar.open .sidebar-footer {
   opacity: 1;
   visibility: visible;
+  transform: translateX(0);
+}
+
+/* ===== Scrollbar ===== */
+.sidebar-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
 }
 
 /* ===== List items ===== */
 .list-group-item {
-  border: none;
-  border-radius: 10px;
-  margin-bottom: 6px;
-  color: #333;
-
-  /* ✅ allow wrapping */
+  border: 1px solid transparent;
+  border-radius: 16px;
+  margin-bottom: 10px;
+  padding: 14px 14px 13px;
+  color: #1f2937;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
+  transition:
+    transform 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
   white-space: normal;
   word-break: break-word;
 }
@@ -72,34 +110,46 @@
   pointer-events: none;
 }
 
-.list-group-item.active {
-  background-color: #f1f3ff;
-  color: #7c3aed;
-  font-weight: 500;
-}
-
 .list-group-item:hover {
-  background-color: #f5f6fa;
+  background: #ffffff;
+  border-color: rgba(124, 58, 237, 0.12);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
 }
 
-/* ===== Bottom button ===== */
-.sidebar-footer {
-  padding: 12px;
-  border-top: 1px solid #eee;
+.list-group-item.active {
+  background: linear-gradient(135deg, #f6f0ff 0%, #eef2ff 100%);
+  border-color: rgba(124, 58, 237, 0.18);
+  color: #5b21b6;
+  font-weight: 600;
+  box-shadow: 0 14px 28px rgba(124, 58, 237, 0.12);
 }
 
+.list-group-item.active .text-muted {
+  color: #6d28d9 !important;
+}
+
+/* ===== Button ===== */
 .addBatchButton {
-  background-color: #7c3aed;
-  color: white;
-  font-weight: 500;
-  border-radius: 10px;
+  min-height: 46px;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #ffffff;
+  font-weight: 600;
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(124, 58, 237, 0.22);
 }
 
 .addBatchButton:hover {
-  background-color: #6d28d9;
+  background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+  color: #ffffff;
 }
 
-/* ===== Toggle button (navbar) ===== */
+.addBatchButton:focus {
+  box-shadow: 0 0 0 0.2rem rgba(124, 58, 237, 0.22);
+}
+
+/* ===== Toggle button ===== */
 .sidebar-toggle {
   background: none;
   border: none;
@@ -108,62 +158,102 @@
   cursor: pointer;
 }
 
-/* ===== Batch item layout ===== */
+/* ===== Batch item ===== */
 .batch-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .batch-name {
   flex: 1;
   cursor: pointer;
-  line-height: 1.2;
+  line-height: 1.35;
+  font-weight: 600;
+  color: inherit;
 }
 
-/* ===== 3-dot menu ===== */
+.batch-item small {
+  line-height: 1.35;
+}
+
+.batch-card {
+  width: 100%;
+  align-items: flex-start;
+}
+
+.batch-card-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ===== Menu ===== */
 .batch-menu {
   position: relative;
+  flex-shrink: 0;
 }
 
 .batch-menu i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
-  opacity: 0.6;
+  color: #64748b;
+  opacity: 0.9;
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 
+.batch-menu i:hover,
 .batch-item:hover .batch-menu i {
-  opacity: 1;
+  background: rgba(148, 163, 184, 0.14);
+  color: #334155;
 }
 
 /* ===== Dropdown ===== */
 .batch-dropdown {
   position: absolute;
-  top: 18px;
+  top: 36px;
   right: 0;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-  min-width: 140px;
+  min-width: 156px;
   overflow: hidden;
   z-index: 2000;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+  backdrop-filter: blur(12px);
 }
 
 .batch-dropdown button {
   width: 100%;
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: none;
   border: none;
   text-align: left;
   cursor: pointer;
   font-size: 13px;
+  color: #334155;
 }
 
 .batch-dropdown button:hover {
-  background: #f3f4f6;
+  background: #f8fafc;
 }
 
 .batch-dropdown .danger {
   color: #dc2626;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 991px) {
+  .sidebar.open {
+    width: 280px;
+  }
 }

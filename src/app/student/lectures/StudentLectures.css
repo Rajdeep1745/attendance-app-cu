@@ -1,0 +1,133 @@
+.student-lectures-page {
+  font-size: 15px;
+  color: #111827;
+}
+
+.student-lectures-title {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.student-lectures-subtitle {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.student-lectures-card {
+  border: none;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+.student-lectures-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.student-unit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.student-unit-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 18px 20px;
+  background: linear-gradient(180deg, #ffffff, #fcfcff);
+}
+
+.student-unit-card h6 {
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.student-unit-card ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.student-unit-card li {
+  color: #4b5563;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.student-plan-list {
+  margin-top: 12px;
+}
+
+.student-week-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 20px;
+  background: #ffffff;
+}
+
+.student-week-header {
+  margin-bottom: 16px;
+}
+
+.student-week-header h5 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.student-topic-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.student-topic-card:last-child {
+  margin-bottom: 0;
+}
+
+.student-topic-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.student-topic-top h6 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  color: #111827;
+}
+
+.student-classes-pill {
+  background: linear-gradient(135deg, #ede9fe, #f5f3ff);
+  color: #5b21b6;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.student-topic-objectives {
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (max-width: 767px) {
+  .student-topic-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

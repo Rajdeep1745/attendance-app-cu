@@ -1,12 +1,11 @@
 import { useState, useContext, useEffect } from "react";
-import AlertContext from "../../context/alert/AlertContext";
-import BatchContext from "../../context/batch/BatchContext";
+import AlertContext from "../../../context/alert/AlertContext";
+import BatchContext from "../../../context/batch/BatchContext";
 import { useParams } from "react-router-dom";
 
-import "./Dashboard.css";
+import "./TeacherDashboard.css";
 
 const Dashboard = () => {
-  const backendUrl = "http://localhost:5000/";
   const { showAlert } = useContext(AlertContext);
   const { activeBatch, fetchBatchById } = useContext(BatchContext);
   const { batchId } = useParams();
@@ -45,14 +44,17 @@ const Dashboard = () => {
   const saveThreshold = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${backendUrl}api/batches/${batchId}/threshold`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/batches/${batchId}/threshold`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ threshold }),
         },
-        body: JSON.stringify({ threshold }),
-      });
+      );
 
       const data = await res.json();
 
@@ -70,11 +72,14 @@ const Dashboard = () => {
   const fetchAverageAttendance = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${backendUrl}api/attendance/${id}/stats`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/attendance/${id}/stats`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
       const data = await res.json();
 
       if (!res.ok) {

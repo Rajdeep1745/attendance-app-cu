@@ -3,11 +3,10 @@ import { useParams } from "react-router-dom";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 
-import BatchContext from "../../context/batch/BatchContext";
-import "./Attendance.css";
+import BatchContext from "../../../context/batch/BatchContext";
+import "./TeacherAttendance.css";
 
 const Attendance = () => {
-  const backendUrl = "http://localhost:5000/";
   const { batchId } = useParams();
   const { activeBatch } = useContext(BatchContext);
 
@@ -32,11 +31,14 @@ const Attendance = () => {
   const fetchAttendanceDetails = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${backendUrl}api/attendance/${id}/stats`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/attendance/${id}/stats`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
       const data = await res.json();
 
       if (!res.ok) {
@@ -58,7 +60,7 @@ const Attendance = () => {
         const formattedDate = selectedDate.toISOString().split("T")[0];
 
         const res = await fetch(
-          `${backendUrl}api/attendance/${batchId}/daily?date=${formattedDate}`,
+          `${process.env.REACT_APP_BACKEND_URL}api/attendance/${batchId}/daily?date=${formattedDate}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -91,7 +93,7 @@ const Attendance = () => {
     };
 
     fetchDailyAttendance();
-  }, [activeBatch, selectedDate]);
+  }, [activeBatch, batchId, selectedDate]);
 
   if (!activeBatch) return null;
 

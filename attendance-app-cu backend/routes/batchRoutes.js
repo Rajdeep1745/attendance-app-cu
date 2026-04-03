@@ -12,12 +12,7 @@ const {
   updateThreshold,
 } = require("../controllers/batchController");
 
-router.get(
-  "/",
-  authMiddleware,
-  roleMiddleware("teacher", "student"),
-  getBatches,
-);
+router.get("/", authMiddleware, roleMiddleware("teacher"), getBatches);
 router.get(
   "/:id",
   authMiddleware,

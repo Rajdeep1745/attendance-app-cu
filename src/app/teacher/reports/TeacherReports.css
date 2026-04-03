@@ -22,6 +22,22 @@
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
 }
 
+.report-kpi-label {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.report-kpi-value {
+  margin-bottom: 8px;
+  font-size: 36px;
+  font-weight: 700;
+  color: #111827;
+}
+
 /* ===== Bar Chart ===== */
 .bar-chart.improved {
   display: flex;

@@ -6,13 +6,11 @@ const generateCode = () =>
 
 // GET ALL BATCHES
 exports.getBatches = async (req, res) => {
-  let query = supabase.from("batches").select("*").order("name", { ascending: true });
-
-  if (req.user.role === "teacher") {
-    query = query.eq("teacher_id", req.user.id);
-  }
-
-  const { data, error } = await query;
+  const { data, error } = await supabase
+    .from("batches")
+    .select("*")
+    .eq("teacher_id", req.user.id)
+    .order("name", { ascending: true });
 
   if (error) return res.status(500).json({ error });
 

@@ -1,13 +1,19 @@
-import { useContext, useState, useEffect } from "react";
+import { useCallback, useContext, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import BatchContext from "../../context/batch/BatchContext";
-import AlertContext from "../../context/alert/AlertContext";
+import BatchContext from "../../../context/batch/BatchContext";
+import AlertContext from "../../../context/alert/AlertContext";
 
-import "./Lectures.css";
-import LectureTopicsModal from "../../components/lectureModal/LectureModal";
+import "./TeacherLectures.css";
+import LectureTopicsModal from "../../../components/lectureModal/LectureModal";
+
+const formatCurriculumData = (data) =>
+  data.map((unit, index) => ({
+    id: "unit-" + index,
+    name: unit.name,
+    topics: unit.topics,
+  }));
 
 const Lectures = () => {
-  const backendUrl = "http://localhost:5000/";
   const { activeBatch } = useContext(BatchContext);
   const { showAlert } = useContext(AlertContext);
   const { batchId } = useParams();
@@ -38,40 +44,36 @@ const Lectures = () => {
 
   /* ================= HELPERS ================= */
 
-  const formatCurriculumData = (data) =>
-    data.map((unit, index) => ({
-      id: "unit-" + index,
-      name: unit.name,
-      topics: unit.topics,
-    }));
-
-  const fetchCurriculum = async (targetBatchId = batchId) => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(
-        `${backendUrl}api/lectures/curriculum/${targetBatchId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+  const fetchCurriculum = useCallback(
+    async (targetBatchId = batchId) => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}api/lectures/curriculum/${targetBatchId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        },
-      );
-      if (!res.ok) {
-        throw new Error("Failed to load lecture topics");
-      }
-      const data = await res.json();
+        );
+        if (!res.ok) {
+          throw new Error("Failed to load lecture topics");
+        }
+        const data = await res.json();
 
-      if (Array.isArray(data) && data.length > 0) {
-        setLectureTopics(formatCurriculumData(data));
-      } else {
-        setLectureTopics([]);
+        if (Array.isArray(data) && data.length > 0) {
+          setLectureTopics(formatCurriculumData(data));
+        } else {
+          setLectureTopics([]);
+        }
+      } catch (err) {
+        console.error(err);
       }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    },
+    [batchId],
+  );
 
-  const resetPlanState = () => {
+  const resetPlanState = useCallback(() => {
     setWeeks([
       {
         id: Date.now(),
@@ -88,45 +90,51 @@ const Lectures = () => {
     setHasSavedPlan(false);
     setIsEditing(true);
     setMode("manual");
-  };
+  }, []);
 
-  const fetchPlan = async (targetBatchId = batchId) => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${backendUrl}api/lectures/plan/${targetBatchId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!res.ok) {
-        throw new Error("Failed to load teaching plan");
-      }
-      const data = await res.json();
+  const fetchPlan = useCallback(
+    async (targetBatchId = batchId) => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}api/lectures/plan/${targetBatchId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        if (!res.ok) {
+          throw new Error("Failed to load teaching plan");
+        }
+        const data = await res.json();
 
-      if (Array.isArray(data) && data.length > 0) {
-        const formattedWeeks = data.map((week) => ({
-          id: Date.now() + Math.random(),
-          topics: week.topics.map((t) => ({
+        if (Array.isArray(data) && data.length > 0) {
+          const formattedWeeks = data.map((week) => ({
             id: Date.now() + Math.random(),
-            title: t.title,
-            objectives: t.objectives,
-            classes: t.classes,
-            topicId: t.topicId,
-          })),
-        }));
+            topics: week.topics.map((t) => ({
+              id: Date.now() + Math.random(),
+              title: t.title,
+              objectives: t.objectives,
+              classes: t.classes,
+              topicId: t.topicId,
+            })),
+          }));
 
-        setWeeks(formattedWeeks);
-        setHasSavedPlan(true);
-        setIsEditing(false);
-        return;
+          setWeeks(formattedWeeks);
+          setHasSavedPlan(true);
+          setIsEditing(false);
+          return;
+        }
+
+        resetPlanState();
+      } catch (err) {
+        console.error(err);
+        resetPlanState();
       }
-
-      resetPlanState();
-    } catch (err) {
-      console.error(err);
-      resetPlanState();
-    }
-  };
+    },
+    [batchId, resetPlanState],
+  );
 
   const addWeek = () => {
     setWeeks((prev) => [
@@ -200,23 +208,26 @@ const Lectures = () => {
         );
         return;
       }
-      const res = await fetch(`${backendUrl}api/lectures/plan/${batchId}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          weeks: weeks.map((w, i) => ({
-            week: i + 1,
-            topics: w.topics.map((t) => ({
-              topicId: t.topicId,
-              objectives: t.objectives,
-              classes: t.classes,
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/lectures/plan/${batchId}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            weeks: weeks.map((w, i) => ({
+              week: i + 1,
+              topics: w.topics.map((t) => ({
+                topicId: t.topicId,
+                objectives: t.objectives,
+                classes: t.classes,
+              })),
             })),
-          })),
-        }),
-      });
+          }),
+        },
+      );
 
       const data = await res.json();
 
@@ -239,7 +250,7 @@ const Lectures = () => {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `${backendUrl}api/lectures/curriculum/${batchId}`,
+        `${process.env.REACT_APP_BACKEND_URL}api/lectures/curriculum/${batchId}`,
         {
           method: "POST",
           headers: {
@@ -275,13 +286,13 @@ const Lectures = () => {
     if (!activeBatch) return;
 
     fetchCurriculum(batchId);
-  }, [activeBatch, batchId]);
+  }, [activeBatch, batchId, fetchCurriculum]);
 
   useEffect(() => {
     if (!activeBatch) return;
 
     fetchPlan(batchId);
-  }, [activeBatch, batchId]);
+  }, [activeBatch, batchId, fetchPlan]);
 
   if (!activeBatch) return;
 

@@ -1,12 +1,10 @@
 import { useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import AlertContext from "../../context/alert/AlertContext";
 import "./Auth.css";
 
 const Login = () => {
-  const backendUrl = "http://localhost:5000/";
   const { showAlert } = useContext(AlertContext);
-  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     email: "",
@@ -21,19 +19,21 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const res = await fetch(`${backendUrl}api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(form),
         },
-        body: JSON.stringify(form),
-      });
+      );
 
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error);
 
-      // Save token
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
@@ -70,7 +70,7 @@ const Login = () => {
         <button className="btn btn-primary w-100">Login</button>
 
         <p className="switch-text">
-          Don’t have an account? <Link to="/signup">Sign up</Link>
+          Don't have an account? <Link to="/signup">Sign up</Link>
         </p>
       </form>
     </div>

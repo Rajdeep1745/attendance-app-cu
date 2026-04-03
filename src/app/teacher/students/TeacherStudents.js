@@ -1,15 +1,14 @@
 import { useContext, useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import BatchContext from "../../context/batch/BatchContext";
-import AlertContext from "../../context/alert/AlertContext";
+import BatchContext from "../../../context/batch/BatchContext";
+import AlertContext from "../../../context/alert/AlertContext";
 
-import StudentModal from "../../components/studentModal/StudentModal";
-import StudentDetailsModal from "../../components/studentDetailsModal/StudentDetailsModal";
-import FaceRegisterModal from "../../components/faceRegisterModal/FaceRegisterModal";
-import "./Students.css";
+import StudentModal from "../../../components/studentModal/StudentModal";
+import StudentDetailsModal from "../../../components/studentDetailsModal/StudentDetailsModal";
+import FaceRegisterModal from "../../../components/faceRegisterModal/FaceRegisterModal";
+import "./TeacherStudents.css";
 
 const Students = () => {
-  const backendUrl = "http://localhost:5000/";
   const { activeBatch, fetchBatchById } = useContext(BatchContext);
   const { showAlert } = useContext(AlertContext);
   const { batchId } = useParams();
@@ -26,17 +25,20 @@ const Students = () => {
   const handleAddStudent = async (student) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${backendUrl}api/students`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/students`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...student,
+            batchId: batchId,
+          }),
         },
-        body: JSON.stringify({
-          ...student,
-          batchId: batchId,
-        }),
-      });
+      );
 
       const data = await res.json();
 
@@ -57,12 +59,15 @@ const Students = () => {
   const handleDeleteStudent = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${backendUrl}api/students/${id}/${batchId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/students/${id}/${batchId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       if (!res.ok) {
         throw new Error("Failed to delete student");
@@ -82,11 +87,14 @@ const Students = () => {
   const fetchStudents = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${backendUrl}api/students/${batchId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/students/${batchId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
       const data = await res.json();
 
       if (!res.ok) throw new Error(data?.error || "Failed to fetch students");

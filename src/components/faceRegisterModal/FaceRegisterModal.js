@@ -53,7 +53,7 @@ const FaceRegisterModal = ({ isOpen, student, onClose }) => {
         </div>
       </div>
     </div>,
-    modalRoot
+    modalRoot,
   );
 };
 

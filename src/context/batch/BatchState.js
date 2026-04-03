@@ -2,7 +2,6 @@ import { useState } from "react";
 import BatchContext from "./BatchContext";
 
 const BatchState = ({ children }) => {
-  const backendUrl = "http://localhost:5000/";
   const [activeBatch, setActiveBatch] = useState(null);
 
   const fetchBatchById = async (id) => {
@@ -14,11 +13,14 @@ const BatchState = ({ children }) => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetch(`${backendUrl}api/batches/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/batches/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       const data = await res.json();
 

@@ -10,9 +10,17 @@ const Navbar = (props) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const { userId, batchId } = useParams();
-  const basePath = userId && batchId ? `/${userId}/${batchId}` : null;
+
   const homePath = userId ? `/${userId}` : "/";
   const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+
+  let basePath = "";
+
+  if (userId && batchId) {
+    basePath = `/${userId}/${batchId}`;
+  } else if (userId) {
+    basePath = `/${userId}`;
+  }
 
   // Close dropdown on outside click
   useEffect(() => {

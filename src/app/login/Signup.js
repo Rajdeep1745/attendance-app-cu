@@ -4,7 +4,6 @@ import AlertContext from "../../context/alert/AlertContext";
 import "./Auth.css";
 
 const Signup = () => {
-  const backendUrl = "http://localhost:5000/";
   const { showAlert } = useContext(AlertContext);
   const navigate = useNavigate();
 
@@ -24,13 +23,16 @@ const Signup = () => {
     e.preventDefault();
 
     try {
-      const res = await fetch(`${backendUrl}api/auth/signup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/auth/signup`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(form),
         },
-        body: JSON.stringify(form),
-      });
+      );
 
       const data = await res.json();
 

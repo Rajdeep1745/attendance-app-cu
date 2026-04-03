@@ -1,24 +1,26 @@
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import BatchContext from "../../context/batch/BatchContext";
+import { LAST_ACTIVE_BATCH_ID_KEY } from "../student/mockStudentData";
 import "./Profile.css";
-
-const token = localStorage.getItem("token");
 
 const Profile = () => {
   const navigate = useNavigate();
   const { activeBatch } = useContext(BatchContext);
   const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+  const isTeacher = storedUser?.role === "teacher";
 
   const [activeTab, setActiveTab] = useState("profile");
 
   const [profile, setProfile] = useState({
-    name: "Dr. Evelyn Reed",
-    email: "teacher@example.com",
-    department: "Computer Science",
-    institution: "ABC Institute of Technology",
-    role: "Teacher",
-    avatar: "https://i.pravatar.cc/150",
+    name: storedUser?.name || "",
+    email: storedUser?.email || "",
+    department: storedUser?.department || "",
+    institution: storedUser?.institution || "",
+    role: storedUser?.role
+      ? `${storedUser.role.charAt(0).toUpperCase()}${storedUser.role.slice(1)}`
+      : "User",
+    avatar: storedUser?.avatar || "https://i.pravatar.cc/150",
   });
 
   const [preferences, setPreferences] = useState({
@@ -32,8 +34,11 @@ const Profile = () => {
   };
 
   const handleBackToDashboard = () => {
-    if (activeBatch) {
-      navigate(`/${storedUser?.id}/${activeBatch.id}/dashboard`);
+    const activeBatchId =
+      activeBatch?.id || localStorage.getItem(LAST_ACTIVE_BATCH_ID_KEY);
+
+    if (activeBatchId && storedUser?.id) {
+      navigate(`/${storedUser.id}/${activeBatchId}/dashboard`);
     } else {
       navigate(storedUser?.id ? `/${storedUser.id}` : "/");
     }
@@ -71,7 +76,9 @@ const Profile = () => {
           {activeTab === "profile" && (
             <>
               <h2>My Profile</h2>
-              <p className="text-muted">Update your personal information.</p>
+              <p className="text-muted">
+                Review and update your personal information.
+              </p>
 
               <div className="avatar-section">
                 <img src={profile.avatar} alt="profile" />
@@ -149,26 +156,36 @@ const Profile = () => {
           {activeTab === "preferences" && (
             <>
               <h2>Preferences</h2>
-              <p className="text-muted">Default settings for new batches.</p>
+              <p className="text-muted">
+                {isTeacher
+                  ? "Default settings for your classroom workflow."
+                  : "Personal viewing preferences for your attendance dashboard."}
+              </p>
+
+              {isTeacher && (
+                <div className="form-group">
+                  <label>Default Attendance Mode</label>
+                  <select
+                    value={preferences.defaultMode}
+                    onChange={(e) =>
+                      setPreferences({
+                        ...preferences,
+                        defaultMode: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="manual">Manual</option>
+                    <option value="auto">Automatic</option>
+                  </select>
+                </div>
+              )}
 
               <div className="form-group">
-                <label>Default Attendance Mode</label>
-                <select
-                  value={preferences.defaultMode}
-                  onChange={(e) =>
-                    setPreferences({
-                      ...preferences,
-                      defaultMode: e.target.value,
-                    })
-                  }
-                >
-                  <option value="manual">Manual</option>
-                  <option value="auto">Automatic</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Attendance Warning Threshold (%)</label>
+                <label>
+                  {isTeacher
+                    ? "Attendance Warning Threshold (%)"
+                    : "Attendance Alert Threshold (%)"}
+                </label>
                 <input
                   type="number"
                   min="0"
@@ -199,7 +216,7 @@ const Profile = () => {
           {activeTab === "activity" && (
             <>
               <h2>Activity</h2>
-              <p className="text-muted">Your usage summary.</p>
+              <p className="text-muted">A quick summary of your account.</p>
 
               <div className="activity-card">
                 <p>
@@ -207,13 +224,14 @@ const Profile = () => {
                   {activeBatch ? activeBatch.name : "None"}
                 </p>
                 <p>
-                  <strong>Batches Managed:</strong> 2
+                  <strong>Account Type:</strong> {profile.role}
                 </p>
                 <p>
-                  <strong>Total Students:</strong> 84
+                  <strong>Email:</strong> {profile.email || "Not available"}
                 </p>
                 <p>
-                  <strong>Average Attendance:</strong> 87%
+                  <strong>Department:</strong>{" "}
+                  {profile.department || "Not provided"}
                 </p>
               </div>
 

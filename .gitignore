@@ -8,6 +8,8 @@
 
 # env files
 /attendance-app-cu backend/.env
+.env
+.env.production
 
 # testing
 /coverage

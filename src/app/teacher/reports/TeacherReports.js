@@ -1,14 +1,20 @@
 import { useContext, useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import BatchContext from "../../context/batch/BatchContext";
-import "./Reports.css";
+import BatchContext from "../../../context/batch/BatchContext";
+import "./TeacherReports.css";
 
 const Reports = () => {
-  const backendUrl = "http://localhost:5000/";
   const { activeBatch } = useContext(BatchContext);
   const { batchId } = useParams();
 
   const [weeklyAttendance, setWeeklyAttendance] = useState([]);
+  const [stats, setStats] = useState({
+    totalClasses: 0,
+    avgAttendance: 0,
+    bestAttendance: { percentage: 0, date: null },
+    worstAttendance: { percentage: 0, date: null },
+  });
+  const [students, setStudents] = useState([]);
 
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current week
   const [weekMode, setWeekMode] = useState("6"); // "5" or "6"
@@ -23,7 +29,7 @@ const Reports = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `${backendUrl}api/attendance/${batchId}/frequent-absentees`,
+        `${process.env.REACT_APP_BACKEND_URL}api/attendance/${batchId}/frequent-absentees`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -38,10 +44,59 @@ const Reports = () => {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/attendance/${batchId}/stats`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to fetch stats");
+      }
+
+      setStats(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchStudents = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/students/${batchId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to fetch students");
+      }
+
+      setStudents(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      setStudents([]);
+    }
+  };
+
   useEffect(() => {
     if (!activeBatch) return;
 
     fetchFrequentAbsentees();
+    fetchStats();
+    fetchStudents();
     //eslint-disable-next-line
   }, [activeBatch]);
 
@@ -76,11 +131,14 @@ const Reports = () => {
   const fetchGraph = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${backendUrl}api/attendance/${batchId}/graph`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/attendance/${batchId}/graph`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
       const data = await res.json();
 
       const { start, end } = getWeekRange();
@@ -139,6 +197,33 @@ const Reports = () => {
     return <div className="p-4">Loading batch...</div>; // MAKE THIS GLOBAL AND BETTER LOOKING
   }
 
+  const lowAttendanceStudents = students.filter(
+    (student) => student.attendance < threshold,
+  );
+
+  const summaryCards = [
+    {
+      label: "Average Attendance",
+      value: `${stats.avgAttendance || 0}%`,
+      detail: "From batch_attendances",
+    },
+    {
+      label: "Total Classes",
+      value: stats.totalClasses || 0,
+      detail: "Recorded attendance sessions",
+    },
+    {
+      label: "Below Threshold",
+      value: lowAttendanceStudents.length,
+      detail: "Students under current threshold",
+    },
+    {
+      label: "Threshold",
+      value: `${threshold || 0}%`,
+      detail: "Current batch warning level",
+    },
+  ];
+
   return (
     <div className="container-fluid reports-page">
       {/* HEADER */}
@@ -147,6 +232,20 @@ const Reports = () => {
         <p className="reports-subtitle">
           Insights and trends for {activeBatch.name}
         </p>
+      </div>
+
+      <div className="row g-4 mb-4">
+        {summaryCards.map((card) => (
+          <div key={card.label} className="col-md-6 col-xl-3">
+            <div className="card reports-card h-100">
+              <div className="card-body">
+                <p className="report-kpi-label">{card.label}</p>
+                <h3 className="report-kpi-value">{card.value}</h3>
+                <p className="reports-subtitle small mb-0">{card.detail}</p>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* WEEKLY ATTENDANCE GRAPH */}
@@ -228,9 +327,38 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* MOST FREQUENT ABSENCES */}
       <div className="row g-4">
-        <div className="col-md-12">
+        <div className="col-lg-6">
+          <div className="card reports-card h-100">
+            <div className="card-body">
+              <h5 className="card-title">Students Below Threshold</h5>
+              <p className="reports-subtitle small mb-3">
+                Using students.attendance_percentage against the current batch
+                threshold
+              </p>
+
+              {lowAttendanceStudents.length === 0 ? (
+                <p className="text-muted mb-0">
+                  No students are below the threshold right now.
+                </p>
+              ) : (
+                <div className="absence-list">
+                  {lowAttendanceStudents.map((student) => (
+                    <div key={student.id} className="absence-row">
+                      <span className="rank">
+                        <i className="fa-solid fa-triangle-exclamation"></i>
+                      </span>
+                      <span className="name">{student.name}</span>
+                      <span className="count">{student.attendance}%</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="col-lg-6">
           <div className="card reports-card">
             <div className="card-body">
               <h5 className="card-title">Most Frequent Absences</h5>

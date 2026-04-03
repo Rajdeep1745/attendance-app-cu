@@ -1,9 +1,11 @@
 import { useState, useEffect, useContext } from "react";
-import { Outlet, useParams } from "react-router-dom";
+import { Navigate, Outlet, useParams } from "react-router-dom";
 import Navbar from "./navbar/Navbar";
-import Sidebar from "./sidebar/Sidebar";
+import TeacherSidebar from "./sidebar/TeacherSidebar";
+import StudentSidebar from "./sidebar/StudentSidebar";
 
 import BatchContext from "../../context/batch/BatchContext";
+import { LAST_ACTIVE_BATCH_ID_KEY } from "../student/mockStudentData";
 import "./Layout.css";
 
 const Layout = () => {
@@ -11,15 +13,32 @@ const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { fetchBatchById } = useContext(BatchContext);
   const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+  const role = storedUser?.role;
+
+  useEffect(() => {
+    if (!batchId) {
+      fetchBatchById(null);
+      return;
+    }
+
+    if (role === "teacher") {
+      fetchBatchById(batchId);
+    }
+  }, [batchId, role, fetchBatchById]);
 
   useEffect(() => {
     if (batchId) {
-      fetchBatchById(batchId);
-    } else {
-      fetchBatchById(null);
+      localStorage.setItem(LAST_ACTIVE_BATCH_ID_KEY, batchId);
     }
-    //eslint-disable-next-line
   }, [batchId]);
+
+  if (!storedUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (userId && String(userId) !== String(storedUser.id)) {
+    return <Navigate to={`/${storedUser.id}`} replace />;
+  }
 
   return (
     <>
@@ -29,22 +48,27 @@ const Layout = () => {
       />
 
       <div className="d-flex">
-        <Sidebar isOpen={sidebarOpen} />
+        {role === "teacher" ? (
+          <TeacherSidebar isOpen={sidebarOpen} />
+        ) : (
+          <StudentSidebar isOpen={sidebarOpen} />
+        )}
 
         <main
-          className="flex-grow-1 p-4"
-          style={{
-            marginLeft: sidebarOpen ? "280px" : "0",
-            transition: "margin 0.3s ease",
-          }}
+          className={`flex-grow-1 p-4 app-main ${
+            sidebarOpen ? "sidebar-visible" : ""
+          }`}
         >
           {/* CONDITIONAL RENDER BASED ON URL */}
           {!batchId ? (
             <div className="empty-state">
-              <h2>Select a batch</h2>
+              <h2>
+                {role === "teacher" ? "Select a batch" : "Choose a batch"}
+              </h2>
               <p>
-                Please choose a batch from the sidebar to continue,{" "}
-                {storedUser?.name || "User"}.
+                {role === "teacher"
+                  ? "Please choose a batch from the sidebar to continue."
+                  : "Select one of your joined batches from the sidebar to continue."}
               </p>
             </div>
           ) : (

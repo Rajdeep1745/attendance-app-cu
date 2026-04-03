@@ -1,5 +1,5 @@
 /* Reuse backdrop behavior */
-@import "../BatchModal/BatchModal.css";
+@import "../batchModal/BatchModal.css";
 
 /* Override container */
 .student-modal {

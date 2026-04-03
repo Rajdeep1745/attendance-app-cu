@@ -1,31 +1,39 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useEffect, useState } from "react";
 
 const AuthContext = createContext();
 
+const readStoredUser = () => {
+  try {
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  } catch (error) {
+    console.error("Failed to read stored user", error);
+    localStorage.removeItem("user");
+    return null;
+  }
+};
+
 export const AuthProvider = ({ children }) => {
-  const backendUrl = "http://localhost:5000/";
-  const [user, setUser] = useState(null);
+  const [user, setUserState] = useState(() => readStoredUser());
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch(`${backendUrl}api/auth/me`, {
-          headers: {
-            "auth-token": localStorage.getItem("token"),
-          },
-        });
+    const syncUser = () => setUserState(readStoredUser());
 
-        const data = await res.json();
-        setUser(data);
-      } catch (err) {
-        console.error(err);
-      }
-      };
-      
-    fetchUser();
-    }, []);
+    window.addEventListener("storage", syncUser);
+    return () => window.removeEventListener("storage", syncUser);
+  }, []);
 
-return (
+  const setUser = (nextUser) => {
+    setUserState(nextUser);
+
+    if (nextUser) {
+      localStorage.setItem("user", JSON.stringify(nextUser));
+    } else {
+      localStorage.removeItem("user");
+    }
+  };
+
+  return (
     <AuthContext.Provider value={{ user, setUser }}>
       {children}
     </AuthContext.Provider>

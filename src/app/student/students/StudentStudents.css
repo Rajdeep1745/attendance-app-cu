@@ -1,0 +1,163 @@
+.student-roster-page {
+  color: #111827;
+}
+
+.student-roster-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.student-roster-subtitle {
+  font-size: 17px;
+  color: #6b7280;
+  margin-bottom: 0;
+}
+
+.student-roster-card {
+  border: none;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.student-roster-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+}
+
+.student-summary-label {
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.student-summary-metrics {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.student-summary-chip {
+  min-width: 150px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  text-align: center;
+}
+
+.student-summary-chip span {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.student-summary-chip strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 24px;
+  color: #0f172a;
+}
+
+.student-roster-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.student-roster-head,
+.student-roster-row {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) 130px 140px 160px;
+  gap: 16px;
+  align-items: center;
+}
+
+.student-roster-head {
+  padding: 0 8px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.student-roster-row {
+  padding: 18px 8px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.student-roster-row:last-child {
+  border-bottom: none;
+}
+
+.student-roster-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.student-roster-info img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.student-roster-info strong {
+  font-size: 17px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.student-attendance-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #5b21b6;
+  font-weight: 600;
+}
+
+.student-face-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 130px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.student-face-pill.ok {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.student-face-pill.missing {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+@media (max-width: 991px) {
+  .student-roster-summary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .student-roster-head {
+    display: none;
+  }
+
+  .student-roster-row {
+    grid-template-columns: 1fr;
+    padding: 16px 0;
+  }
+}
