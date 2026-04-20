@@ -1,63 +1,67 @@
 # Smart Attendance
 
-Smart Attendance is a full-stack attendance management system for teachers and students.
+Smart Attendance is a full-stack attendance management app for classroom batches. It includes a React frontend, an Express API, and a Supabase Postgres database.
 
-The project helps teachers:
-
-- create and manage batches
-- add and manage students
-- track daily attendance
-- view attendance reports
-- organize lecture topics and teaching plans
-- prepare for automatic attendance using face/image recognition
-
-The application has a React frontend, an Express backend, and a Supabase database.
-
-Important note:
-
-- The project structure already includes face registration and automatic attendance UI flow
-- The current codebase contains placeholders and integration points for image/face recognition
-- If you plan to present this as a finished image-recognition system, you should complete the backend face-recognition pipeline first
+The app currently supports authentication, profile management, teacher batch management, student enrollment, attendance dashboards, reports, and curriculum planning. Teacher pages are connected to the backend. Student-facing pages are routed and functional in the frontend, but in this workspace they still read from local student data files instead of backend APIs.
 
 ## Features
 
-- Batch management
-- Student enrollment
-- Daily attendance records
-- Attendance statistics
-- Weekly reports
-- Frequent absentee reporting
-- Lecture curriculum management
-- Teaching plan management
-- Face registration UI for students
-- Automatic attendance mode UI
-- Global alert/toast system
+- Implemented teacher and student signup/login
+- JWT-protected backend routes
+- Role-based teacher API access
+- Implemented profile read/update for teachers and students
+- Teacher batch creation, rename, deletion, and attendance-threshold updates
+- Student enrollment into teacher-owned batches
+- Student removal from a batch or full student deletion
+- Batch attendance statistics and graph data
+- Daily attendance lookup by date
+- Frequent absentee reports
+- Lecture curriculum management by unit/topic
+- Weekly teaching plan creation and persistence
+- Face registration UI and database table placeholders for future recognition work
+- Global alert/toast UI
+
+## Current Status
+
+Implemented backend-backed flows:
+
+- Authentication through `/api/auth/signup` and `/api/auth/login`
+- Profile fetch/update through `/api/users/me`
+- Teacher batch, student, attendance report, and lecture APIs
+- Supabase schema bootstrap through `db:init`
+
+Frontend-only or planned flows:
+
+- Student pages exist and render, but still read from `src/app/student/mockStudentData.js` and `src/app/student/studentDataService.js`
+- Face registration and automatic attendance recognition are UI/schema placeholders
+- Manual attendance creation/update endpoints are not currently exposed
+- Production backend URL in `.env.production` is a placeholder
 
 ## Tech Stack
 
-### Frontend
+Frontend:
 
 - React 19
-- React Router
+- React Router 7
 - React Context API
 - react-day-picker
-- Bootstrap
-- Font Awesome
+- Bootstrap / Font Awesome classes in the UI
+- Create React App scripts
 
-### Backend
+Backend:
 
 - Node.js
 - Express 5
-- dotenv
-- cors
-- multer
+- Supabase JS client
+- PostgreSQL via `pg` for schema initialization
+- JWT authentication
+- bcryptjs password hashing
+- dotenv, cors, multer
 
-### Database / Backend Service
+Database:
 
-- Supabase
-- Supabase Postgres tables
-- Supabase RPC/database functions
-- PostgreSQL bootstrap script for first-time setup
+- Supabase Postgres
+- SQL bootstrap script at `attendance-app-cu backend/db/schema.sql`
 
 ## Project Structure
 
@@ -66,197 +70,139 @@ attendance-app-cu/
 |- public/
 |- src/
 |  |- app/
+|  |  |- layout/
+|  |  |- login/
+|  |  |- profile/
+|  |  |- student/
+|  |  |- teacher/
 |  |- components/
 |  |- context/
 |- attendance-app-cu backend/
 |  |- config/
 |  |- controllers/
+|  |- db/
+|  |- middleware/
 |  |- routes/
+|  |- scripts/
+|- sample.sql
+|- ATTENDANCE_APP_GUIDE.md
 |- package.json
 |- README.md
 ```
 
-### Folder summary
+Important files:
 
-- `src/` contains the React frontend
-- `src/app/` contains pages like Dashboard, Students, Attendance, Reports, and Lectures
-- `src/components/` contains reusable UI such as modals and alerts
-- `src/context/` contains global state providers
-- `attendance-app-cu backend/` contains the Express backend
-- `attendance-app-cu backend/controllers/` contains business logic
-- `attendance-app-cu backend/routes/` contains API route definitions
-- `attendance-app-cu backend/config/` contains shared backend configuration like Supabase setup
-
-## Main Modules
-
-### Frontend pages
-
-- Dashboard
-- Attendance
-- Students
-- Reports
-- Lectures
-- Profile
-
-### Backend API areas
-
-- Batches
-- Students
-- Attendance
-- Lectures
-
-## How the System Works
-
-### Basic flow
-
-1. The teacher opens the app.
-2. The teacher selects a batch.
-3. The frontend loads batch-specific data.
-4. The teacher can manage students, view attendance, and view reports.
-5. The backend reads and writes data to Supabase.
-
-### Student management flow
-
-1. Teacher adds a student.
-2. Backend creates user and student records.
-3. Backend enrolls the student into the selected batch.
-4. Frontend refreshes the student list.
-
-### Attendance flow
-
-1. Teacher opens the Attendance page.
-2. Frontend requests attendance data for a specific date.
-3. Backend combines student and attendance records.
-4. Frontend displays Present, Absent, or No Class.
-
-### Automatic attendance / image recognition flow
-
-Planned system flow:
-
-1. Teacher uploads a classroom image or student face image.
-2. Backend processes the image.
-3. Backend identifies registered students.
-4. Backend marks recognized students as present.
-5. Attendance records are stored and shown in the app.
-
-Current code status:
-
-- face registration modal exists on the frontend
-- automatic attendance mode UI exists on the dashboard
-- `multer` is installed in the backend for file upload handling
-- the full image-recognition processing backend is not yet implemented in this repository
-
-## Installation
+- `src/App.js` defines the frontend routes
+- `src/app/layout/Layout.js` renders the shared authenticated layout
+- `src/app/layout/sidebar/TeacherSidebar.js` loads and manages teacher batches
+- `src/app/teacher/*` contains the teacher pages
+- `src/app/student/*` contains the student pages and local student demo data
+- `attendance-app-cu backend/server.js` mounts the API routes
+- `attendance-app-cu backend/controllers/*` contains backend business logic
+- `attendance-app-cu backend/db/schema.sql` contains the Supabase schema
 
 ## Prerequisites
-
-Make sure you have these installed:
 
 - Node.js 18 or newer
 - npm
 - A Supabase project
+- A Supabase service role key
+- A direct Supabase Postgres connection string for first-time schema setup
 
-## 1. Clone the repository
+## Environment Variables
 
-```bash
-git clone <your-repository-url>
-cd attendance-app-cu
+Create or update the root frontend `.env`:
+
+```env
+REACT_APP_BACKEND_URL=http://localhost:5000/
 ```
 
-## 2. Install frontend dependencies
+Create `attendance-app-cu backend/.env`:
 
-From the root project folder:
+```env
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+SUPABASE_DB_URL=your_supabase_postgres_connection_string
+JWT_SECRET=replace_this_with_a_strong_secret
+```
+
+Notes:
+
+- `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are used by `config/supabaseClient.js`.
+- `SUPABASE_DB_URL` is used by `scripts/initDb.js` to create database tables and functions.
+- `JWT_SECRET` signs login tokens. The backend has a fallback value, but you should set a real secret locally and in production.
+- `.env.production` currently points to `https://api.production.com/`; replace it before deploying.
+
+## Installation
+
+Install frontend dependencies from the repository root:
 
 ```bash
 npm install
 ```
 
-## 3. Install backend dependencies
-
-From the root project folder:
+Install backend dependencies:
 
 ```bash
 npm --prefix "./attendance-app-cu backend" install
 ```
 
-Or go into the backend folder and install there:
+## Database Setup
 
-```bash
-cd "attendance-app-cu backend"
-npm install
-cd ..
-```
-
-## 4. Configure environment variables
-
-Create a `.env` file inside the backend folder:
-
-`attendance-app-cu backend/.env`
-
-Add:
-
-```env
-SUPABASE_URL=your_supabase_url
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-SUPABASE_DB_URL=your_supabase_postgres_connection_string
-```
-
-Important:
-
-- the backend reads these values in `attendance-app-cu backend/config/supabaseClient.js`
-- without them, the backend cannot connect to Supabase
-- `SUPABASE_DB_URL` is used only for one-time schema creation
-- use the direct Postgres connection string from Supabase, not the API URL
-
-## 5. Create the Supabase tables automatically
-
-No, the tables are not created automatically just by starting the app.
-
-To make onboarding easier, this repository now includes a database bootstrap script and SQL schema.
-
-Run this from the root project folder:
+Run the bootstrap script once after adding the backend environment variables:
 
 ```bash
 npm --prefix "./attendance-app-cu backend" run db:init
 ```
 
-What this does:
+The script creates the required tables, indexes, and helper functions if they do not already exist. It is designed to be safe to re-run for normal setup.
 
-- connects directly to your Supabase Postgres database
-- creates the required tables if they do not already exist
-- creates the helper functions used by the backend
-- safely re-runs because it uses `if not exists` where possible
+Tables include:
 
-Files involved:
+- `users`
+- `batches`
+- `students`
+- `enrollments`
+- `batch_attendances`
+- `student_attendances`
+- `lecture_curriculum`
+- `lecture_curriculum_topics`
+- `lecture_schedule`
+- `student_face_data`
 
-- `attendance-app-cu backend/scripts/initDb.js`
-- `attendance-app-cu backend/db/schema.sql`
+Helper functions include:
 
-After this step, you can start the app normally.
+- `increment_student_count`
+- `decrement_student_count`
+- `frequent_absentees`
 
-## 6. Start the project
+## Running the App
 
-### Start frontend only
+Start the frontend only:
 
 ```bash
 npm start
 ```
 
-Frontend runs on:
+The frontend runs at:
 
-`http://localhost:3000`
+```text
+http://localhost:3000
+```
 
-### Start backend only
+Start the backend only:
 
 ```bash
 npm run backend
 ```
 
-Backend runs on:
+The backend runs at:
 
-`http://localhost:5000`
+```text
+http://localhost:5000
+```
 
-### Start both frontend and backend together
+Start both together:
 
 ```bash
 npm run both
@@ -264,18 +210,58 @@ npm run both
 
 ## Available Scripts
 
-From the root folder:
+Root scripts:
 
-- `npm start` starts the React frontend
-- `npm run backend` starts the backend server using the backend project
+- `npm start` starts the React development server
+- `npm run backend` starts the backend with nodemon
 - `npm run both` starts frontend and backend together
-- `npm run build` builds the frontend for production
+- `npm run build` creates a production frontend build
 - `npm test` runs frontend tests
-- `npm --prefix "./attendance-app-cu backend" run db:init` creates the required database schema
 
-## Backend API Overview
+Backend scripts:
 
-### Batch routes
+- `npm --prefix "./attendance-app-cu backend" run start` starts `server.js`
+- `npm --prefix "./attendance-app-cu backend" run dev` starts the backend with nodemon
+- `npm --prefix "./attendance-app-cu backend" run db:init` initializes the Supabase schema
+
+## Frontend Routes
+
+Public routes:
+
+- `/login`
+- `/signup`
+
+Authenticated routes:
+
+- `/:userId`
+- `/:userId/:batchId/dashboard`
+- `/:userId/:batchId/attendance`
+- `/:userId/:batchId/students`
+- `/:userId/:batchId/reports`
+- `/:userId/:batchId/lectures`
+- `/profile`
+
+The authenticated batch pages render teacher or student screens based on the saved `user.role` value from login.
+
+## API Overview
+
+All protected routes expect:
+
+```text
+Authorization: Bearer <token>
+```
+
+Auth:
+
+- `POST /api/auth/signup`
+- `POST /api/auth/login`
+
+Users:
+
+- `GET /api/users/me`
+- `PATCH /api/users/me`
+
+Batches:
 
 - `GET /api/batches`
 - `GET /api/batches/:id`
@@ -284,77 +270,67 @@ From the root folder:
 - `DELETE /api/batches/:id`
 - `PATCH /api/batches/:id/threshold`
 
-### Student routes
+Students:
 
 - `GET /api/students/:batchId`
 - `POST /api/students`
 - `DELETE /api/students/:id/:batchId`
 - `DELETE /api/students/:id`
 
-### Attendance routes
+Attendance:
 
 - `GET /api/attendance/:id/stats`
 - `GET /api/attendance/:id/graph`
 - `GET /api/attendance/:batchId/daily?date=YYYY-MM-DD`
 - `GET /api/attendance/:id/frequent-absentees`
 
-### Lecture routes
+Lectures:
 
 - `GET /api/lectures/curriculum/:batchId`
 - `POST /api/lectures/curriculum/:batchId`
 - `GET /api/lectures/plan/:batchId`
 - `POST /api/lectures/plan/:batchId`
 
-## Supabase / Database Notes
+## Typical Teacher Flow
 
-The backend bootstrap script creates tables like:
+1. Sign up or log in as a teacher.
+2. Create a batch from the teacher sidebar.
+3. Add students to the selected batch.
+4. View batch dashboard statistics and attendance reports.
+5. Configure attendance threshold from the dashboard.
+6. Add curriculum units/topics.
+7. Save a weekly teaching plan.
 
-- `batches`
-- `users`
-- `students`
-- `enrollments`
-- `batch_attendances`
-- `student_attendances`
-- `lecture_curriculum`
-- `lecture_curriculum_topics`
-- `lecture_schedule`
+## Development Notes
 
-It also creates helper database functions/RPC calls such as:
+- The backend listens on port `5000`.
+- The frontend uses `REACT_APP_BACKEND_URL` and appends paths like `api/batches`.
+- Teacher APIs enforce ownership checks before reading or mutating batch data.
+- The schema stores password hashes in the `users` table for app-managed authentication.
+- `ATTENDANCE_APP_GUIDE.md` contains a longer project guide.
+- `sample.sql` appears to be an additional SQL reference file; the active bootstrap path is `attendance-app-cu backend/db/schema.sql`.
 
-- `increment_student_count`
-- `frequent_absentees`
+## Missing Work
 
-If you set up this project in a fresh Supabase instance, run the bootstrap command before starting the app.
+The following items are still absent from the current source:
 
-## Current Limitations
-
-- Authentication is not fully implemented
-- Profile save is currently frontend-only
-- Face recognition is not fully wired on the backend yet
-- Some lecture save actions are present in the UI but are not fully connected to backend persistence
+- Student pages are present, but they still use local mock data from `src/app/student/mockStudentData.js` and `src/app/student/studentDataService.js`.
+- Endpoints for marking or editing daily attendance are not exposed in `attendanceRoutes.js`.
+- Face registration upload is not wired to backend storage or `student_face_data`.
+- The face/image recognition attendance pipeline is not implemented.
+- App-owned frontend/backend tests are not present.
+- `.env.production` still uses the placeholder backend URL `https://api.production.com/`.
 
 ## Suggested Next Improvements
 
-- add real authentication for teachers and students
-- implement backend face/image recognition pipeline
-- connect face registration upload to backend
-- connect automatic attendance mode to backend recognition logic
-- complete lecture save flow
-- add database schema documentation
-- add tests for frontend and backend
-
-## For New Developers
-
-If you are new to the project, start with these files:
-
-- `src/App.js`
-- `src/app/layout/Layout.js`
-- `src/app/layout/sidebar/Sidebar.js`
-- `src/app/students/Students.js`
-- `attendance-app-cu backend/server.js`
-- `attendance-app-cu backend/controllers/studentController.js`
-- `attendance-app-cu backend/controllers/attendanceController.js`
+- Replace the student mock data service with backend-backed student endpoints.
+- Add APIs and UI actions for marking or editing daily attendance.
+- Wire face registration uploads to backend storage and `student_face_data`.
+- Implement the face/image recognition attendance pipeline.
+- Add backend tests for controllers and middleware.
+- Add frontend tests for login, batch management, profile, and page data loading.
+- Replace production placeholder URLs and document deployment steps.
 
 ## License
 
-This project currently does not define a custom license in the repository. Add one if you plan to publish or distribute it.
+The backend package currently declares `ISC`, but this repository does not include a dedicated license file. Add one before publishing or distributing the project.
