@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-import "../batchModal/BatchModal.css";
+import "../BatchModal/BatchModal.css";
 
 const modalRoot = document.getElementById("modal-root");
 

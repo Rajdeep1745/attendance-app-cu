@@ -4,6 +4,27 @@ const supabase = require("../config/supabaseClient");
 const generateCode = () =>
   Math.random().toString(36).substring(2, 8).toUpperCase();
 
+const ensureStudentBatchAccess = async (batchId, userId) => {
+  const { data: student, error: studentError } = await supabase
+    .from("students")
+    .select("student_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (studentError) throw studentError;
+  if (!student) return false;
+
+  const { data, error } = await supabase
+    .from("enrollments")
+    .select("id")
+    .eq("batch_id", batchId)
+    .eq("student_id", student.student_id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return Boolean(data);
+};
+
 // GET ALL BATCHES
 exports.getBatches = async (req, res) => {
   const { data, error } = await supabase
@@ -21,23 +42,37 @@ exports.getBatches = async (req, res) => {
 exports.getSelectedBatches = async (req, res) => {
   const { id } = req.params;
 
-  const { data, error } = await supabase
-    .from("batches")
-    .select("*")
-    .eq("id", id)
-    .eq("teacher_id", req.user.id)
-    .single();
+  try {
+    const hasAccess =
+      req.user.role === "teacher"
+        ? true
+        : await ensureStudentBatchAccess(id, req.user.id);
 
-  if (error) {
-    console.log("FETCH ERROR:", error);
-    return res.status(500).json({ error });
+    if (!hasAccess) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    let query = supabase.from("batches").select("*").eq("id", id);
+    if (req.user.role === "teacher") {
+      query = query.eq("teacher_id", req.user.id);
+    }
+
+    const { data, error } = await query.single();
+
+    if (error) {
+      console.log("FETCH ERROR:", error);
+      return res.status(500).json({ error });
+    }
+
+    if (!data) {
+      return res.status(404).json({ error: "Batch not found" });
+    }
+
+    res.json(data);
+  } catch (err) {
+    console.log("FETCH ERROR:", err);
+    return res.status(500).json({ error: err.message });
   }
-
-  if (!data) {
-    return res.status(404).json({ error: "Batch not found" });
-  }
-
-  res.json(data);
 };
 
 // ADD BATCH

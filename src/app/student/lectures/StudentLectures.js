@@ -1,18 +1,83 @@
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getStudentLecturesData } from "../studentDataService";
+import {
+  getStudentCurriculum,
+  getStudentPlan,
+} from "../studentApi";
 
 import "./StudentLectures.css";
 
 const StudentLectures = () => {
   const { batchId } = useParams();
-  const details = getStudentLecturesData(batchId);
+  const [details, setDetails] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!batchId) return;
+
+    let ignore = false;
+
+    const loadLectures = async () => {
+      try {
+        const [curriculum, plan] = await Promise.all([
+          getStudentCurriculum(batchId),
+          getStudentPlan(batchId),
+        ]);
+
+        if (!ignore) {
+          setDetails({
+            batchName: "",
+            curriculum,
+            plan: plan.map((week, weekIndex) => ({
+              ...week,
+              id: `week-${week.week || weekIndex + 1}`,
+              topics: week.topics.map((topic, topicIndex) => ({
+                ...topic,
+                id: topic.topicId || `topic-${weekIndex}-${topicIndex}`,
+              })),
+            })),
+          });
+          setError("");
+        }
+      } catch (err) {
+        if (!ignore) {
+          setError(err.message);
+        }
+      }
+    };
+
+    loadLectures();
+
+    return () => {
+      ignore = true;
+    };
+  }, [batchId]);
+
+  if (error) {
+    return (
+      <div className="container-fluid student-lectures-page">
+        <div className="alert alert-danger">{error}</div>
+      </div>
+    );
+  }
+
+  if (!details) {
+    return (
+      <div className="container-fluid student-lectures-page">
+        <div className="text-muted">
+          <span className="spinner-border spinner-border-sm me-2"></span>
+          Loading lecture plan...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container-fluid student-lectures-page">
       <div className="mb-4">
         <h2 className="student-lectures-title">Lecture Topics</h2>
         <p className="student-lectures-subtitle">
-          View the planned curriculum and teaching roadmap for {details.batchName}.
+          View the planned curriculum and teaching roadmap for this batch.
         </p>
       </div>
 
@@ -28,8 +93,8 @@ const StudentLectures = () => {
           </div>
 
           <div className="student-unit-grid">
-            {details.curriculum.map((unit) => (
-              <div key={unit.id} className="student-unit-card">
+            {details.curriculum.map((unit, unitIndex) => (
+              <div key={unit.name || `unit-${unitIndex}`} className="student-unit-card">
                 <h6>{unit.name}</h6>
                 <ul>
                   {unit.topics.map((topic) => (

@@ -1,59 +1,144 @@
-import { useState } from "react";
-import { createPortal } from "react-dom";
-import "../studentModal/StudentModal.css";
+import React, { useState, useRef } from 'react';
+import ReactDOM from 'react-dom';
+import './FaceRegisterModal.css';
 
-const modalRoot = document.getElementById("modal-root");
-
-const FaceRegisterModal = ({ isOpen, student, onClose }) => {
-  const [image, setImage] = useState(null);
+const FaceRegisterModal = ({ isOpen, onClose, student, onSuccess }) => {
+  const [image, setImage]     = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState('');
+  const fileInputRef = useRef();
 
   if (!isOpen || !student) return null;
 
-  const handleSubmit = () => {
-    if (!image) return;
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImage(file);
+    setError('');
+    if (preview) URL.revokeObjectURL(preview);
+    setPreview(URL.createObjectURL(file));
+  };
 
-    // 🔮 Future: send image to backend
-    console.log("Face image uploaded for:", student.name, image);
+  const handleSubmit = async () => {
+    if (!image) {
+      setError('Please select a photo first.');
+      return;
+    }
+    setLoading(true);
+    setError('');
 
+    try {
+      const formData = new FormData();
+      formData.append('faceImage', image);
+
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/students/${student.id}/register-face`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          body: formData,
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+      onSuccess && onSuccess(student.id);
+      handleClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    setImage(null);
+    if (preview) URL.revokeObjectURL(preview);
+    setPreview(null);
+    setError('');
+    setLoading(false);
     onClose();
   };
 
-  return createPortal(
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="student-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="student-modal-header">
-          <div>
-            <h3>Register Face</h3>
-            <p>Upload a clear face image for {student.name}</p>
+  return ReactDOM.createPortal(
+    <>
+      {/* Full-screen dimmed backdrop — sits above everything including sidebar */}
+      <div className="frm-backdrop" onClick={handleClose} />
+
+      {/* Centered modal box */}
+      <div className="frm-modal" role="dialog" aria-modal="true">
+        {/* Header */}
+        <div className="frm-header">
+          <div className="frm-header-left">
+            <i className="fa fa-camera frm-header-icon"></i>
+            <span className="frm-title">Register Face</span>
+            <span className="frm-student-name">— {student.name}</span>
           </div>
-          <button className="close-btn" onClick={onClose}>
-            ✕
+          <button className="frm-close-btn" onClick={handleClose} aria-label="Close">
+            <i className="fa fa-times"></i>
           </button>
         </div>
 
-        <div className="student-modal-body">
+        {/* Body */}
+        <div className="frm-body">
+          <p className="frm-hint">
+            Upload a clear, frontal, well-lit photo. Only one face should be visible.
+          </p>
+
+          {/* Preview */}
+          {preview && (
+            <div className="frm-preview-wrap">
+              <img src={preview} alt="Face preview" className="frm-preview-img" />
+            </div>
+          )}
+
+          {/* File input */}
           <input
             type="file"
-            accept="image/*"
-            onChange={(e) => setImage(e.target.files[0])}
+            accept="image/jpeg,image/png,image/webp"
+            className="frm-file-input"
+            ref={fileInputRef}
+            onChange={handleFileChange}
           />
+          <p className="frm-file-hint">Accepted: JPEG, PNG, WebP — max 5 MB</p>
+
+          {/* Error */}
+          {error && (
+            <div className="frm-error">
+              <i className="fa fa-exclamation-circle me-1"></i>
+              {error}
+            </div>
+          )}
         </div>
 
-        <div className="student-modal-actions">
-          <button className="cancel-text" onClick={onClose}>
+        {/* Footer */}
+        <div className="frm-footer">
+          <button className="frm-btn-cancel" onClick={handleClose} disabled={loading}>
             Cancel
           </button>
           <button
-            className="btn btn-primary"
-            disabled={!image}
+            className="frm-btn-submit"
             onClick={handleSubmit}
+            disabled={loading || !image}
           >
-            Upload Face
+            {loading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2"></span>
+                Registering…
+              </>
+            ) : (
+              <>
+                <i className="fa fa-check me-2"></i>
+                Register Face
+              </>
+            )}
           </button>
         </div>
       </div>
-    </div>,
-    modalRoot,
+    </>,
+    document.getElementById('modal-root')
   );
 };
 

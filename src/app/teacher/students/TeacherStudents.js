@@ -330,6 +330,13 @@ const Students = () => {
         isOpen={showFaceRegister}
         student={selectedStudent}
         onClose={() => setShowFaceRegister(false)}
+        onSuccess={(studentId) => {
+        // Update local state so the face-registered badge refreshes without a full reload
+        setStudents(prev =>
+          prev.map(s => s.id === studentId ? { ...s, faceRegistered: true } : s)
+        );
+        showAlert(true, 'Face registered successfully!', 'success');
+        }}
       />
     </div>
   );

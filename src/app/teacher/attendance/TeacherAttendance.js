@@ -6,9 +6,17 @@ import "react-day-picker/dist/style.css";
 import BatchContext from "../../../context/batch/BatchContext";
 import "./TeacherAttendance.css";
 
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const Attendance = () => {
   const { batchId } = useParams();
   const { activeBatch } = useContext(BatchContext);
+  const today = new Date();
 
   // Attendance threshold
   const [threshold, setThreshold] = useState(0);
@@ -57,7 +65,7 @@ const Attendance = () => {
     const fetchDailyAttendance = async () => {
       try {
         const token = localStorage.getItem("token");
-        const formattedDate = selectedDate.toISOString().split("T")[0];
+        const formattedDate = formatLocalDate(selectedDate);
 
         const res = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}api/attendance/${batchId}/daily?date=${formattedDate}`,
@@ -112,14 +120,28 @@ const Attendance = () => {
         {/* CALENDAR */}
         <div className="col-md-6">
           <div className="card attendance-card h-100">
-            <div className="card-body d-flex justify-content-center">
-              <DayPicker
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
-                showOutsideDays
-                disabled={{ after: new Date() }}
-              />
+            <div className="card-body attendance-calendar-card-body">
+              <div className="attendance-page-calendar-shell">
+                <div className="premium-date-picker-calendar attendance-page-calendar">
+                  <DayPicker
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    showOutsideDays
+                    disabled={{ after: today }}
+                  />
+                </div>
+
+                <div className="premium-date-picker-footer attendance-page-calendar-footer">
+                  <button
+                    type="button"
+                    className="premium-date-picker-footer-btn primary"
+                    onClick={() => setSelectedDate(new Date())}
+                  >
+                    Today
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

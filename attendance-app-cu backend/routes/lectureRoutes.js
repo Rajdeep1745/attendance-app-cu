@@ -14,7 +14,7 @@ const {
 router.get(
   "/curriculum/:batchId",
   authMiddleware,
-  roleMiddleware("teacher"),
+  roleMiddleware("teacher", "student"),
   getCurriculum,
 );
 router.post(
@@ -28,7 +28,7 @@ router.post(
 router.get(
   "/plan/:batchId",
   authMiddleware,
-  roleMiddleware("teacher"),
+  roleMiddleware("teacher", "student"),
   getPlan,
 );
 router.post(
