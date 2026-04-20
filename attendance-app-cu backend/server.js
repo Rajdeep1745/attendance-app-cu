@@ -22,6 +22,9 @@ app.use("/api/lectures", lectureRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 
+const faceRoutes = require('./routes/faceRoutes');
+app.use('/api', faceRoutes);  // exposes POST /api/students/:id/register-face
+
 const PORT = 5000;
 
 app.listen(PORT, () => {

@@ -134,17 +134,6 @@
   box-shadow: 0 8px 20px rgba(124, 58, 237, 0.08);
 }
 
-/* Divider */
-.topic-container::after {
-  content: "";
-  position: absolute;
-  left: 20px;
-  right: 20px;
-  top: 60px;
-  height: 1px;
-  background: #f1f5f9;
-}
-
 /* Top Row */
 .topic-top {
   display: grid;

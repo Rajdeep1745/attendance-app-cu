@@ -1,3 +1,5 @@
+@import "../../../components/premiumDatePicker/PremiumDatePicker.css";
+
 /* ===============================
    Page base
 ================================ */
@@ -144,45 +146,35 @@
 }
 
 /* ===============================
-   Calendar 
+   Calendar
 ================================ */
-.attendance-page .rdp {
-  --rdp-accent-color: #7c3aed;
-  --rdp-background-color: #ede9fe;
-  --rdp-accent-color-dark: #6d28d9;
+.attendance-calendar-card-body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 22px;
 }
 
-.attendance-page .rdp-day_selected {
-  background-color: #7c3aed !important;
-  color: #ffffff;
-  border-radius: 10px;
+.attendance-page-calendar-shell {
+  width: min(430px, 100%);
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(203, 213, 225, 0.78);
+  background:
+    radial-gradient(circle at top right, rgba(124, 58, 237, 0.12), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
+  box-shadow:
+    0 24px 56px rgba(15, 23, 42, 0.12),
+    0 10px 22px rgba(124, 58, 237, 0.07);
 }
 
-.attendance-page .rdp-day_today {
-  font-weight: 600;
+.attendance-page-calendar .rdp {
+  width: 100%;
 }
 
-.attendance-page .rdp-caption {
-  font-weight: 600;
-}
-
-.attendance-page .rdp-nav_button {
-  border-radius: 8px;
-}
-
-/* Remove browser blue focus styles */
-.attendance-page .rdp-day:focus,
-.attendance-page .rdp-day:focus-visible,
-.attendance-page .rdp-nav_button:focus,
-.attendance-page .rdp-nav_button:focus-visible {
-  outline: none;
-  box-shadow: none;
-}
-
-/* Ensure nav arrows stay purple */
-.attendance-page .rdp-nav_button svg {
-  stroke: #7c3aed;
-  fill: #7c3aed;
+.attendance-page-calendar-footer {
+  justify-content: flex-end;
+  margin-top: 14px;
 }
 
 .stats-value-main {

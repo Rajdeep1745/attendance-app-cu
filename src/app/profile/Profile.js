@@ -2,7 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BatchContext from "../../context/batch/BatchContext";
 import AlertContext from "../../context/alert/AlertContext";
-import { LAST_ACTIVE_BATCH_ID_KEY } from "../student/mockStudentData";
+import { LAST_ACTIVE_BATCH_ID_KEY } from "../student/studentStorage";
 import "./Profile.css";
 
 const Profile = () => {

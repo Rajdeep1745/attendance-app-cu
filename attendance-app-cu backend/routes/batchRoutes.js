@@ -16,7 +16,7 @@ router.get("/", authMiddleware, roleMiddleware("teacher"), getBatches);
 router.get(
   "/:id",
   authMiddleware,
-  roleMiddleware("teacher"),
+  roleMiddleware("teacher", "student"),
   getSelectedBatches,
 );
 router.post("/", authMiddleware, roleMiddleware("teacher"), addBatch);

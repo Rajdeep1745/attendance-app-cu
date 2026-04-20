@@ -1,16 +1,48 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
-import { getStudentAttendanceByDate } from "../studentDataService";
+import { getStudentAttendanceByDate } from "../studentApi";
 
 import "./StudentAttendance.css";
 
-const StudentAttendance = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date(2026, 3, 3));
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
-  const formatKey = (date) => date.toISOString().split("T")[0];
-  const selectedKey = formatKey(selectedDate);
-  const selectedRows = getStudentAttendanceByDate(selectedKey);
+const StudentAttendance = () => {
+  const maxSelectableDate = new Date();
+  const [selectedDate, setSelectedDate] = useState(maxSelectableDate);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [error, setError] = useState("");
+
+  const selectedKey = formatLocalDate(selectedDate);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadAttendance = async () => {
+      try {
+        const data = await getStudentAttendanceByDate(selectedKey);
+        if (!ignore) {
+          setSelectedRows(data);
+          setError("");
+        }
+      } catch (err) {
+        if (!ignore) {
+          setError(err.message);
+        }
+      }
+    };
+
+    loadAttendance();
+
+    return () => {
+      ignore = true;
+    };
+  }, [selectedKey]);
 
   const formattedHeadingDate = selectedDate.toLocaleDateString("en-US", {
     month: "long",
@@ -30,6 +62,7 @@ const StudentAttendance = () => {
 
   return (
     <div className="container-fluid attendance-page student-attendance-page">
+      {error && <div className="alert alert-danger mb-4">{error}</div>}
       <div className="mb-4">
         <h2 className="attendance-title">Attendance</h2>
         <p className="attendance-subtitle">
@@ -41,13 +74,27 @@ const StudentAttendance = () => {
       <div className="card attendance-card mb-4">
         <div className="card-body student-date-card">
           <div className="student-calendar-shell">
-            <DayPicker
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
-              showOutsideDays
-              disabled={{ after: new Date(2026, 3, 30) }}
-            />
+            <div className="attendance-page-calendar-shell">
+              <div className="premium-date-picker-calendar attendance-page-calendar">
+                <DayPicker
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  showOutsideDays
+                  disabled={{ after: maxSelectableDate }}
+                />
+              </div>
+
+              <div className="premium-date-picker-footer attendance-page-calendar-footer">
+                <button
+                  type="button"
+                  className="premium-date-picker-footer-btn primary"
+                  onClick={() => setSelectedDate(new Date())}
+                >
+                  Today
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="student-date-copy">

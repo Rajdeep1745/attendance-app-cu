@@ -1,11 +1,58 @@
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getStudentDashboardData } from "../studentDataService";
+import { getStudentOverview } from "../studentApi";
 
 import "./StudentDashboard.css";
 
 const StudentDashboard = () => {
   const { batchId } = useParams();
-  const details = getStudentDashboardData(batchId);
+  const [details, setDetails] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!batchId) return;
+
+    let ignore = false;
+
+    const loadOverview = async () => {
+      try {
+        const data = await getStudentOverview(batchId);
+        if (!ignore) {
+          setDetails(data);
+          setError("");
+        }
+      } catch (err) {
+        if (!ignore) {
+          setError(err.message);
+        }
+      }
+    };
+
+    loadOverview();
+
+    return () => {
+      ignore = true;
+    };
+  }, [batchId]);
+
+  if (error) {
+    return (
+      <div className="container-fluid dashboard student-dashboard">
+        <div className="alert alert-danger">{error}</div>
+      </div>
+    );
+  }
+
+  if (!details) {
+    return (
+      <div className="container-fluid dashboard student-dashboard">
+        <div className="text-muted">
+          <span className="spinner-border spinner-border-sm me-2"></span>
+          Loading batch overview...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container-fluid dashboard student-dashboard">

@@ -12,6 +12,39 @@ const ensureTeacherBatchAccess = async (batchId, teacherId) => {
   return Boolean(data);
 };
 
+const ensureStudentBatchAccess = async (batchId, userId) => {
+  const { data: student, error: studentError } = await supabase
+    .from("students")
+    .select("student_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (studentError) throw studentError;
+  if (!student) return false;
+
+  const { data, error } = await supabase
+    .from("enrollments")
+    .select("id")
+    .eq("batch_id", batchId)
+    .eq("student_id", student.student_id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return Boolean(data);
+};
+
+const ensureBatchAccess = async (batchId, user) => {
+  if (user.role === "teacher") {
+    return ensureTeacherBatchAccess(batchId, user.id);
+  }
+
+  if (user.role === "student") {
+    return ensureStudentBatchAccess(batchId, user.id);
+  }
+
+  return false;
+};
+
 // SAVE CURRICULUM (Units + Topics)
 exports.saveCurriculum = async (req, res) => {
   const { batchId } = req.params;
@@ -19,7 +52,7 @@ exports.saveCurriculum = async (req, res) => {
   // units = [{ name: "Unit 1", topics: [{ id?, name }] }]
 
   try {
-    const hasAccess = await ensureTeacherBatchAccess(batchId, req.user.id);
+    const hasAccess = await ensureBatchAccess(batchId, req.user);
     if (!hasAccess) {
       return res.status(403).json({ error: "Access denied" });
     }
@@ -128,7 +161,7 @@ exports.getCurriculum = async (req, res) => {
   const { batchId } = req.params;
 
   try {
-    const hasAccess = await ensureTeacherBatchAccess(batchId, req.user.id);
+    const hasAccess = await ensureBatchAccess(batchId, req.user);
     if (!hasAccess) {
       return res.status(403).json({ error: "Access denied" });
     }
