@@ -1,11 +1,59 @@
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getStudentReportsData } from "../studentDataService";
+import { getStudentReports } from "../studentApi";
 
 import "./StudentReports.css";
 
 const StudentReports = () => {
   const { batchId } = useParams();
-  const details = getStudentReportsData(batchId);
+  const [details, setDetails] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!batchId) return;
+
+    let ignore = false;
+
+    const loadReports = async () => {
+      try {
+        const data = await getStudentReports(batchId);
+        if (!ignore) {
+          setDetails(data);
+          setError("");
+        }
+      } catch (err) {
+        if (!ignore) {
+          setError(err.message);
+        }
+      }
+    };
+
+    loadReports();
+
+    return () => {
+      ignore = true;
+    };
+  }, [batchId]);
+
+  if (error) {
+    return (
+      <div className="container-fluid student-reports-page">
+        <div className="alert alert-danger">{error}</div>
+      </div>
+    );
+  }
+
+  if (!details) {
+    return (
+      <div className="container-fluid student-reports-page">
+        <div className="text-muted">
+          <span className="spinner-border spinner-border-sm me-2"></span>
+          Loading reports...
+        </div>
+      </div>
+    );
+  }
+
   const presentCount = details.recentAttendance.filter(
     (item) => item.status === "Present",
   ).length;

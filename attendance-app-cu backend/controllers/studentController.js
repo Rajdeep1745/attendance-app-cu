@@ -15,15 +15,169 @@ const ensureTeacherBatchAccess = async (batchId, teacherId) => {
   return Boolean(data);
 };
 
+const getStudentRecordByUserId = async (userId) => {
+  const { data, error } = await supabase
+    .from("students")
+    .select("student_id, roll_no, attendance_percentage, face_registered")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+};
+
+const ensureStudentBatchAccess = async (batchId, userId) => {
+  const student = await getStudentRecordByUserId(userId);
+  if (!student) return false;
+
+  const { data, error } = await supabase
+    .from("enrollments")
+    .select("id")
+    .eq("batch_id", batchId)
+    .eq("student_id", student.student_id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return Boolean(data);
+};
+
+const ensureBatchAccess = async (batchId, user) => {
+  if (user.role === "teacher") {
+    return ensureTeacherBatchAccess(batchId, user.id);
+  }
+
+  if (user.role === "student") {
+    return ensureStudentBatchAccess(batchId, user.id);
+  }
+
+  return false;
+};
+
+const incrementBatchStudentCount = async (batchId) => {
+  const { error } = await supabase.rpc("increment_student_count", {
+    batch_id: batchId,
+  });
+
+  if (!error) return;
+
+  console.error("Error incrementing student count:", error);
+  const { data: batch } = await supabase
+    .from("batches")
+    .select("total_students")
+    .eq("id", batchId)
+    .single();
+
+  await supabase
+    .from("batches")
+    .update({ total_students: (batch?.total_students || 0) + 1 })
+    .eq("id", batchId);
+};
+
+const decrementBatchStudentCount = async (batchId) => {
+  const { error } = await supabase.rpc("decrement_student_count", {
+    batch_id: batchId,
+  });
+
+  if (!error) return;
+
+  console.error("Error decrementing student count:", error);
+  const { data: batch } = await supabase
+    .from("batches")
+    .select("total_students")
+    .eq("id", batchId)
+    .single();
+
+  await supabase
+    .from("batches")
+    .update({
+      total_students: Math.max((batch?.total_students || 0) - 1, 0),
+    })
+    .eq("id", batchId);
+};
+
+const createGeneratedRollNo = (userId, attempt = 0) => {
+  const base = `STU-${String(userId).replace(/-/g, "").slice(0, 8).toUpperCase()}`;
+  return attempt === 0 ? base : `${base}-${attempt}`;
+};
+
+const getOrCreateStudentRecord = async (userId) => {
+  const existingStudent = await getStudentRecordByUserId(userId);
+  if (existingStudent) return existingStudent;
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const { data, error } = await supabase
+      .from("students")
+      .insert([
+        {
+          user_id: userId,
+          roll_no: createGeneratedRollNo(userId, attempt),
+          attendance_percentage: 0,
+        },
+      ])
+      .select("student_id, roll_no, attendance_percentage, face_registered")
+      .single();
+
+    if (!error) return data;
+    if (error.code !== "23505") throw error;
+  }
+
+  throw new Error("Failed to create student profile");
+};
+
+const formatJoinedOn = (value) =>
+  new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+
+const formatRecordedTime = (value) =>
+  new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+
+const getBatchAverageAttendance = async (batchId) => {
+  const { data, error } = await supabase
+    .from("batch_attendances")
+    .select("attendance_percentage")
+    .eq("batch_id", batchId);
+
+  if (error) throw error;
+  if (!data || data.length === 0) return 0;
+
+  return Number(
+    (
+      data.reduce((sum, row) => sum + Number(row.attendance_percentage || 0), 0) /
+      data.length
+    ).toFixed(1),
+  );
+};
+
 // Get student details
 exports.getStudentsByBatch = async (req, res) => {
   const { batchId } = req.params;
 
   try {
-    const hasAccess = await ensureTeacherBatchAccess(batchId, req.user.id);
+    const hasAccess = await ensureBatchAccess(batchId, req.user);
     if (!hasAccess) {
       return res.status(403).json({ error: "Access denied" });
     }
+
+    const { data: batchInfo, error: batchError } = await supabase
+      .from("batches")
+      .select(
+        `
+        name,
+        users!batches_teacher_id_fkey (
+          name
+        )
+      `,
+      )
+      .eq("id", batchId)
+      .single();
+
+    if (batchError) throw batchError;
 
     const { data, error } = await supabase
       .from("enrollments")
@@ -60,6 +214,8 @@ exports.getStudentsByBatch = async (req, res) => {
       department: e.students.users?.department,
       institution: e.students.users?.institution,
       avatar: e.students.users?.avatar,
+      batchName: batchInfo.name,
+      teacher: batchInfo.users?.name || "Teacher",
       faceRegistered: e.students.face_registered,
       attendance: e.students.attendance_percentage || 0,
     }));
@@ -207,31 +363,13 @@ exports.addStudent = async (req, res) => {
           throw enrollError;
         }
         // Already enrolled, no action needed
-        isNewEnrollment = false;
+      isNewEnrollment = false;
       }
     }
 
     // 4. Increase batch student count (only if new enrollment)
     if (isNewEnrollment) {
-      const { error: incrementError } = await supabase.rpc(
-        "increment_student_count",
-        { batch_id: batchId },
-      );
-
-      if (incrementError) {
-        console.error("Error incrementing student count:", incrementError);
-        // Fallback: manually increment if RPC fails
-        const { data: batch } = await supabase
-          .from("batches")
-          .select("total_students")
-          .eq("id", batchId)
-          .single();
-
-        await supabase
-          .from("batches")
-          .update({ total_students: (batch?.total_students || 0) + 1 })
-          .eq("id", batchId);
-      }
+      await incrementBatchStudentCount(batchId);
     }
 
     // Get student data to return
@@ -280,27 +418,7 @@ exports.removeStudentFromBatch = async (req, res) => {
     }
 
     // Decrement batch student count
-    const { error: decrementError } = await supabase.rpc(
-      "decrement_student_count",
-      { batch_id: batchId },
-    );
-
-    if (decrementError) {
-      console.error("Error decrementing student count:", decrementError);
-      // Fallback: manually decrement if RPC fails
-      const { data: batch } = await supabase
-        .from("batches")
-        .select("total_students")
-        .eq("id", batchId)
-        .single();
-
-      await supabase
-        .from("batches")
-        .update({
-          total_students: Math.max((batch?.total_students || 0) - 1, 0),
-        })
-        .eq("id", batchId);
-    }
+    await decrementBatchStudentCount(batchId);
 
     res.json({ message: "Student removed from batch" });
   } catch (err) {
@@ -331,6 +449,353 @@ exports.deleteStudent = async (req, res) => {
 
     res.json({ message: "Student deleted completely" });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getMyBatches = async (req, res) => {
+  try {
+    const student = await getStudentRecordByUserId(req.user.id);
+    if (!student) {
+      return res.json([]);
+    }
+
+    const { data, error } = await supabase
+      .from("enrollments")
+      .select(
+        `
+        batch_id,
+        created_at,
+        batches!inner (
+          id,
+          name,
+          batch_code,
+          threshold,
+          total_students,
+          users!batches_teacher_id_fkey (
+            name
+          )
+        )
+      `,
+      )
+      .eq("student_id", student.student_id)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    res.json(
+      (data || []).map((row) => ({
+        id: row.batches.id,
+        name: row.batches.name,
+        code: row.batches.batch_code,
+        threshold: row.batches.threshold,
+        totalStudents: row.batches.total_students,
+        teacher: row.batches.users?.name || "Teacher",
+        joinedOn: formatJoinedOn(row.created_at),
+        joinedAt: row.created_at,
+      })),
+    );
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.joinBatchByCode = async (req, res) => {
+  const batchCode = req.body?.batchCode?.trim()?.toUpperCase();
+
+  if (!batchCode) {
+    return res.status(400).json({ error: "Batch code is required" });
+  }
+
+  try {
+    const { data: batch, error: batchError } = await supabase
+      .from("batches")
+      .select(
+        `
+        id,
+        name,
+        batch_code,
+        threshold,
+        total_students,
+        teacher_id,
+        users!batches_teacher_id_fkey (
+          name
+        )
+      `,
+      )
+      .eq("batch_code", batchCode)
+      .maybeSingle();
+
+    if (batchError) throw batchError;
+    if (!batch) {
+      return res.status(404).json({ error: "Invalid batch code" });
+    }
+
+    const student = await getOrCreateStudentRecord(req.user.id);
+
+    const { data: existingEnrollment, error: enrollmentCheckError } = await supabase
+      .from("enrollments")
+      .select("id, created_at")
+      .eq("student_id", student.student_id)
+      .eq("batch_id", batch.id)
+      .maybeSingle();
+
+    if (enrollmentCheckError) throw enrollmentCheckError;
+
+    if (existingEnrollment) {
+      return res.json({
+        message: "You have already joined this class",
+        batch: {
+          id: batch.id,
+          name: batch.name,
+          code: batch.batch_code,
+          threshold: batch.threshold,
+          totalStudents: batch.total_students,
+          teacher: batch.users?.name || "Teacher",
+          joinedOn: formatJoinedOn(existingEnrollment.created_at),
+          joinedAt: existingEnrollment.created_at,
+        },
+      });
+    }
+
+    const { data: createdEnrollment, error: enrollError } = await supabase
+      .from("enrollments")
+      .insert([
+        {
+          student_id: student.student_id,
+          batch_id: batch.id,
+        },
+      ])
+      .select("created_at")
+      .single();
+
+    if (enrollError) throw enrollError;
+
+    await incrementBatchStudentCount(batch.id);
+
+    res.json({
+      message: "Class joined successfully",
+      batch: {
+        id: batch.id,
+        name: batch.name,
+        code: batch.batch_code,
+        threshold: batch.threshold,
+        totalStudents: batch.total_students + 1,
+        teacher: batch.users?.name || "Teacher",
+        joinedOn: formatJoinedOn(createdEnrollment.created_at),
+        joinedAt: createdEnrollment.created_at,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.leaveMyBatch = async (req, res) => {
+  const { batchId } = req.params;
+
+  try {
+    const student = await getStudentRecordByUserId(req.user.id);
+    if (!student) {
+      return res.status(404).json({ error: "Student profile not found" });
+    }
+
+    const { data: deletedEnrollment, error } = await supabase
+      .from("enrollments")
+      .delete()
+      .select("id")
+      .eq("student_id", student.student_id)
+      .eq("batch_id", batchId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!deletedEnrollment) {
+      return res.status(404).json({ error: "Enrollment not found" });
+    }
+
+    await decrementBatchStudentCount(batchId);
+    res.json({ message: "You left the batch successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getMyBatchOverview = async (req, res) => {
+  const { batchId } = req.params;
+
+  try {
+    const student = await getStudentRecordByUserId(req.user.id);
+    if (!student) {
+      return res.status(404).json({ error: "Student profile not found" });
+    }
+
+    const { data: enrollment, error: enrollmentError } = await supabase
+      .from("enrollments")
+      .select(
+        `
+        created_at,
+        batches!inner (
+          id,
+          name,
+          batch_code,
+          threshold,
+          total_students,
+          users!batches_teacher_id_fkey (
+            name
+          )
+        )
+      `,
+      )
+      .eq("student_id", student.student_id)
+      .eq("batch_id", batchId)
+      .maybeSingle();
+
+    if (enrollmentError) throw enrollmentError;
+    if (!enrollment) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const avgAttendance = await getBatchAverageAttendance(batchId);
+    const myAttendance = Number(student.attendance_percentage || 0);
+    const threshold = Number(enrollment.batches.threshold || 0);
+    const thresholdGap = Number((myAttendance - threshold).toFixed(1));
+
+    res.json({
+      batchId: enrollment.batches.id,
+      name: enrollment.batches.name,
+      teacher: enrollment.batches.users?.name || "Teacher",
+      code: enrollment.batches.batch_code,
+      totalStudents: enrollment.batches.total_students || 0,
+      avgAttendance,
+      myAttendance,
+      threshold,
+      joinedOn: formatJoinedOn(enrollment.created_at),
+      thresholdNote:
+        "Stay above this mark to avoid low-attendance warnings from your teacher.",
+      currentStanding: `${thresholdGap >= 0 ? "+" : ""}${thresholdGap}% vs threshold`,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getMyBatchReports = async (req, res) => {
+  const { batchId } = req.params;
+
+  try {
+    const student = await getStudentRecordByUserId(req.user.id);
+    if (!student) {
+      return res.status(404).json({ error: "Student profile not found" });
+    }
+
+    const hasAccess = await ensureStudentBatchAccess(batchId, req.user.id);
+    if (!hasAccess) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const { data: batch, error: batchError } = await supabase
+      .from("batches")
+      .select("name, threshold")
+      .eq("id", batchId)
+      .single();
+
+    if (batchError) throw batchError;
+
+    const { data: classRows, error: classError } = await supabase
+      .from("student_attendances")
+      .select("date, present")
+      .eq("batch_id", batchId)
+      .eq("student_id", student.student_id)
+      .order("date", { ascending: false });
+
+    if (classError) throw classError;
+
+    const avgAttendance = await getBatchAverageAttendance(batchId);
+    const attendedClasses = (classRows || []).filter((row) => row.present).length;
+
+    res.json({
+      batchId,
+      batchName: batch.name,
+      myAttendance: Number(student.attendance_percentage || 0),
+      batchAverage: avgAttendance,
+      totalClasses: classRows?.length || 0,
+      attendedClasses,
+      threshold: Number(batch.threshold || 0),
+      recentAttendance: (classRows || []).slice(0, 5).map((row) => ({
+        date: row.date,
+        status: row.present ? "Present" : "Absent",
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getMyAttendanceByDate = async (req, res) => {
+  const { date } = req.query;
+
+  if (!date) {
+    return res.status(400).json({ error: "Date is required" });
+  }
+
+  try {
+    const student = await getStudentRecordByUserId(req.user.id);
+    if (!student) {
+      return res.json([]);
+    }
+
+    const { data: joinedBatches, error: joinedError } = await supabase
+      .from("enrollments")
+      .select(
+        `
+        batch_id,
+        batches!inner (
+          id,
+          name
+        )
+      `,
+      )
+      .eq("student_id", student.student_id)
+      .order("batch_id", { ascending: true });
+
+    if (joinedError) throw joinedError;
+
+    const { data: attendanceRows, error: attendanceError } = await supabase
+      .from("student_attendances")
+      .select("batch_id, present, created_at")
+      .eq("student_id", student.student_id)
+      .eq("date", date);
+
+    if (attendanceError) throw attendanceError;
+
+    const attendanceMap = new Map(
+      (attendanceRows || []).map((row) => [row.batch_id, row]),
+    );
+
+    res.json(
+      (joinedBatches || []).map((row) => {
+        const attendance = attendanceMap.get(row.batch_id);
+        return {
+          batchId: row.batches.id,
+          batchName: row.batches.name,
+          status: attendance
+            ? attendance.present
+              ? "Present"
+              : "Absent"
+            : "No Class",
+          recordedAt: attendance?.created_at
+            ? formatRecordedTime(attendance.created_at)
+            : "-",
+        };
+      }),
+    );
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };

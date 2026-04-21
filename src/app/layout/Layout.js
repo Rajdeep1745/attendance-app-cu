@@ -5,7 +5,7 @@ import TeacherSidebar from "./sidebar/TeacherSidebar";
 import StudentSidebar from "./sidebar/StudentSidebar";
 
 import BatchContext from "../../context/batch/BatchContext";
-import { LAST_ACTIVE_BATCH_ID_KEY } from "../student/mockStudentData";
+import { LAST_ACTIVE_BATCH_ID_KEY } from "../student/studentStorage";
 import "./Layout.css";
 
 const Layout = () => {
@@ -21,9 +21,7 @@ const Layout = () => {
       return;
     }
 
-    if (role === "teacher") {
-      fetchBatchById(batchId);
-    }
+    fetchBatchById(batchId);
   }, [batchId, role, fetchBatchById]);
 
   useEffect(() => {
@@ -68,7 +66,7 @@ const Layout = () => {
               <p>
                 {role === "teacher"
                   ? "Please choose a batch from the sidebar to continue."
-                  : "Select one of your joined batches from the sidebar to continue."}
+                  : "Join a batch using a valid batch code, or choose one of your real joined batches from the sidebar."}
               </p>
             </div>
           ) : (

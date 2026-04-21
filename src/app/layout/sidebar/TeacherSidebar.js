@@ -4,7 +4,7 @@ import AlertContext from "../../../context/alert/AlertContext";
 import BatchContext from "../../../context/batch/BatchContext";
 
 import "./Sidebar.css";
-import BatchModal from "../../../components/batchModal/BatchModal";
+import BatchModal from "../../../components/BatchModal/BatchModal";
 
 const TeacherSidebar = ({ isOpen }) => {
   const { userId, batchId } = useParams();

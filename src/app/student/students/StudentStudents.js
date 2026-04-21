@@ -1,11 +1,63 @@
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getStudentRosterData } from "../studentDataService";
+import { getStudentRoster } from "../studentApi";
 
 import "./StudentStudents.css";
 
 const StudentStudents = () => {
   const { batchId } = useParams();
-  const details = getStudentRosterData(batchId);
+  const [details, setDetails] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!batchId) return;
+
+    let ignore = false;
+
+    const loadRoster = async () => {
+      try {
+        const students = await getStudentRoster(batchId);
+        if (!ignore) {
+          setDetails({
+            batchName: students[0]?.batchName || "",
+            teacher: students[0]?.teacher || "",
+            students,
+          });
+          setError("");
+        }
+      } catch (err) {
+        if (!ignore) {
+          setError(err.message);
+        }
+      }
+    };
+
+    loadRoster();
+
+    return () => {
+      ignore = true;
+    };
+  }, [batchId]);
+
+  if (error) {
+    return (
+      <div className="container-fluid student-roster-page">
+        <div className="alert alert-danger">{error}</div>
+      </div>
+    );
+  }
+
+  if (!details) {
+    return (
+      <div className="container-fluid student-roster-page">
+        <div className="text-muted">
+          <span className="spinner-border spinner-border-sm me-2"></span>
+          Loading roster...
+        </div>
+      </div>
+    );
+  }
+
   const students = details.students;
 
   return (

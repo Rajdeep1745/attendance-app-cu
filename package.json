@@ -22,7 +22,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "both": "concurrently \"npm run start\" \"npm run backend\""
+    "face-service": "bash face_service/start.sh",
+    "both": "concurrently \"npm start\" \"npm run backend\" \"npm run face-service\""
   },
   "eslintConfig": {
     "extends": [
@@ -42,6 +43,7 @@
       "last 1 safari version"
     ]
   },
+  
   "devDependencies": {
     "concurrently": "^9.2.1"
   }
