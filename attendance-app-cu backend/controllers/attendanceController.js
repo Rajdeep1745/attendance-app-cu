@@ -175,13 +175,43 @@ exports.getFrequentAbsentees = async (req, res) => {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    const { data, error } = await supabase.rpc("frequent_absentees", {
-      batch_id_input: id,
-    });
+    const { data, error } = await supabase
+      .from("student_attendances")
+      .select(
+        `
+        student_id,
+        students!student_attendances_student_id_fkey (
+          student_id,
+          users!students_user_id_fkey (
+            name
+          )
+        )
+      `,
+      )
+      .eq("batch_id", id)
+      .eq("present", false);
 
     if (error) throw error;
 
-    res.json(data);
+    const absencesByStudent = new Map();
+
+    (data || []).forEach((row) => {
+      const studentId = row.student_id;
+      const name = row.students?.users?.name || "Unknown Student";
+      const current = absencesByStudent.get(studentId);
+
+      absencesByStudent.set(studentId, {
+        id: studentId,
+        name,
+        absences: (current?.absences || 0) + 1,
+      });
+    });
+
+    const frequentAbsentees = Array.from(absencesByStudent.values()).sort(
+      (a, b) => b.absences - a.absences || a.name.localeCompare(b.name),
+    );
+
+    res.json(frequentAbsentees);
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: err.message });

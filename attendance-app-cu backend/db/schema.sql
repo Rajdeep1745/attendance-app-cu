@@ -12,9 +12,16 @@ create table if not exists users (
   created_at timestamptz not null default now()
 );
 
+create table if not exists teachers (
+  teacher_id uuid primary key references users(id) on delete cascade,
+  default_mode text not null default 'manual',
+  default_threshold integer not null default 75 check (default_threshold >= 0 and default_threshold <= 100),
+  created_at timestamptz not null default now()
+);
+
 create table if not exists batches (
   id uuid primary key default gen_random_uuid(),
-  teacher_id uuid not null references users(id) on delete cascade,
+  teacher_id uuid not null references teachers(teacher_id) on delete cascade,
   name text not null,
   batch_code text not null unique,
   threshold integer not null default 75 check (threshold >= 0 and threshold <= 100),
@@ -118,6 +125,8 @@ begin
   where id = batch_id;
 end;
 $$;
+
+drop function if exists frequent_absentees(uuid);
 
 create or replace function frequent_absentees(batch_id_input uuid)
 returns table (

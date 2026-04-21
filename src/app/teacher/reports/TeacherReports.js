@@ -38,9 +38,20 @@ const Reports = () => {
       );
       const data = await res.json();
 
-      setFrequentAbsentees(data);
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to fetch frequent absentees");
+      }
+
+      const absentees = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.frequentAbsentees)
+          ? data.frequentAbsentees
+          : [];
+
+      setFrequentAbsentees(absentees);
     } catch (err) {
       console.error(err);
+      setFrequentAbsentees([]);
     }
   };
 
@@ -333,8 +344,7 @@ const Reports = () => {
             <div className="card-body">
               <h5 className="card-title">Students Below Threshold</h5>
               <p className="reports-subtitle small mb-3">
-                Using students.attendance_percentage against the current batch
-                threshold
+                Students below the current batch threshold
               </p>
 
               {lowAttendanceStudents.length === 0 ? (
