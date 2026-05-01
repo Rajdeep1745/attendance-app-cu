@@ -2,17 +2,30 @@ import { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BatchContext from "../../context/batch/BatchContext";
 import AlertContext from "../../context/alert/AlertContext";
+import AuthContext from "../../context/auth/AuthContext";
+import FaceRegisterModal from "../../components/faceRegisterModal/FaceRegisterModal";
 import { LAST_ACTIVE_BATCH_ID_KEY } from "../student/studentStorage";
 import "./Profile.css";
+
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Failed to read the selected image"));
+    reader.readAsDataURL(file);
+  });
 
 const Profile = () => {
   const navigate = useNavigate();
   const { activeBatch } = useContext(BatchContext);
   const { showAlert } = useContext(AlertContext);
-  const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+  const { user: storedUser, setUser } = useContext(AuthContext);
   const isTeacher = storedUser?.role === "teacher";
 
   const [activeTab, setActiveTab] = useState("profile");
+  const [showFaceRegister, setShowFaceRegister] = useState(false);
+  const [studentFaceRegistered, setStudentFaceRegistered] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [preferences, setPreferences] = useState({
     defaultMode: "manual",
     threshold: 75,
@@ -29,35 +42,96 @@ const Profile = () => {
     avatar: storedUser?.avatar || "https://i.pravatar.cc/150",
   });
 
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+
+    if (!file) return;
+
+    if (isTeacher) {
+      const previewUrl = URL.createObjectURL(file);
+      setProfile((prev) => ({ ...prev, avatar: previewUrl }));
+      setAvatarUploading(true);
+
+      try {
+        const token = localStorage.getItem("token");
+        const formData = new FormData();
+        formData.append("avatar", file);
+
+        const res = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}api/users/me/avatar`,
+          {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          },
+        );
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to update photo");
+
+        setProfile((prev) => ({
+          ...prev,
+          avatar: data.avatar || prev.avatar,
+        }));
+        setUser({ ...(storedUser || {}), ...data });
+        showAlert("Updated", "Teacher profile photo updated", "success");
+      } catch (err) {
+        console.error(err);
+        setProfile((prev) => ({
+          ...prev,
+          avatar: storedUser?.avatar || "https://i.pravatar.cc/150",
+        }));
+        showAlert("Failed", err.message || "Failed to update profile photo", "danger");
+      } finally {
+        URL.revokeObjectURL(previewUrl);
+        setAvatarUploading(false);
+      }
+
+      return;
+    }
+
+    try {
+      const nextAvatar = await readFileAsDataUrl(file);
+      setProfile((prev) => ({
+        ...prev,
+        avatar: nextAvatar,
+      }));
+    } catch (err) {
+      showAlert("Error", err.message, "danger");
+    }
+  };
+
   const handleSave = async () => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}api/users/me`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            name: profile.name,
-            department: profile.department,
-            institution: profile.institution,
-            avatar: profile.avatar,
-            defaultMode: preferences.defaultMode,
-            defaultThreshold: preferences.threshold,
-          }),
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}api/users/me`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({
+          name: profile.name,
+          department: profile.department,
+          institution: profile.institution,
+          avatar: isTeacher ? undefined : profile.avatar,
+          defaultMode: preferences.defaultMode,
+          defaultThreshold: preferences.threshold,
+        }),
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      // update localStorage user
-      const storedUser = JSON.parse(localStorage.getItem("user"));
-      localStorage.setItem("user", JSON.stringify({ ...storedUser, ...data }));
+      setUser({ ...(storedUser || {}), ...data });
+      setProfile((prev) => ({
+        ...prev,
+        avatar: data.avatar || prev.avatar,
+      }));
 
       showAlert("Updated", "Your profile has been updated", "primary");
     } catch (err) {
@@ -82,14 +156,11 @@ const Profile = () => {
       try {
         const token = localStorage.getItem("token");
 
-        const res = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}api/users/me`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+        const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}api/users/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        );
+        });
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
@@ -102,24 +173,24 @@ const Profile = () => {
           role: data.role,
           avatar: data.avatar || "https://i.pravatar.cc/150",
         });
-
-        // ADD THIS
+        setStudentFaceRegistered(Boolean(data.face_registered));
         setPreferences({
           defaultMode: data.default_mode || "manual",
           threshold: data.default_threshold || 75,
         });
+        setUser({ ...(storedUser || {}), ...data });
       } catch (err) {
         console.error(err);
       }
     };
 
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className="container-fluid profile-page">
       <div className="profile-layout">
-        {/* SIDE PANEL */}
         <aside className="profile-sidebar">
           <button
             className={activeTab === "profile" ? "active" : ""}
@@ -143,7 +214,6 @@ const Profile = () => {
           </button>
         </aside>
 
-        {/* CONTENT */}
         <section className="profile-content">
           {activeTab === "profile" && (
             <>
@@ -154,23 +224,36 @@ const Profile = () => {
 
               <div className="avatar-section">
                 <img src={profile.avatar} alt="profile" />
-                <label className="avatar-upload-btn">
-                  Change Photo
+                <label
+                  className={`avatar-upload-btn ${
+                    avatarUploading ? "avatar-upload-btn-disabled" : ""
+                  }`}
+                >
+                  {avatarUploading ? "Uploading..." : "Change Photo"}
                   <input
                     type="file"
                     hidden
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-
-                      setProfile((p) => ({
-                        ...p,
-                        avatar: URL.createObjectURL(file),
-                      }));
-                    }}
+                    accept="image/jpeg,image/png,image/webp"
+                    disabled={avatarUploading}
+                    onChange={handleAvatarChange}
                   />
                 </label>
+                {!isTeacher && (
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary mt-3"
+                      onClick={() => setShowFaceRegister(true)}
+                    >
+                      <i className="fa-solid fa-camera me-2"></i>
+                      {studentFaceRegistered ? "Update Registered Face" : "Register Face"}
+                    </button>
+                    <p className="text-muted small mt-2 mb-0">
+                      Your registered face photo is also used as your profile picture
+                      across roster and attendance views.
+                    </p>
+                  </>
+                )}
               </div>
 
               <div className="form-group">
@@ -317,6 +400,28 @@ const Profile = () => {
           )}
         </section>
       </div>
+
+      {!isTeacher && (
+        <FaceRegisterModal
+          isOpen={showFaceRegister}
+          onClose={() => setShowFaceRegister(false)}
+          student={{
+            id: storedUser?.student_id || "me",
+            name: profile.name || "Student",
+          }}
+          endpoint={`${process.env.REACT_APP_BACKEND_URL}api/students/me/register-face`}
+          title={studentFaceRegistered ? "Update Registered Face" : "Register Face"}
+          onSuccess={(payload) => {
+            setProfile((prev) => ({ ...prev, avatar: payload.avatar }));
+            setStudentFaceRegistered(true);
+            setUser({
+              ...(storedUser || {}),
+              avatar: payload.avatar,
+            });
+            showAlert("Updated", "Face registered and profile photo updated", "success");
+          }}
+        />
+      )}
     </div>
   );
 };

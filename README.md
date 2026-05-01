@@ -124,6 +124,8 @@ SUPABASE_URL=your_supabase_project_url
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 SUPABASE_DB_URL=your_supabase_postgres_connection_string
 JWT_SECRET=replace_this_with_a_strong_secret
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_PLAN_MODEL=gemini-2.5-flash-lite
 ```
 
 Notes:
@@ -131,6 +133,8 @@ Notes:
 - `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are used by `config/supabaseClient.js`.
 - `SUPABASE_DB_URL` is used by `scripts/initDb.js` to create database tables and functions.
 - `JWT_SECRET` signs login tokens. The backend has a fallback value, but you should set a real secret locally and in production.
+- `GEMINI_API_KEY` enables AI teaching-plan generation from saved syllabus topics.
+- `GEMINI_PLAN_MODEL` optionally overrides the default Gemini model used for teaching-plan generation.
 - `.env.production` currently points to `https://api.production.com/`; replace it before deploying.
 
 ## Installation
@@ -289,6 +293,7 @@ Lectures:
 - `GET /api/lectures/curriculum/:batchId`
 - `POST /api/lectures/curriculum/:batchId`
 - `GET /api/lectures/plan/:batchId`
+- `POST /api/lectures/plan/generate/:batchId`
 - `POST /api/lectures/plan/:batchId`
 
 ## Typical Teacher Flow

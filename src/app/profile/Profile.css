@@ -83,6 +83,12 @@
   text-decoration: underline;
 }
 
+.avatar-upload-btn-disabled {
+  color: #6c757d;
+  cursor: wait;
+  pointer-events: none;
+}
+
 /* ===== FORM ===== */
 
 .form-group {

@@ -264,7 +264,11 @@ const AutoAttendancePanel = ({ batchId, students = [], onSaved, showAlert }) => 
                   onClick={() => toggleStudent(student.id)}
                 >
                   <div className="override-avatar">
-                    {student.name?.[0]?.toUpperCase() || '?'}
+                    {student.avatar ? (
+                      <img src={student.avatar} alt={student.name} />
+                    ) : (
+                      student.name?.[0]?.toUpperCase() || '?'
+                    )}
                   </div>
                   <div className="override-info">
                     <div className="override-name">{student.name}</div>

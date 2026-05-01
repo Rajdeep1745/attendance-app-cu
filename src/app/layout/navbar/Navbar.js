@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import { NavLink, useParams } from "react-router-dom";
+import AuthContext from "../../../context/auth/AuthContext";
 
 import AppLogo from "./assets/Logo.png";
 
@@ -10,9 +11,9 @@ const Navbar = (props) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const { userId, batchId } = useParams();
+  const { user: storedUser, setUser } = useContext(AuthContext);
 
   const homePath = userId ? `/${userId}` : "/";
-  const storedUser = JSON.parse(localStorage.getItem("user") || "null");
 
   let basePath = "";
 
@@ -22,7 +23,6 @@ const Navbar = (props) => {
     basePath = `/${userId}`;
   }
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -36,14 +36,12 @@ const Navbar = (props) => {
 
   return (
     <nav className="navbar custom-navbar">
-      {/* LEFT */}
       <div className="navbar-left">
         <NavLink to={homePath} className="brand">
           <img src={AppLogo} alt="logo" className="brand-logo" />
           <span className="brand-text">Smart Attendance</span>
         </NavLink>
 
-        {/* Compact toggle button */}
         <button
           className="sidebar-toggle"
           onClick={toggleSidebar}
@@ -58,7 +56,6 @@ const Navbar = (props) => {
         </button>
       </div>
 
-      {/* CENTER */}
       <ul className="navbar-menu">
         <li>
           <NavLink
@@ -131,14 +128,13 @@ const Navbar = (props) => {
         </li>
       </ul>
 
-      {/* RIGHT */}
       <div className="navbar-right" ref={dropdownRef}>
         <div
           className="profile"
           onClick={() => setDropdownOpen((prev) => !prev)}
         >
           <img
-            src="https://i.pravatar.cc/40"
+            src={storedUser?.avatar || "https://i.pravatar.cc/40"}
             alt="profile"
             className="avatar"
           />
@@ -156,7 +152,7 @@ const Navbar = (props) => {
                 className="logout"
                 onClick={() => {
                   localStorage.removeItem("token");
-                  localStorage.removeItem("user");
+                  setUser(null);
                   window.location.href = "/login";
                 }}
               >

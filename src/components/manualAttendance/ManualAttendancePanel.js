@@ -205,7 +205,11 @@ const ManualAttendancePanel = ({
                     onClick={() => toggleStudent(student.id)}
                   >
                     <div className="manual-attendance-avatar">
-                      {student.name?.[0]?.toUpperCase() || "?"}
+                      {student.avatar ? (
+                        <img src={student.avatar} alt={student.name} />
+                      ) : (
+                        student.name?.[0]?.toUpperCase() || "?"
+                      )}
                     </div>
 
                     <div className="manual-attendance-info">

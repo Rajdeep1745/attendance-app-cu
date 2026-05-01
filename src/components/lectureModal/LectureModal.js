@@ -14,8 +14,8 @@ const LectureTopicsModal = ({ data, setData, onCancel, onSave }) => {
       ...localData,
       {
         id: Date.now(),
-        name: "New Unit",
-        topics: [{ id: Date.now(), name: "New Topic" }],
+        name: "New Main Topic",
+        topics: [{ id: Date.now(), name: "New Subtopic" }],
       },
     ]);
   };
@@ -36,7 +36,7 @@ const LectureTopicsModal = ({ data, setData, onCancel, onSave }) => {
     const updated = [...localData];
     updated[unitIndex].topics.push({
       id: Date.now(),
-      name: "New Topic",
+      name: "New Subtopic",
     });
     setLocalData(updated);
   };
@@ -61,11 +61,11 @@ const LectureTopicsModal = ({ data, setData, onCancel, onSave }) => {
   return (
     <div className="ltm-backdrop" onClick={onCancel}>
       <div className="ltm-modal" onClick={(e) => e.stopPropagation()}>
-        <h3>Edit Lecture Topics & Units</h3>
+        <h3>Edit Main Topics and Subtopics</h3>
 
         {localData.length === 0 && (
           <div className="text-muted mb-3">
-            No units yet. Click <b>Add Unit</b> to create curriculum structure.
+            No syllabus topics yet. Click <b>Add Main Topic</b> to start building the semester syllabus.
           </div>
         )}
 
@@ -97,14 +97,14 @@ const LectureTopicsModal = ({ data, setData, onCancel, onSave }) => {
             ))}
 
             <button className="secondary" onClick={() => addTopic(uIndex)}>
-              + Add Topic
+              + Add Subtopic
             </button>
           </div>
         ))}
 
         <div className="ltm-footer">
           <button className="secondary" onClick={addUnit}>
-            + Add Unit
+            + Add Main Topic
           </button>
 
           <div className="ltm-actions">
