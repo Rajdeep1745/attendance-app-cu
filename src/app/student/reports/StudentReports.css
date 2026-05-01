@@ -94,6 +94,27 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 460px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.student-records-card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.student-record-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.student-record-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.student-record-list::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .student-record-row {

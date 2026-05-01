@@ -374,6 +374,7 @@ exports.addStudent = async (req, res) => {
       id: studentId,
       name: userData?.name || name,
       roll,
+      avatar: userData?.avatar,
       attendance: 0,
       faceRegistered: false,
       isNew: isNewEnrollment,
@@ -696,30 +697,51 @@ exports.getMyBatchReports = async (req, res) => {
 
     if (batchError) throw batchError;
 
+    const { data: batchAttendanceRows, error: batchAttendanceError } = await supabase
+      .from("batch_attendances")
+      .select("date")
+      .eq("batch_id", batchId)
+      .order("date", { ascending: false });
+
+    if (batchAttendanceError) throw batchAttendanceError;
+
     const { data: classRows, error: classError } = await supabase
       .from("student_attendances")
       .select("date, present")
       .eq("batch_id", batchId)
-      .eq("student_id", student.student_id)
-      .order("date", { ascending: false });
+      .eq("student_id", student.student_id);
 
     if (classError) throw classError;
 
+    const attendanceByDate = new Map(
+      (classRows || []).map((row) => [row.date, row.present]),
+    );
+    const recentAttendance = (batchAttendanceRows || []).map((row) => {
+      const present = attendanceByDate.get(row.date);
+
+      return {
+        date: row.date,
+        status:
+          present === true
+            ? "Present"
+            : present === false
+              ? "Absent"
+              : "No Class",
+      };
+    });
+
     const avgAttendance = await getBatchAverageAttendance(batchId);
-    const attendedClasses = (classRows || []).filter((row) => row.present).length;
+    const attendedClasses = (classRows || []).filter((row) => row.present === true).length;
 
     res.json({
       batchId,
       batchName: batch.name,
       myAttendance: Number(student.attendance_percentage || 0),
       batchAverage: avgAttendance,
-      totalClasses: classRows?.length || 0,
+      totalClasses: batchAttendanceRows?.length || 0,
       attendedClasses,
       threshold: Number(batch.threshold || 0),
-      recentAttendance: (classRows || []).slice(0, 5).map((row) => ({
-        date: row.date,
-        status: row.present ? "Present" : "Absent",
-      })),
+      recentAttendance,
     });
   } catch (err) {
     console.error(err);

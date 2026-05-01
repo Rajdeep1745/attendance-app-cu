@@ -54,13 +54,14 @@ const StudentReports = () => {
     );
   }
 
-  const presentCount = details.recentAttendance.filter(
+  const attendanceHistory = details.recentAttendance || [];
+  const presentCount = attendanceHistory.filter(
     (item) => item.status === "Present",
   ).length;
-  const absentCount = details.recentAttendance.filter(
+  const absentCount = attendanceHistory.filter(
     (item) => item.status === "Absent",
   ).length;
-  const noClassCount = details.recentAttendance.filter(
+  const noClassCount = attendanceHistory.filter(
     (item) => item.status === "No Class",
   ).length;
   const thresholdGap = details.myAttendance - details.threshold;
@@ -107,12 +108,13 @@ const StudentReports = () => {
       </div>
 
       <div className="row g-4">
-        <div className="col-lg-5">
+        <div className="col-12">
           <div className="card student-reports-card h-100">
             <div className="card-body">
-              <h5 className="card-title mb-1">Recent Attendance Breakdown</h5>
+              <h5 className="card-title mb-1">Complete Attendance Breakdown</h5>
               <p className="student-reports-subtitle small mb-4">
-                Quick view based on the most recent recorded class dates.
+                Full attendance summary across all recorded class dates since
+                the beginning.
               </p>
 
               <div className="student-breakdown-grid">
@@ -133,16 +135,17 @@ const StudentReports = () => {
           </div>
         </div>
 
-        <div className="col-lg-7">
+        <div className="col-12">
           <div className="card student-reports-card h-100">
-            <div className="card-body">
-              <h5 className="card-title mb-1">Recent Attendance Records</h5>
+            <div className="card-body student-records-card-body">
+              <h5 className="card-title mb-1">All Attendance Records</h5>
               <p className="student-reports-subtitle small mb-4">
-                Date-wise status from recent entries in student attendance.
+                Date-wise attendance history for every recorded class since the
+                beginning.
               </p>
 
               <div className="student-record-list">
-                {details.recentAttendance.map((item) => (
+                {attendanceHistory.map((item) => (
                   <div
                     key={`${item.date}-${item.status}`}
                     className="student-record-row"
