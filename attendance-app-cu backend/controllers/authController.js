@@ -12,6 +12,8 @@ exports.signup = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const userRole = role || "student";
+
     const { data, error } = await supabase
       .from("users")
       .insert([
@@ -20,7 +22,7 @@ exports.signup = async (req, res) => {
           email,
           password: hashedPassword,
           department,
-          role: role || "student",
+          role: userRole,
           avatar: "https://i.pravatar.cc/150",
         },
       ])
@@ -28,6 +30,18 @@ exports.signup = async (req, res) => {
       .single();
 
     if (error) throw error;
+
+    if (userRole === "teacher") {
+      const { error: teacherError } = await supabase.from("teachers").insert([
+        {
+          teacher_id: data.id,
+          default_mode: "manual",
+          default_threshold: 75,
+        },
+      ]);
+
+      if (teacherError) throw teacherError;
+    }
 
     res.json({ message: "User created" });
   } catch (err) {

@@ -1,4 +1,7 @@
 const supabase = require("../config/supabaseClient");
+const bcrypt = require("bcryptjs");
+
+const TEACHER_CREATED_STUDENT_PASSWORD = "12345678";
 
 const ensureTeacherBatchAccess = async (batchId, teacherId) => {
   const { data, error } = await supabase
@@ -304,6 +307,11 @@ exports.addStudent = async (req, res) => {
       }
     } else {
       // User doesn't exist - create new user and student
+      const hashedPassword = await bcrypt.hash(
+        TEACHER_CREATED_STUDENT_PASSWORD,
+        10,
+      );
+
       const { data: user, error: userError } = await supabase
         .from("users")
         .insert([
@@ -314,6 +322,7 @@ exports.addStudent = async (req, res) => {
             institution,
             role: "student",
             avatar: "https://i.pravatar.cc/150",
+            password: hashedPassword,
           },
         ])
         .select()
