@@ -22,7 +22,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "face-service": "bash face_service/start.sh",
+    "face-service": "powershell -ExecutionPolicy Bypass -File face_service/start.ps1",
     "both": "concurrently \"npm start\" \"npm run backend\" \"npm run face-service\""
   },
   "eslintConfig": {

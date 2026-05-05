@@ -114,6 +114,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .icon-btn {
@@ -189,4 +190,69 @@
   font-size: 14px;
   color: #dc2626;
   font-weight: 500;
+}
+
+@media (max-width: 767px) {
+  .reports-title {
+    font-size: 25px;
+  }
+
+  .reports-subtitle {
+    font-size: 14px;
+  }
+
+  .reports-card {
+    border-radius: 12px;
+  }
+
+  .reports-card .card-body {
+    padding: 16px;
+  }
+
+  .report-kpi-value {
+    font-size: 30px;
+  }
+
+  .bar-chart.improved {
+    min-width: 560px;
+    gap: 18px;
+    padding: 0 12px;
+  }
+
+  .reports-card .card-body {
+    overflow-x: auto;
+  }
+
+  .reports-graph-header {
+    align-items: flex-start;
+  }
+
+  .graph-controls {
+    width: 100%;
+  }
+
+  .week-label {
+    min-width: 0;
+    flex: 1 1 150px;
+  }
+
+  .absence-row {
+    grid-template-columns: 32px 1fr;
+    gap: 8px 12px;
+  }
+
+  .count {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 480px) {
+  .bar-chart.improved {
+    min-width: 500px;
+    height: 230px;
+  }
+
+  .bar-wrapper {
+    height: 170px;
+  }
 }

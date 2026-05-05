@@ -169,3 +169,25 @@
     margin-left: auto;
   }
 }
+
+@media (max-width: 420px) {
+  .manual-attendance-section {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .manual-attendance-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .manual-attendance-toggle {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .manual-attendance-toggle .btn,
+  .manual-attendance-toggle button {
+    width: 100%;
+  }
+}

@@ -191,6 +191,8 @@
 @media (max-width: 991px) {
   .student-date-card {
     grid-template-columns: 1fr;
+    gap: 24px;
+    min-height: 0;
   }
 
   .student-calendar-shell {
@@ -239,5 +241,40 @@
   .student-time-cell,
   .student-status-cell {
     justify-content: flex-start;
+  }
+}
+
+@media (max-width: 767px) {
+  .student-date-copy h3,
+  .student-attendance-header h3 {
+    font-size: 24px;
+  }
+
+  .student-date-stats {
+    width: 100%;
+  }
+
+  .date-stat-card {
+    flex: 1 1 120px;
+    min-width: 0;
+  }
+
+  .student-attendance-page .rdp {
+    padding: 12px;
+  }
+
+  .student-status-row {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .student-section-pill,
+  .student-date-note {
+    width: 100%;
+  }
+
+  .date-stat-card strong {
+    font-size: 24px;
   }
 }

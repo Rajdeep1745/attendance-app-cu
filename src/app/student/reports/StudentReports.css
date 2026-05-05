@@ -133,6 +133,26 @@
 }
 
 @media (max-width: 767px) {
+  .student-reports-title {
+    font-size: 25px;
+  }
+
+  .student-reports-subtitle {
+    font-size: 14px;
+  }
+
+  .student-reports-card {
+    border-radius: 12px;
+  }
+
+  .student-reports-card .card-body {
+    padding: 16px;
+  }
+
+  .student-reports-value {
+    font-size: 30px;
+  }
+
   .student-breakdown-grid {
     grid-template-columns: 1fr;
   }
@@ -140,5 +160,9 @@
   .student-record-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .student-record-pill {
+    width: 100%;
   }
 }

@@ -98,3 +98,24 @@
   color: #777;
   margin-bottom: 10px;
 }
+
+@media (max-width: 480px) {
+  .auth-page {
+    min-height: 100svh;
+    height: auto;
+    padding: 24px 14px;
+    align-items: flex-start;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 380px;
+    padding: 28px 20px;
+    gap: 14px;
+  }
+
+  .auth-card h2,
+  .brand-title {
+    font-size: 21px;
+  }
+}

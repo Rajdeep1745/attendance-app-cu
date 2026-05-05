@@ -161,3 +161,46 @@
     padding: 16px 0;
   }
 }
+
+@media (max-width: 767px) {
+  .student-roster-title {
+    font-size: 25px;
+  }
+
+  .student-roster-subtitle {
+    font-size: 14px;
+  }
+
+  .student-roster-card {
+    border-radius: 12px;
+  }
+
+  .student-roster-card .card-body {
+    padding: 16px;
+  }
+
+  .student-summary-metrics {
+    width: 100%;
+  }
+
+  .student-summary-chip {
+    flex: 1 1 130px;
+    min-width: 0;
+  }
+
+  .student-roster-info {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .student-roster-info img {
+    width: 42px;
+    height: 42px;
+  }
+
+  .student-face-pill,
+  .student-attendance-pill {
+    width: 100%;
+  }
+}

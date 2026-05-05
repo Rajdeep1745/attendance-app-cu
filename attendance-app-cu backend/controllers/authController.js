@@ -4,9 +4,16 @@ const jwt = require("jsonwebtoken");
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
 
+const normalizeEmail = (email) => email?.trim().toLowerCase();
+
 // SIGNUP
 exports.signup = async (req, res) => {
   const { name, email, password, department, role } = req.body;
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!name?.trim() || !normalizedEmail || !password) {
+    return res.status(400).json({ error: "Name, email, and password are required" });
+  }
 
   try {
     // Hash password
@@ -18,8 +25,8 @@ exports.signup = async (req, res) => {
       .from("users")
       .insert([
         {
-          name,
-          email,
+          name: name.trim(),
+          email: normalizedEmail,
           password: hashedPassword,
           department,
           role: userRole,
@@ -45,6 +52,10 @@ exports.signup = async (req, res) => {
 
     res.json({ message: "User created" });
   } catch (err) {
+    if (err.code === "23505") {
+      return res.status(409).json({ error: "An account with this email already exists" });
+    }
+
     res.status(500).json({ error: err.message });
   }
 };
@@ -52,22 +63,27 @@ exports.signup = async (req, res) => {
 // LOGIN
 exports.login = async (req, res) => {
   const { email, password } = req.body;
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!normalizedEmail || !password) {
+    return res.status(400).json({ error: "Email and password are required" });
+  }
 
   try {
     const { data: user, error } = await supabase
       .from("users")
       .select("*")
-      .eq("email", email)
+      .eq("email", normalizedEmail)
       .single();
 
     if (error || !user) {
-      return res.status(400).json({ error: "User not found" });
+      return res.status(401).json({ error: "Invalid email or password" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({ error: "Invalid password" });
+      return res.status(401).json({ error: "Invalid email or password" });
     }
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {

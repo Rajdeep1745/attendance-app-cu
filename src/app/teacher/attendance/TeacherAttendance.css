@@ -101,9 +101,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   padding: 14px 16px;
   border-radius: 12px;
   background: #f9fafb;
+}
+
+.attendance-row > div:first-child {
+  min-width: 0;
 }
 
 .student-name {
@@ -116,6 +121,8 @@
   display: flex;
   align-items: center;
   gap: 14px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .student-percent {
@@ -207,4 +214,89 @@
 .no-class {
   background-color: #6c757d;
   color: white;
+}
+
+@media (max-width: 991px) {
+  .batch-summary-body {
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .summary-right,
+  .summary-right-details {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 767px) {
+  .attendance-title {
+    font-size: 25px;
+  }
+
+  .attendance-subtitle {
+    font-size: 14px;
+  }
+
+  .attendance-card {
+    border-radius: 12px;
+  }
+
+  .attendance-card .card-body {
+    padding: 16px;
+  }
+
+  .batch-summary-body {
+    flex-direction: column;
+  }
+
+  .summary-right {
+    width: 100%;
+  }
+
+  .summary-right-details {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .stat-box {
+    flex: 1 1 130px;
+  }
+
+  .attendance-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .student-metrics {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .status-pill {
+    min-width: 0;
+  }
+
+  .attendance-calendar-card-body {
+    padding: 16px;
+  }
+
+  .attendance-page-calendar-shell {
+    padding: 12px;
+    border-radius: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-value-main,
+  .batch-summary .stats-value {
+    font-size: 34px;
+  }
+
+  .attendance-row {
+    padding: 12px;
+  }
+
+  .student-metrics {
+    gap: 10px;
+  }
 }

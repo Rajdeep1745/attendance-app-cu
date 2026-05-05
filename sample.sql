@@ -2,7 +2,7 @@
 -- Run attendance-app-cu backend/db/schema.sql before running this file.
 --
 -- Demo login credentials for every seeded user:
--- password: password
+-- password: 12345678
 
 begin;
 

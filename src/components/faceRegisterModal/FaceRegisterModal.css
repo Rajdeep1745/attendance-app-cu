@@ -224,4 +224,39 @@
   .frm-modal {
     max-width: calc(100vw - 32px);
   }
+
+  .frm-header,
+  .frm-footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .frm-body {
+    padding: 18px 16px;
+  }
+
+  .frm-header-left {
+    flex-wrap: wrap;
+  }
+
+  .frm-title,
+  .frm-student-name {
+    white-space: normal;
+  }
+
+  .frm-preview-img {
+    width: 132px;
+    height: 132px;
+  }
+
+  .frm-footer {
+    flex-direction: column-reverse;
+  }
+
+  .frm-btn-cancel,
+  .frm-btn-submit {
+    width: 100%;
+    justify-content: center;
+    min-height: 42px;
+  }
 }

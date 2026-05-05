@@ -1,8 +1,9 @@
 /* ===== Sidebar container ===== */
 .sidebar {
-  height: calc(100vh - 64px);
+  height: calc(100vh - 72px);
+  height: calc(100svh - 72px);
   position: fixed;
-  top: 64px;
+  top: 72px;
   left: 0;
   display: flex;
   flex-direction: column;
@@ -13,7 +14,8 @@
     linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
   border-right: 1px solid rgba(148, 163, 184, 0.18);
   box-shadow: 18px 0 40px rgba(15, 23, 42, 0.06);
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, transform 0.3s ease;
+  z-index: 1050;
 }
 
 .sidebar.open {
@@ -273,7 +275,44 @@
 
 /* ===== Responsive ===== */
 @media (max-width: 991px) {
+  .sidebar {
+    box-shadow: 20px 0 44px rgba(15, 23, 42, 0.18);
+  }
+
   .sidebar.open {
-    width: 280px;
+    width: min(320px, 86vw);
+    transform: translateX(0);
+  }
+
+  .sidebar.closed {
+    width: min(320px, 86vw);
+    transform: translateX(-100%);
+  }
+}
+
+@media (max-width: 575px) {
+  .sidebar {
+    top: 64px;
+    height: calc(100vh - 64px);
+    height: calc(100svh - 64px);
+    padding: 10px;
+  }
+
+  .sidebar.open,
+  .sidebar.closed {
+    width: min(300px, 88vw);
+  }
+
+  .sidebar-content {
+    padding: 14px 10px 8px;
+  }
+
+  .sidebar-footer {
+    padding: 12px 10px 14px;
+  }
+
+  .list-group-item {
+    padding: 12px;
+    border-radius: 12px;
   }
 }

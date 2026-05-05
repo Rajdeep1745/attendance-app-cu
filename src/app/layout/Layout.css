@@ -1,6 +1,8 @@
 .app-main {
   margin-left: 0;
   transition: margin 0.3s ease;
+  min-width: 0;
+  width: 100%;
 }
 
 .app-main.sidebar-visible {
@@ -29,6 +31,36 @@
 
 @media (max-width: 768px) {
   .app-main.sidebar-visible {
-    margin-left: 280px;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 991px) {
+  .app-main.sidebar-visible {
+    margin-left: 0;
+  }
+
+  .app-main {
+    padding: 1rem !important;
+  }
+
+  .empty-state {
+    min-height: calc(100svh - 72px);
+    height: auto;
+    padding: 48px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-main {
+    padding: 0.75rem !important;
+  }
+
+  .empty-state h2 {
+    font-size: 21px;
+  }
+
+  .empty-state p {
+    max-width: 280px;
   }
 }

@@ -53,3 +53,12 @@
     opacity: 1;
   }
 }
+
+@media (max-width: 480px) {
+  .toast-alert {
+    left: 12px;
+    right: 12px;
+    bottom: 14px;
+    width: auto;
+  }
+}

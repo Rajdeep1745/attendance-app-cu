@@ -318,6 +318,29 @@
 }
 
 @media (max-width: 767px) {
+  .dashboard-title {
+    font-size: 25px;
+  }
+
+  .dashboard-subtitle {
+    font-size: 14px;
+  }
+
+  .dashboard-card .card-body {
+    padding: 16px;
+  }
+
+  .stats-value {
+    font-size: 32px;
+  }
+
+  .stats-icon {
+    width: 44px;
+    height: 40px;
+    font-size: 19px;
+    padding-top: 8px;
+  }
+
   .attendance-mode-body {
     padding: 1.15rem;
   }
@@ -328,5 +351,28 @@
 
   .attendance-mode-label {
     min-height: 78px;
+  }
+}
+
+@media (max-width: 575px) {
+  .dashboard-card {
+    border-radius: 12px;
+  }
+
+  .dashboard-card input[readonly] {
+    font-size: 15px;
+    letter-spacing: 1px;
+  }
+
+  .threshold-input-wrapper {
+    width: 100%;
+  }
+
+  .attendance-mode-body {
+    padding: 1rem;
+  }
+
+  .attendance-mode-label {
+    padding: 14px;
   }
 }

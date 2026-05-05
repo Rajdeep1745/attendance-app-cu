@@ -26,6 +26,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .student-unit-grid {
@@ -126,8 +127,38 @@
 }
 
 @media (max-width: 767px) {
+  .student-lectures-title {
+    font-size: 25px;
+  }
+
+  .student-lectures-card {
+    border-radius: 12px;
+  }
+
+  .student-lectures-card .card-body {
+    padding: 16px;
+  }
+
+  .student-unit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .student-week-card,
+  .student-topic-card,
+  .student-unit-card {
+    padding: 16px;
+  }
+
   .student-topic-top {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 420px) {
+  .student-week-card,
+  .student-topic-card,
+  .student-unit-card {
+    padding: 14px;
   }
 }

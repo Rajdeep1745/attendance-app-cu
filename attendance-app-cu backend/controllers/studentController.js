@@ -154,6 +154,32 @@ const getBatchAverageAttendance = async (batchId) => {
   );
 };
 
+const getTeacherNameById = async (teacherId) => {
+  if (!teacherId) return "Teacher";
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("name")
+    .eq("id", teacherId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.name || "Teacher";
+};
+
+const getTeacherNamesByIds = async (teacherIds) => {
+  const uniqueIds = [...new Set((teacherIds || []).filter(Boolean))];
+  if (uniqueIds.length === 0) return new Map();
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, name")
+    .in("id", uniqueIds);
+
+  if (error) throw error;
+  return new Map((data || []).map((teacher) => [teacher.id, teacher.name]));
+};
+
 // Get student details
 exports.getStudentsByBatch = async (req, res) => {
   const { batchId } = req.params;
@@ -166,18 +192,12 @@ exports.getStudentsByBatch = async (req, res) => {
 
     const { data: batchInfo, error: batchError } = await supabase
       .from("batches")
-      .select(
-        `
-        name,
-        users!batches_teacher_id_fkey (
-          name
-        )
-      `,
-      )
+      .select("name, teacher_id")
       .eq("id", batchId)
       .single();
 
     if (batchError) throw batchError;
+    const teacherName = await getTeacherNameById(batchInfo.teacher_id);
 
     const { data, error } = await supabase
       .from("enrollments")
@@ -215,7 +235,7 @@ exports.getStudentsByBatch = async (req, res) => {
       institution: e.students.users?.institution,
       avatar: e.students.users?.avatar,
       batchName: batchInfo.name,
-      teacher: batchInfo.users?.name || "Teacher",
+      teacher: teacherName,
       faceRegistered: e.students.face_registered,
       attendance: e.students.attendance_percentage || 0,
     }));
@@ -470,11 +490,9 @@ exports.getMyBatches = async (req, res) => {
           id,
           name,
           batch_code,
+          teacher_id,
           threshold,
-          total_students,
-          users!batches_teacher_id_fkey (
-            name
-          )
+          total_students
         )
       `,
       )
@@ -482,6 +500,9 @@ exports.getMyBatches = async (req, res) => {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
+    const teacherNames = await getTeacherNamesByIds(
+      (data || []).map((row) => row.batches?.teacher_id),
+    );
 
     res.json(
       (data || []).map((row) => ({
@@ -490,7 +511,7 @@ exports.getMyBatches = async (req, res) => {
         code: row.batches.batch_code,
         threshold: row.batches.threshold,
         totalStudents: row.batches.total_students,
-        teacher: row.batches.users?.name || "Teacher",
+        teacher: teacherNames.get(row.batches.teacher_id) || "Teacher",
         joinedOn: formatJoinedOn(row.created_at),
         joinedAt: row.created_at,
       })),
@@ -518,10 +539,7 @@ exports.joinBatchByCode = async (req, res) => {
         batch_code,
         threshold,
         total_students,
-        teacher_id,
-        users!batches_teacher_id_fkey (
-          name
-        )
+        teacher_id
       `,
       )
       .eq("batch_code", batchCode)
@@ -531,6 +549,7 @@ exports.joinBatchByCode = async (req, res) => {
     if (!batch) {
       return res.status(404).json({ error: "Invalid batch code" });
     }
+    const teacherName = await getTeacherNameById(batch.teacher_id);
 
     const student = await getOrCreateStudentRecord(req.user.id);
 
@@ -552,7 +571,7 @@ exports.joinBatchByCode = async (req, res) => {
           code: batch.batch_code,
           threshold: batch.threshold,
           totalStudents: batch.total_students,
-          teacher: batch.users?.name || "Teacher",
+          teacher: teacherName,
           joinedOn: formatJoinedOn(existingEnrollment.created_at),
           joinedAt: existingEnrollment.created_at,
         },
@@ -582,7 +601,7 @@ exports.joinBatchByCode = async (req, res) => {
         code: batch.batch_code,
         threshold: batch.threshold,
         totalStudents: batch.total_students + 1,
-        teacher: batch.users?.name || "Teacher",
+        teacher: teacherName,
         joinedOn: formatJoinedOn(createdEnrollment.created_at),
         joinedAt: createdEnrollment.created_at,
       },
@@ -641,11 +660,9 @@ exports.getMyBatchOverview = async (req, res) => {
           id,
           name,
           batch_code,
+          teacher_id,
           threshold,
-          total_students,
-          users!batches_teacher_id_fkey (
-            name
-          )
+          total_students
         )
       `,
       )
@@ -657,6 +674,7 @@ exports.getMyBatchOverview = async (req, res) => {
     if (!enrollment) {
       return res.status(403).json({ error: "Access denied" });
     }
+    const teacherName = await getTeacherNameById(enrollment.batches.teacher_id);
 
     const avgAttendance = await getBatchAverageAttendance(batchId);
     const myAttendance = Number(student.attendance_percentage || 0);
@@ -666,7 +684,7 @@ exports.getMyBatchOverview = async (req, res) => {
     res.json({
       batchId: enrollment.batches.id,
       name: enrollment.batches.name,
-      teacher: enrollment.batches.users?.name || "Teacher",
+      teacher: teacherName,
       code: enrollment.batches.batch_code,
       totalStudents: enrollment.batches.total_students || 0,
       avgAttendance,

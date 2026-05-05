@@ -7,6 +7,7 @@
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  padding: 16px;
 }
 
 /* Modal box */
@@ -16,6 +17,8 @@
   padding: 20px;
   width: 400px;
   max-width: 90%;
+  max-height: calc(100svh - 32px);
+  overflow-y: auto;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
@@ -66,4 +69,22 @@
 .primary.danger {
   background: #dc2626;
   color: white;
+}
+
+@media (max-width: 480px) {
+  .modal-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 18px;
+    border-radius: 10px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions button {
+    width: 100%;
+    min-height: 42px;
+  }
 }

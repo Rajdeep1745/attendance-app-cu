@@ -210,3 +210,27 @@
     margin-left: auto;
   }
 }
+
+@media (max-width: 420px) {
+  .override-section {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .override-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .override-toggle {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .override-toggle .btn,
+  .override-toggle button,
+  .auto-attendance-panel .btn-primary,
+  .auto-attendance-panel .btn-success {
+    width: 100%;
+  }
+}

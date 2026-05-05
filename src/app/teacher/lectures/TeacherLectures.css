@@ -38,6 +38,7 @@
 .plan-mode-toggle {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .mode-btn {
@@ -225,6 +226,7 @@
   justify-content: space-between;
   align-items: center;
   margin-top: 30px;
+  gap: 14px;
 }
 
 /* ===============================
@@ -313,4 +315,63 @@
 .topic-container .input-group textarea {
   width: 100%;
   min-height: 160px;
+}
+
+@media (max-width: 767px) {
+  .lectures-title {
+    font-size: 25px;
+  }
+
+  .lectures-card {
+    border-radius: 12px;
+  }
+
+  .lectures-card .card-body {
+    padding: 16px;
+  }
+
+  .plan-mode-toggle,
+  .manual-footer,
+  .week-header,
+  .topic-read-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topic-top {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .week-container,
+  .topic-container,
+  .ai-plan-box {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .week-header {
+    gap: 10px;
+  }
+
+  .classes-input-wrapper {
+    justify-content: space-between;
+  }
+
+  .input-group.small input {
+    width: 88px;
+  }
+}
+
+@media (max-width: 480px) {
+  .week-container,
+  .topic-container,
+  .topic-readonly {
+    padding: 14px;
+  }
+
+  .input-group textarea,
+  .topic-container .input-group textarea {
+    min-height: 130px;
+  }
 }

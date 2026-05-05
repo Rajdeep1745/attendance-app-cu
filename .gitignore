@@ -5,6 +5,7 @@
 /.pnp
 .pnp.js
 /attendance-app-cu backend/node_modules
+/face_service/.venv
 
 # env files
 /attendance-app-cu backend/.env
@@ -27,6 +28,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+/face_service/*.log
 
 # guide file
 /ATTENDANCE_APP_GUIDE.md
