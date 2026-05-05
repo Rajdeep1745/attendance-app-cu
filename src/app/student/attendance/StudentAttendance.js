@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { getStudentAttendanceByDate } from "../studentApi";
+import useDelayedLoading from "../../../hooks/useDelayedLoading";
+import { StudentAttendanceSkeleton } from "../../../components/skeletons/Skeletons";
 
 import "./StudentAttendance.css";
 
@@ -16,6 +18,7 @@ const StudentAttendance = () => {
   const maxSelectableDate = new Date();
   const [selectedDate, setSelectedDate] = useState(maxSelectableDate);
   const [selectedRows, setSelectedRows] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const selectedKey = formatLocalDate(selectedDate);
@@ -24,6 +27,7 @@ const StudentAttendance = () => {
     let ignore = false;
 
     const loadAttendance = async () => {
+      setLoading(true);
       try {
         const data = await getStudentAttendanceByDate(selectedKey);
         if (!ignore) {
@@ -34,6 +38,10 @@ const StudentAttendance = () => {
         if (!ignore) {
           setError(err.message);
         }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     };
 
@@ -43,6 +51,8 @@ const StudentAttendance = () => {
       ignore = true;
     };
   }, [selectedKey]);
+
+  const showSkeleton = useDelayedLoading(loading);
 
   const formattedHeadingDate = selectedDate.toLocaleDateString("en-US", {
     month: "long",
@@ -59,6 +69,10 @@ const StudentAttendance = () => {
     absent: selectedRows.filter((item) => item.status === "Absent").length,
     noClass: selectedRows.filter((item) => item.status === "No Class").length,
   };
+
+  if (showSkeleton) {
+    return <StudentAttendanceSkeleton />;
+  }
 
   return (
     <div className="container-fluid attendance-page student-attendance-page">

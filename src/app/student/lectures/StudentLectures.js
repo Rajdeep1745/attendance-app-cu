@@ -4,12 +4,15 @@ import {
   getStudentCurriculum,
   getStudentPlan,
 } from "../studentApi";
+import useDelayedLoading from "../../../hooks/useDelayedLoading";
+import { StudentLecturesSkeleton } from "../../../components/skeletons/Skeletons";
 
 import "./StudentLectures.css";
 
 const StudentLectures = () => {
   const { batchId } = useParams();
   const [details, setDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -18,6 +21,7 @@ const StudentLectures = () => {
     let ignore = false;
 
     const loadLectures = async () => {
+      setLoading(true);
       try {
         const [curriculum, plan] = await Promise.all([
           getStudentCurriculum(batchId),
@@ -43,6 +47,10 @@ const StudentLectures = () => {
         if (!ignore) {
           setError(err.message);
         }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     };
 
@@ -53,6 +61,8 @@ const StudentLectures = () => {
     };
   }, [batchId]);
 
+  const showSkeleton = useDelayedLoading(loading || !details);
+
   if (error) {
     return (
       <div className="container-fluid student-lectures-page">
@@ -61,15 +71,8 @@ const StudentLectures = () => {
     );
   }
 
-  if (!details) {
-    return (
-      <div className="container-fluid student-lectures-page">
-        <div className="text-muted">
-          <span className="spinner-border spinner-border-sm me-2"></span>
-          Loading lecture plan...
-        </div>
-      </div>
-    );
+  if (showSkeleton || !details) {
+    return <StudentLecturesSkeleton />;
   }
 
   return (

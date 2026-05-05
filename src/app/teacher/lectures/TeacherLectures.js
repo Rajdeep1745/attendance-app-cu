@@ -2,6 +2,8 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import BatchContext from "../../../context/batch/BatchContext";
 import AlertContext from "../../../context/alert/AlertContext";
+import useDelayedLoading from "../../../hooks/useDelayedLoading";
+import { TeacherLecturesSkeleton } from "../../../components/skeletons/Skeletons";
 
 import "./TeacherLectures.css";
 import LectureTopicsModal from "../../../components/lectureModal/LectureModal";
@@ -72,12 +74,16 @@ const Lectures = () => {
   const [lectureTopics, setLectureTopics] = useState([]);
   const [showEditTopics, setShowEditTopics] = useState(false);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+  const [curriculumLoading, setCurriculumLoading] = useState(true);
+  const [planLoading, setPlanLoading] = useState(true);
   const [hasAiDraft, setHasAiDraft] = useState(false);
   const [generationSettings, setGenerationSettings] = useState(
     DEFAULT_GENERATION_SETTINGS,
   );
   const [planSummary, setPlanSummary] = useState(null);
   const [expandedCurriculumUnits, setExpandedCurriculumUnits] = useState({});
+
+  const batchMatchesRoute = String(activeBatch?.id || "") === String(batchId || "");
 
   const hasCurriculumTopics = useMemo(
     () => lectureTopics.some((unit) => unit.topics.length > 0),
@@ -100,6 +106,8 @@ const Lectures = () => {
 
   const fetchCurriculum = useCallback(
     async (targetBatchId = batchId) => {
+      if (!targetBatchId) return;
+      setCurriculumLoading(true);
       try {
         const token = localStorage.getItem("token");
         const res = await fetch(
@@ -119,6 +127,8 @@ const Lectures = () => {
         setLectureTopics(Array.isArray(data) ? formatCurriculumData(data) : []);
       } catch (err) {
         console.error(err);
+      } finally {
+        setCurriculumLoading(false);
       }
     },
     [batchId],
@@ -126,6 +136,8 @@ const Lectures = () => {
 
   const fetchPlan = useCallback(
     async (targetBatchId = batchId) => {
+      if (!targetBatchId) return;
+      setPlanLoading(true);
       try {
         const token = localStorage.getItem("token");
         const res = await fetch(
@@ -155,20 +167,22 @@ const Lectures = () => {
       } catch (err) {
         console.error(err);
         resetPlanState();
+      } finally {
+        setPlanLoading(false);
       }
     },
     [batchId, resetPlanState],
   );
 
   useEffect(() => {
-    if (!activeBatch) return;
+    if (!batchMatchesRoute) return;
     fetchCurriculum(batchId);
-  }, [activeBatch, batchId, fetchCurriculum]);
+  }, [batchMatchesRoute, batchId, fetchCurriculum]);
 
   useEffect(() => {
-    if (!activeBatch) return;
+    if (!batchMatchesRoute) return;
     fetchPlan(batchId);
-  }, [activeBatch, batchId, fetchPlan]);
+  }, [batchMatchesRoute, batchId, fetchPlan]);
 
   const addWeek = () => {
     setWeeks((prev) => [...prev, createEmptyWeek()]);
@@ -560,7 +574,11 @@ const Lectures = () => {
     </div>
   );
 
-  if (!activeBatch) return null;
+  const showPageSkeleton = useDelayedLoading(
+    !batchMatchesRoute || curriculumLoading || planLoading,
+  );
+
+  if (showPageSkeleton || !batchMatchesRoute) return <TeacherLecturesSkeleton />;
 
   return (
     <div className="container-fluid lectures-page">
