@@ -104,7 +104,7 @@ const StudentStudents = () => {
               <div key={student.id} className="student-roster-row">
                 <div className="student-roster-info">
                   <img
-                    src={`https://i.pravatar.cc/48?u=${student.id}`}
+                    src={student.avatar || `https://i.pravatar.cc/48?u=${student.id}`}
                     alt={student.name}
                   />
                   <div>

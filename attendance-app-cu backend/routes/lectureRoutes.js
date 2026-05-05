@@ -8,6 +8,7 @@ const {
   saveCurriculum,
   getPlan,
   savePlan,
+  generatePlan,
 } = require("../controllers/lectureController");
 
 // Curriculum
@@ -30,6 +31,12 @@ router.get(
   authMiddleware,
   roleMiddleware("teacher", "student"),
   getPlan,
+);
+router.post(
+  "/plan/generate/:batchId",
+  authMiddleware,
+  roleMiddleware("teacher"),
+  generatePlan,
 );
 router.post(
   "/plan/:batchId",

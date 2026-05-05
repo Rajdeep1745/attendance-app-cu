@@ -1,5 +1,8 @@
 const supabase = require("../config/supabaseClient");
 
+const buildInlineImageUrl = (file) =>
+  `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+
 // GET current logged in user
 exports.getCurrentUser = async (req, res) => {
   try {
@@ -33,14 +36,16 @@ exports.getCurrentUser = async (req, res) => {
     if (role === "student") {
       const { data: student } = await supabase
         .from("students")
-        .select("alert_threshold, preferred_view")
+        .select("student_id, alert_threshold, preferred_view, face_registered")
         .eq("user_id", userId)
         .single();
 
       return res.json({
         ...user,
+        student_id: student?.student_id,
         alert_threshold: student?.alert_threshold,
         preferred_view: student?.preferred_view,
+        face_registered: student?.face_registered,
       });
     }
 
@@ -66,15 +71,20 @@ exports.updateProfile = async (req, res) => {
       defaultThreshold,
     } = req.body;
 
+    const userUpdates = {
+      name,
+      department,
+      institution,
+    };
+
+    if (avatar !== undefined) {
+      userUpdates.avatar = avatar;
+    }
+
     // 1. Update users table
     const { data: userData, error: userError } = await supabase
       .from("users")
-      .update({
-        name,
-        department,
-        institution,
-        avatar,
-      })
+      .update(userUpdates)
       .eq("id", userId)
       .select()
       .single();
@@ -107,5 +117,33 @@ exports.updateProfile = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Failed to update profile" });
+  }
+};
+
+exports.updateTeacherAvatar = async (req, res) => {
+  try {
+    if (req.user.role !== "teacher") {
+      return res.status(403).json({ error: "Only teachers can update teacher profile photos" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No profile photo provided" });
+    }
+
+    const avatar = buildInlineImageUrl(req.file);
+
+    const { data: userData, error } = await supabase
+      .from("users")
+      .update({ avatar })
+      .eq("id", req.user.id)
+      .select("id, name, email, role, department, institution, avatar")
+      .single();
+
+    if (error) throw error;
+
+    res.json(userData);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Failed to update teacher profile photo" });
   }
 };
