@@ -4,6 +4,8 @@ import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 
 import BatchContext from "../../../context/batch/BatchContext";
+import useDelayedLoading from "../../../hooks/useDelayedLoading";
+import { TeacherAttendanceSkeleton } from "../../../components/skeletons/Skeletons";
 import "./TeacherAttendance.css";
 
 const formatLocalDate = (date) => {
@@ -26,6 +28,7 @@ const Attendance = () => {
 
   // Record of students
   const [records, setRecords] = useState([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(true);
 
   // Attendance stats
   const [attendanceStats, setAttendanceStats] = useState({
@@ -63,6 +66,7 @@ const Attendance = () => {
     if (!batchId || !selectedDate) return;
 
     const fetchDailyAttendance = async () => {
+      setAttendanceLoading(true);
       try {
         const token = localStorage.getItem("token");
         const formattedDate = formatLocalDate(selectedDate);
@@ -94,16 +98,23 @@ const Attendance = () => {
         setRecords(formatted);
         setThreshold(activeBatch?.threshold || 0);
 
-        fetchAttendanceDetails(batchId);
+        await fetchAttendanceDetails(batchId);
       } catch (err) {
         console.error(err);
+      } finally {
+        setAttendanceLoading(false);
       }
     };
 
     fetchDailyAttendance();
   }, [activeBatch, batchId, selectedDate]);
 
-  if (!activeBatch) return null;
+  const batchMatchesRoute = String(activeBatch?.id || "") === String(batchId || "");
+  const showPageSkeleton = useDelayedLoading(
+    !batchMatchesRoute || attendanceLoading,
+  );
+
+  if (showPageSkeleton || !batchMatchesRoute) return <TeacherAttendanceSkeleton />;
 
   return (
     <div className="container-fluid attendance-page">

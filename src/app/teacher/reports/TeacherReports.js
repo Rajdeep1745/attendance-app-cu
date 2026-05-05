@@ -1,6 +1,8 @@
 import { useContext, useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import BatchContext from "../../../context/batch/BatchContext";
+import useDelayedLoading from "../../../hooks/useDelayedLoading";
+import { TeacherReportsSkeleton } from "../../../components/skeletons/Skeletons";
 import "./TeacherReports.css";
 
 const Reports = () => {
@@ -15,6 +17,10 @@ const Reports = () => {
     worstAttendance: { percentage: 0, date: null },
   });
   const [students, setStudents] = useState([]);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [studentsLoading, setStudentsLoading] = useState(true);
+  const [absenteesLoading, setAbsenteesLoading] = useState(true);
+  const [graphLoading, setGraphLoading] = useState(true);
 
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current week
   const [weekMode, setWeekMode] = useState("6"); // "5" or "6"
@@ -25,7 +31,11 @@ const Reports = () => {
   // Frequent absentees
   const [frequentAbsentees, setFrequentAbsentees] = useState([]);
 
+  const batchMatchesRoute = String(activeBatch?.id || "") === String(batchId || "");
+
   const fetchFrequentAbsentees = async () => {
+    if (!batchId) return;
+    setAbsenteesLoading(true);
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
@@ -52,10 +62,14 @@ const Reports = () => {
     } catch (err) {
       console.error(err);
       setFrequentAbsentees([]);
+    } finally {
+      setAbsenteesLoading(false);
     }
   };
 
   const fetchStats = async () => {
+    if (!batchId) return;
+    setStatsLoading(true);
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
@@ -75,10 +89,14 @@ const Reports = () => {
       setStats(data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
   const fetchStudents = async () => {
+    if (!batchId) return;
+    setStudentsLoading(true);
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
@@ -99,17 +117,19 @@ const Reports = () => {
     } catch (err) {
       console.error(err);
       setStudents([]);
+    } finally {
+      setStudentsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!activeBatch) return;
+    if (!batchMatchesRoute) return;
 
     fetchFrequentAbsentees();
     fetchStats();
     fetchStudents();
     //eslint-disable-next-line
-  }, [activeBatch]);
+  }, [batchMatchesRoute, batchId]);
 
   // Get week range
   const getWeekRange = () => {
@@ -140,6 +160,8 @@ const Reports = () => {
 
   // Fetch graph data
   const fetchGraph = async () => {
+    if (!batchId) return;
+    setGraphLoading(true);
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
@@ -151,6 +173,9 @@ const Reports = () => {
         },
       );
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to fetch graph data");
+      }
 
       const { start, end } = getWeekRange();
 
@@ -193,20 +218,29 @@ const Reports = () => {
       setWeeklyAttendance(formatted);
     } catch (err) {
       console.error("Failed to fetch graph data", err);
+      setWeeklyAttendance([]);
+    } finally {
+      setGraphLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!activeBatch) return;
+    if (!batchMatchesRoute) return;
 
     fetchGraph();
     setThreshold(activeBatch.threshold);
     //eslint-disable-next-line
-  }, [activeBatch, weekOffset, weekMode]);
+  }, [batchMatchesRoute, batchId, weekOffset, weekMode]);
 
-  if (!activeBatch) {
-    return <div className="p-4">Loading batch...</div>; // MAKE THIS GLOBAL AND BETTER LOOKING
-  }
+  const showPageSkeleton = useDelayedLoading(
+    !batchMatchesRoute ||
+      statsLoading ||
+      studentsLoading ||
+      absenteesLoading ||
+      graphLoading,
+  );
+
+  if (showPageSkeleton || !batchMatchesRoute) return <TeacherReportsSkeleton />;
 
   const lowAttendanceStudents = students.filter(
     (student) => student.attendance < threshold,

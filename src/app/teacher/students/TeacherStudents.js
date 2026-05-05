@@ -6,6 +6,8 @@ import AlertContext from "../../../context/alert/AlertContext";
 import StudentModal from "../../../components/studentModal/StudentModal";
 import StudentDetailsModal from "../../../components/studentDetailsModal/StudentDetailsModal";
 import FaceRegisterModal from "../../../components/faceRegisterModal/FaceRegisterModal";
+import useDelayedLoading from "../../../hooks/useDelayedLoading";
+import { TeacherStudentsSkeleton } from "../../../components/skeletons/Skeletons";
 import "./TeacherStudents.css";
 
 const Students = () => {
@@ -14,6 +16,7 @@ const Students = () => {
   const { batchId } = useParams();
 
   const [students, setStudents] = useState([]);
+  const [studentsLoading, setStudentsLoading] = useState(true);
 
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -85,6 +88,8 @@ const Students = () => {
   };
 
   const fetchStudents = async () => {
+    if (!batchId) return;
+    setStudentsLoading(true);
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
@@ -103,15 +108,19 @@ const Students = () => {
     } catch (err) {
       console.error(err);
       showAlert("Error", "Failed to load students", "danger");
+    } finally {
+      setStudentsLoading(false);
     }
   };
 
+  const batchMatchesRoute = String(activeBatch?.id || "") === String(batchId || "");
+
   useEffect(() => {
-    if (!activeBatch) return;
+    if (!batchMatchesRoute) return;
 
     fetchStudents();
     //eslint-disable-next-line
-  }, [activeBatch]);
+  }, [batchMatchesRoute, batchId]);
 
   const handleRefresh = () => {
     fetchStudents();
@@ -145,7 +154,11 @@ const Students = () => {
   }, [students]);
 
   // conditional return AFTER hooks
-  if (!activeBatch) return null;
+  const showPageSkeleton = useDelayedLoading(
+    !batchMatchesRoute || studentsLoading,
+  );
+
+  if (showPageSkeleton || !batchMatchesRoute) return <TeacherStudentsSkeleton />;
 
   return (
     <div className="container-fluid students-page">

@@ -4,6 +4,8 @@ import BatchContext from "../../../context/batch/BatchContext";
 import { useParams } from "react-router-dom";
 import AutoAttendancePanel from "../../../components/autoAttendance/AutoAttendancePanel";
 import ManualAttendancePanel from "../../../components/manualAttendance/ManualAttendancePanel";
+import useDelayedLoading from "../../../hooks/useDelayedLoading";
+import { TeacherDashboardSkeleton } from "../../../components/skeletons/Skeletons";
 
 import "./TeacherDashboard.css";
 
@@ -14,6 +16,8 @@ const Dashboard = () => {
 
   // Average attendance
   const [avgAttendance, setAvgAttendance] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [batchLoading, setBatchLoading] = useState(false);
 
   // Attendance code
   const code = activeBatch?.batch_code;
@@ -70,6 +74,8 @@ const Dashboard = () => {
 
   // Fetch Average Attendance
   const fetchAverageAttendance = async (id) => {
+    if (!id) return;
+    setStatsLoading(true);
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
@@ -83,6 +89,8 @@ const Dashboard = () => {
       setAvgAttendance(data.avgAttendance);
     } catch (err) {
       console.error(err);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -115,7 +123,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!batchId) return;
-    fetchBatchById(batchId);
+    setBatchLoading(true);
+    fetchBatchById(batchId).finally(() => setBatchLoading(false));
     fetchAverageAttendance(batchId);
     fetchStudentList(batchId);
     //eslint-disable-next-line
@@ -127,6 +136,15 @@ const Dashboard = () => {
       setSavedThreshold(activeBatch.threshold);
     }
   }, [activeBatch]);
+
+  const batchMatchesRoute = String(activeBatch?.id || "") === String(batchId || "");
+  const pageLoading =
+    !batchMatchesRoute || batchLoading || statsLoading || studentsLoading;
+  const showPageSkeleton = useDelayedLoading(pageLoading);
+
+  if (showPageSkeleton || !batchMatchesRoute) {
+    return <TeacherDashboardSkeleton />;
+  }
 
   return (
     <div className="container-fluid dashboard">
