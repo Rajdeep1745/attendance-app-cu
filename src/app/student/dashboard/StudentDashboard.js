@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getStudentOverview } from "../studentApi";
+import useDelayedLoading from "../../../hooks/useDelayedLoading";
+import { StudentDashboardSkeleton } from "../../../components/skeletons/Skeletons";
 
 import "./StudentDashboard.css";
 
 const StudentDashboard = () => {
   const { batchId } = useParams();
   const [details, setDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -15,6 +18,7 @@ const StudentDashboard = () => {
     let ignore = false;
 
     const loadOverview = async () => {
+      setLoading(true);
       try {
         const data = await getStudentOverview(batchId);
         if (!ignore) {
@@ -24,6 +28,10 @@ const StudentDashboard = () => {
       } catch (err) {
         if (!ignore) {
           setError(err.message);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
         }
       }
     };
@@ -35,6 +43,8 @@ const StudentDashboard = () => {
     };
   }, [batchId]);
 
+  const showSkeleton = useDelayedLoading(loading || !details);
+
   if (error) {
     return (
       <div className="container-fluid dashboard student-dashboard">
@@ -43,15 +53,8 @@ const StudentDashboard = () => {
     );
   }
 
-  if (!details) {
-    return (
-      <div className="container-fluid dashboard student-dashboard">
-        <div className="text-muted">
-          <span className="spinner-border spinner-border-sm me-2"></span>
-          Loading batch overview...
-        </div>
-      </div>
-    );
+  if (showSkeleton || !details) {
+    return <StudentDashboardSkeleton />;
   }
 
   return (

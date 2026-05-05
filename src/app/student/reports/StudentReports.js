@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getStudentReports } from "../studentApi";
+import useDelayedLoading from "../../../hooks/useDelayedLoading";
+import { StudentReportsSkeleton } from "../../../components/skeletons/Skeletons";
 
 import "./StudentReports.css";
 
 const StudentReports = () => {
   const { batchId } = useParams();
   const [details, setDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -15,6 +18,7 @@ const StudentReports = () => {
     let ignore = false;
 
     const loadReports = async () => {
+      setLoading(true);
       try {
         const data = await getStudentReports(batchId);
         if (!ignore) {
@@ -24,6 +28,10 @@ const StudentReports = () => {
       } catch (err) {
         if (!ignore) {
           setError(err.message);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
         }
       }
     };
@@ -35,6 +43,8 @@ const StudentReports = () => {
     };
   }, [batchId]);
 
+  const showSkeleton = useDelayedLoading(loading || !details);
+
   if (error) {
     return (
       <div className="container-fluid student-reports-page">
@@ -43,15 +53,8 @@ const StudentReports = () => {
     );
   }
 
-  if (!details) {
-    return (
-      <div className="container-fluid student-reports-page">
-        <div className="text-muted">
-          <span className="spinner-border spinner-border-sm me-2"></span>
-          Loading reports...
-        </div>
-      </div>
-    );
+  if (showSkeleton || !details) {
+    return <StudentReportsSkeleton />;
   }
 
   const attendanceHistory = details.recentAttendance || [];

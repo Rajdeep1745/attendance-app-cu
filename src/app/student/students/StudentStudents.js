@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getStudentRoster } from "../studentApi";
+import useDelayedLoading from "../../../hooks/useDelayedLoading";
+import { StudentStudentsSkeleton } from "../../../components/skeletons/Skeletons";
 
 import "./StudentStudents.css";
 
 const StudentStudents = () => {
   const { batchId } = useParams();
   const [details, setDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -15,6 +18,7 @@ const StudentStudents = () => {
     let ignore = false;
 
     const loadRoster = async () => {
+      setLoading(true);
       try {
         const students = await getStudentRoster(batchId);
         if (!ignore) {
@@ -29,6 +33,10 @@ const StudentStudents = () => {
         if (!ignore) {
           setError(err.message);
         }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     };
 
@@ -39,6 +47,8 @@ const StudentStudents = () => {
     };
   }, [batchId]);
 
+  const showSkeleton = useDelayedLoading(loading || !details);
+
   if (error) {
     return (
       <div className="container-fluid student-roster-page">
@@ -47,15 +57,8 @@ const StudentStudents = () => {
     );
   }
 
-  if (!details) {
-    return (
-      <div className="container-fluid student-roster-page">
-        <div className="text-muted">
-          <span className="spinner-border spinner-border-sm me-2"></span>
-          Loading roster...
-        </div>
-      </div>
-    );
+  if (showSkeleton || !details) {
+    return <StudentStudentsSkeleton />;
   }
 
   const students = details.students;
