@@ -165,7 +165,8 @@ def recognize():
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('FACE_SERVICE_PORT', 5001))
+    # Render uses PORT env var, fallback to 5001 for local dev
+    port = int(os.environ.get('PORT', os.environ.get('FACE_SERVICE_PORT', 5001)))
     app.run(host='0.0.0.0', port=port, debug=False)
     
     

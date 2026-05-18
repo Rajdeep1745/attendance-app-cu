@@ -1,4 +1,3 @@
 #!/bin/bash
 cd "$(dirname "$0")"
-pip install -r requirements.txt --quiet
-python app.py
+gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1
