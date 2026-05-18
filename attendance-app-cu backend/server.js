@@ -9,6 +9,7 @@ const attendanceRoutes = require("./routes/attendanceRoutes");
 const lectureRoutes = require("./routes/lectureRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/users");
+const faceRoutes = require('./routes/faceRoutes');
 
 const app = express();
 
@@ -21,9 +22,8 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/lectures", lectureRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-
-const faceRoutes = require('./routes/faceRoutes');
 app.use('/api', faceRoutes);  // exposes POST /api/students/:id/register-face
+
 
 const PORT = 5000;
 
