@@ -132,9 +132,11 @@ const formatJoinedOn = (value) =>
   }).format(new Date(value));
 
 const formatRecordedTime = (value) =>
-  new Intl.DateTimeFormat("en-US", {
+  new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: true,
   }).format(new Date(value));
 
 const getBatchAverageAttendance = async (batchId) => {
@@ -148,8 +150,10 @@ const getBatchAverageAttendance = async (batchId) => {
 
   return Number(
     (
-      data.reduce((sum, row) => sum + Number(row.attendance_percentage || 0), 0) /
-      data.length
+      data.reduce(
+        (sum, row) => sum + Number(row.attendance_percentage || 0),
+        0,
+      ) / data.length
     ).toFixed(1),
   );
 };
@@ -383,7 +387,7 @@ exports.addStudent = async (req, res) => {
           throw enrollError;
         }
         // Already enrolled, no action needed
-      isNewEnrollment = false;
+        isNewEnrollment = false;
       }
     }
 
@@ -554,12 +558,13 @@ exports.joinBatchByCode = async (req, res) => {
 
     const student = await getOrCreateStudentRecord(req.user.id);
 
-    const { data: existingEnrollment, error: enrollmentCheckError } = await supabase
-      .from("enrollments")
-      .select("id, created_at")
-      .eq("student_id", student.student_id)
-      .eq("batch_id", batch.id)
-      .maybeSingle();
+    const { data: existingEnrollment, error: enrollmentCheckError } =
+      await supabase
+        .from("enrollments")
+        .select("id, created_at")
+        .eq("student_id", student.student_id)
+        .eq("batch_id", batch.id)
+        .maybeSingle();
 
     if (enrollmentCheckError) throw enrollmentCheckError;
 
@@ -724,11 +729,12 @@ exports.getMyBatchReports = async (req, res) => {
 
     if (batchError) throw batchError;
 
-    const { data: batchAttendanceRows, error: batchAttendanceError } = await supabase
-      .from("batch_attendances")
-      .select("date")
-      .eq("batch_id", batchId)
-      .order("date", { ascending: false });
+    const { data: batchAttendanceRows, error: batchAttendanceError } =
+      await supabase
+        .from("batch_attendances")
+        .select("date")
+        .eq("batch_id", batchId)
+        .order("date", { ascending: false });
 
     if (batchAttendanceError) throw batchAttendanceError;
 
@@ -758,7 +764,9 @@ exports.getMyBatchReports = async (req, res) => {
     });
 
     const avgAttendance = await getBatchAverageAttendance(batchId);
-    const attendedClasses = (classRows || []).filter((row) => row.present === true).length;
+    const attendedClasses = (classRows || []).filter(
+      (row) => row.present === true,
+    ).length;
 
     res.json({
       batchId,

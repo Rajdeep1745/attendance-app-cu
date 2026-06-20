@@ -1,10 +1,21 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getStudentOverview } from "../studentApi";
 import useDelayedLoading from "../../../hooks/useDelayedLoading";
 import { StudentDashboardSkeleton } from "../../../components/skeletons/Skeletons";
 
 import "./StudentDashboard.css";
+
+const getStudentOverview = async (batchId) => {
+  const token = localStorage.getItem("token");
+  const response = await fetch(
+    `${process.env.REACT_APP_BACKEND_URL}api/students/me/batches/${batchId}/overview`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  const data = await response.json();
+
+  if (!response.ok) throw new Error(data?.error || "Failed to load overview");
+  return data;
+};
 
 const StudentDashboard = () => {
   const { batchId } = useParams();

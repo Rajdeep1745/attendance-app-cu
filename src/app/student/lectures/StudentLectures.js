@@ -1,13 +1,21 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import {
-  getStudentCurriculum,
-  getStudentPlan,
-} from "../studentApi";
 import useDelayedLoading from "../../../hooks/useDelayedLoading";
 import { StudentLecturesSkeleton } from "../../../components/skeletons/Skeletons";
 
 import "./StudentLectures.css";
+
+const getLectureData = async (path) => {
+  const token = localStorage.getItem("token");
+  const response = await fetch(
+    `${process.env.REACT_APP_BACKEND_URL}${path}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  const data = await response.json();
+
+  if (!response.ok) throw new Error(data?.error || "Failed to load lectures");
+  return data;
+};
 
 const StudentLectures = () => {
   const { batchId } = useParams();
@@ -24,8 +32,8 @@ const StudentLectures = () => {
       setLoading(true);
       try {
         const [curriculum, plan] = await Promise.all([
-          getStudentCurriculum(batchId),
-          getStudentPlan(batchId),
+          getLectureData(`api/lectures/curriculum/${batchId}`),
+          getLectureData(`api/lectures/plan/${batchId}`),
         ]);
 
         if (!ignore) {

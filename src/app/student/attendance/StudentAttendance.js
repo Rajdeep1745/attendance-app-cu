@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
-import { getStudentAttendanceByDate } from "../studentApi";
 import useDelayedLoading from "../../../hooks/useDelayedLoading";
 import { StudentAttendanceSkeleton } from "../../../components/skeletons/Skeletons";
 
 import "./StudentAttendance.css";
+
+const getStudentAttendanceByDate = async (date) => {
+  const token = localStorage.getItem("token");
+  const response = await fetch(
+    `${process.env.REACT_APP_BACKEND_URL}api/students/me/attendance?date=${encodeURIComponent(date)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  const data = await response.json();
+
+  if (!response.ok) throw new Error(data?.error || "Failed to load attendance");
+  return data;
+};
 
 const formatLocalDate = (date) => {
   const year = date.getFullYear();
@@ -119,7 +130,8 @@ const StudentAttendance = () => {
 
             <h3>{formattedHeadingDate}</h3>
             <p className="attendance-subtitle">
-              Attendance summary for {selectedWeekday} across all joined classes.
+              Attendance summary for {selectedWeekday} across all joined
+              classes.
             </p>
 
             <div className="student-date-stats">
@@ -140,7 +152,8 @@ const StudentAttendance = () => {
             <div className="student-date-note">
               <i className="fa-regular fa-circle-check"></i>
               <span>
-                Use the calendar to jump between dates and review your batch-wise status for each day.
+                Use the calendar to jump between dates and review your
+                batch-wise status for each day.
               </span>
             </div>
           </div>

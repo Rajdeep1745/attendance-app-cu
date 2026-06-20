@@ -5,8 +5,9 @@ import TeacherSidebar from "./sidebar/TeacherSidebar";
 import StudentSidebar from "./sidebar/StudentSidebar";
 
 import BatchContext from "../../context/batch/BatchContext";
-import { LAST_ACTIVE_BATCH_ID_KEY } from "../student/studentStorage";
 import "./Layout.css";
+
+const LAST_ACTIVE_BATCH_ID_KEY = "lastActiveBatchId";
 
 const Layout = () => {
   const { userId, batchId } = useParams();
