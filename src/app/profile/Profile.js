@@ -4,8 +4,9 @@ import BatchContext from "../../context/batch/BatchContext";
 import AlertContext from "../../context/alert/AlertContext";
 import AuthContext from "../../context/auth/AuthContext";
 import FaceRegisterModal from "../../components/faceRegisterModal/FaceRegisterModal";
-import { LAST_ACTIVE_BATCH_ID_KEY } from "../student/studentStorage";
 import "./Profile.css";
+
+const LAST_ACTIVE_BATCH_ID_KEY = "lastActiveBatchId";
 
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {

@@ -2,14 +2,31 @@ import { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import AlertContext from "../../../context/alert/AlertContext";
 import JoinClassModal from "../../../components/joinClassModal/JoinClassModal";
-import {
-  getMyJoinedBatches,
-  joinBatchByCode,
-  leaveBatch,
-} from "../../student/studentApi";
-import { LAST_ACTIVE_BATCH_ID_KEY } from "../../student/studentStorage";
 
 import "./Sidebar.css";
+
+const LAST_ACTIVE_BATCH_ID_KEY = "lastActiveBatchId";
+
+const studentRequest = async (path, options = {}) => {
+  const token = localStorage.getItem("token");
+  const response = await fetch(
+    `${process.env.REACT_APP_BACKEND_URL}${path}`,
+    {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(options.headers || {}),
+      },
+    },
+  );
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error || "Request failed");
+  }
+
+  return data;
+};
 
 const StudentSidebar = ({ isOpen }) => {
   const { userId, batchId } = useParams();
@@ -30,7 +47,7 @@ const StudentSidebar = ({ isOpen }) => {
     const loadJoinedBatches = async () => {
       setLoading(true);
       try {
-        const data = await getMyJoinedBatches();
+        const data = await studentRequest("api/students/me/batches");
         if (!ignore) {
           setJoinedBatches(data);
         }
@@ -88,7 +105,11 @@ const StudentSidebar = ({ isOpen }) => {
 
   const handleJoinClass = async (batchCode) => {
     try {
-      const data = await joinBatchByCode(batchCode);
+      const data = await studentRequest("api/students/me/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ batchCode }),
+      });
       const joinedBatch = data.batch;
       const alreadyJoined = joinedBatches.some((batch) => batch.id === joinedBatch.id);
 
@@ -111,7 +132,9 @@ const StudentSidebar = ({ isOpen }) => {
 
   const handleLeaveBatch = async (batchToLeave) => {
     try {
-      await leaveBatch(batchToLeave.id);
+      await studentRequest(`api/students/me/batches/${batchToLeave.id}`, {
+        method: "DELETE",
+      });
       const remainingBatches = joinedBatches.filter(
         (batch) => batch.id !== batchToLeave.id,
       );

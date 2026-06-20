@@ -338,8 +338,7 @@ exports.markAttendanceByFace = async (req, res) => {
     return res.status(403).json({ error: 'Access denied' });
   }
 
-  // ── Load enrolled students with their face data ────────────────────
-  // BUG FIX: students PK is student_id — select student_id not id
+  // Load enrolled students with their face data
   const { data: enrolled, error: enrollErr } = await supabase
     .from('enrollments')
     .select(`

@@ -1,10 +1,21 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getStudentReports } from "../studentApi";
 import useDelayedLoading from "../../../hooks/useDelayedLoading";
 import { StudentReportsSkeleton } from "../../../components/skeletons/Skeletons";
 
 import "./StudentReports.css";
+
+const getStudentReports = async (batchId) => {
+  const token = localStorage.getItem("token");
+  const response = await fetch(
+    `${process.env.REACT_APP_BACKEND_URL}api/students/me/batches/${batchId}/reports`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  const data = await response.json();
+
+  if (!response.ok) throw new Error(data?.error || "Failed to load reports");
+  return data;
+};
 
 const StudentReports = () => {
   const { batchId } = useParams();
