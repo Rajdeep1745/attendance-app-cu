@@ -1,9 +1,9 @@
 import { useState, useEffect, useContext } from "react";
 import { Navigate, Outlet, useParams } from "react-router-dom";
 import Navbar from "./navbar/Navbar";
+import Footer from "./footer/Footer";
 import TeacherSidebar from "./sidebar/TeacherSidebar";
 import StudentSidebar from "./sidebar/StudentSidebar";
-
 import BatchContext from "../../context/batch/BatchContext";
 import "./Layout.css";
 
@@ -46,34 +46,38 @@ const Layout = () => {
         isSidebarOpen={sidebarOpen}
       />
 
-      <div className="d-flex">
-        {role === "teacher" ? (
-          <TeacherSidebar isOpen={sidebarOpen} />
-        ) : (
-          <StudentSidebar isOpen={sidebarOpen} />
-        )}
-
-        <main
-          className={`flex-grow-1 p-4 app-main ${
-            sidebarOpen ? "sidebar-visible" : ""
-          }`}
-        >
-          {/* CONDITIONAL RENDER BASED ON URL */}
-          {!batchId ? (
-            <div className="empty-state">
-              <h2>
-                {role === "teacher" ? "Select a batch" : "Choose a batch"}
-              </h2>
-              <p>
-                {role === "teacher"
-                  ? "Please choose a batch from the sidebar to continue."
-                  : "Join a batch using a valid batch code, or choose one of your real joined batches from the sidebar."}
-              </p>
-            </div>
+      <div className="layout-wrapper">
+        <div className="d-flex flex-grow-1">
+          {role === "teacher" ? (
+            <TeacherSidebar isOpen={sidebarOpen} />
           ) : (
-            <Outlet />
+            <StudentSidebar isOpen={sidebarOpen} />
           )}
-        </main>
+
+          <main
+            className={`flex-grow-1 p-4 app-main ${
+              sidebarOpen ? "sidebar-visible" : ""
+            }`}
+          >
+            {!batchId ? (
+              <div className="empty-state">
+                <h2>
+                  {role === "teacher" ? "Select a batch" : "Choose a batch"}
+                </h2>
+                <p>
+                  {role === "teacher"
+                    ? "Please choose a batch from the sidebar to continue."
+                    : "Join a batch using a valid batch code, or choose one of your real joined batches from the sidebar."}
+                </p>
+              </div>
+            ) : (
+              <>
+                <Outlet />
+                <Footer />
+              </>
+            )}
+          </main>
+        </div>
       </div>
     </>
   );

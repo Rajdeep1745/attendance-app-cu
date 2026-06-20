@@ -1,0 +1,17 @@
+.app-footer {
+  width: 100%;
+  margin-top: 60px;
+}
+
+.footer-bottom {
+  background: #ffffff;
+  border-top: 2px solid rgba(124, 58, 237, 0.15);
+
+  padding: 18px 24px;
+
+  text-align: center;
+
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+}
