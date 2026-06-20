@@ -1,7 +1,7 @@
 /* ===== Sidebar container ===== */
 .sidebar {
   height: calc(100vh - 72px);
-  height: calc(100svh - 72px);
+  height: calc(100svh - 110px);
   position: fixed;
   top: 72px;
   left: 0;
@@ -15,7 +15,7 @@
   border-right: 1px solid rgba(148, 163, 184, 0.18);
   box-shadow: 18px 0 40px rgba(15, 23, 42, 0.06);
   transition: width 0.3s ease, transform 0.3s ease;
-  z-index: 1050;
+  z-index: 1000;
 }
 
 .sidebar.open {

@@ -89,7 +89,9 @@
   color: #6b7280;
   font-weight: 500;
   background: transparent;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
   white-space: nowrap;
 }
 
@@ -162,7 +164,6 @@
 
 .dropdown a:hover {
   background: #f3f4f6;
-
 }
 
 .dropdown .logout {
@@ -187,7 +188,6 @@
   outline: 2px solid rgba(220, 38, 38, 0.35);
   outline-offset: 2px;
 }
-
 
 /* ===============================
    Accessibility
@@ -260,4 +260,35 @@
   * {
     transition: none !important;
   }
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dev-info-btn {
+  width: 40px;
+  height: 40px;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(124, 58, 237, 0.08);
+  color: #7c3aed;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.dev-info-btn:hover {
+  background: #7c3aed;
+  color: white;
+  transform: translateY(-2px);
 }
