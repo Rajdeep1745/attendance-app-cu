@@ -54,6 +54,13 @@ const Layout = () => {
             <StudentSidebar isOpen={sidebarOpen} />
           )}
 
+          {sidebarOpen && (
+            <div
+              className="sidebar-backdrop"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
           <main
             className={`flex-grow-1 p-4 app-main ${
               sidebarOpen ? "sidebar-visible" : ""

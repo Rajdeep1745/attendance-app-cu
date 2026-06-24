@@ -1,12 +1,40 @@
+body {
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(124, 58, 237, 0.08),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(99, 102, 241, 0.06),
+      transparent 40%
+    ),
+    #f8fafc;
+}
+
+.layout-wrapper {
+  min-height: 100vh;
+  padding-top: 72px;
+}
+
 .app-main {
-  margin-left: 0;
-  transition: margin 0.3s ease;
-  min-width: 0;
-  width: 100%;
+  min-height: calc(100vh - 72px);
+
+  transition:
+    margin 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+
+  position: relative;
 }
 
 .app-main.sidebar-visible {
   margin-left: 300px;
+}
+
+.page-shell {
+  max-width: 1500px;
+  margin: 0 auto;
 }
 
 /* Empty state when no batch is selected */
@@ -62,5 +90,93 @@
 
   .empty-state p {
     max-width: 280px;
+  }
+}
+
+/* =========================================
+   RESPONSIVE IMPROVEMENTS
+========================================= */
+
+:root {
+  --sidebar-width: 280px;
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+.layout-wrapper,
+.app-main,
+.page-shell {
+  min-width: 0;
+}
+
+.app-main.sidebar-visible {
+  margin-left: var(--sidebar-width);
+}
+
+.app-main {
+  width: 100%;
+  max-width: 100%;
+}
+
+.empty-state {
+  max-width: 600px;
+  margin: auto;
+}
+
+@media (max-width: 991px) {
+  .app-main {
+    padding: 24px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-main {
+    padding: 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-main {
+    padding: 12px !important;
+  }
+}
+
+/* Mobile sidebar overlay */
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 72px 0 0 0;
+
+  background: rgba(15, 23, 42, 0.45);
+
+  backdrop-filter: blur(4px);
+
+  z-index: 998;
+
+  animation: fadeIn 0.25s ease;
+}
+
+@media (min-width: 992px) {
+  .sidebar-backdrop {
+    display: none;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 575px) {
+  .layout-wrapper {
+    padding-top: 64px;
   }
 }

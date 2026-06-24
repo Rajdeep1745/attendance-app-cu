@@ -14,6 +14,7 @@ const Navbar = (props) => {
   const { user: storedUser, setUser } = useContext(AuthContext);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [devModalOpen, setDevModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const homePath = "/";
 
@@ -42,7 +43,7 @@ const Navbar = (props) => {
         <div className="navbar-left">
           <NavLink to={homePath} className="brand">
             <img src={AppLogo} alt="logo" className="brand-logo" />
-            <span className="brand-text">Smart Attendance</span>
+            <span className="brand-text">Attendify</span>
           </NavLink>
 
           <button
@@ -56,6 +57,13 @@ const Navbar = (props) => {
             ) : (
               <i className="fa-solid fa-angles-right"></i>
             )}
+          </button>
+
+          <button
+            className="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <i className="fa-solid fa-bars"></i>
           </button>
         </div>
 
@@ -173,6 +181,45 @@ const Navbar = (props) => {
             <i className="fa-solid fa-code"></i>
           </button>
         </div>
+        
+        {mobileMenuOpen && (
+          <div className="mobile-navbar-menu">
+            <NavLink
+              to={`${basePath}/dashboard`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Dashboard
+            </NavLink>
+
+            <NavLink
+              to={`${basePath}/attendance`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Attendance
+            </NavLink>
+
+            <NavLink
+              to={`${basePath}/students`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Students
+            </NavLink>
+
+            <NavLink
+              to={`${basePath}/reports`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Reports
+            </NavLink>
+
+            <NavLink
+              to={`${basePath}/lectures`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Lectures
+            </NavLink>
+          </div>
+        )}
       </nav>
       <DeveloperModal
         isOpen={devModalOpen}
