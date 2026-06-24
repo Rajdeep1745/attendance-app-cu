@@ -58,7 +58,7 @@ const Dashboard = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ threshold }),
-        }
+        },
       );
 
       const data = await res.json();
@@ -82,10 +82,11 @@ const Dashboard = () => {
         `${process.env.REACT_APP_BACKEND_URL}api/attendance/${id}/stats`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message || "Failed to fetch stats");
+      if (!res.ok)
+        throw new Error(data?.error?.message || "Failed to fetch stats");
       setAvgAttendance(data.avgAttendance);
     } catch (err) {
       console.error(err);
@@ -108,7 +109,7 @@ const Dashboard = () => {
         `${process.env.REACT_APP_BACKEND_URL}api/students/${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to fetch students");
@@ -137,7 +138,8 @@ const Dashboard = () => {
     }
   }, [activeBatch]);
 
-  const batchMatchesRoute = String(activeBatch?.id || "") === String(batchId || "");
+  const batchMatchesRoute =
+    String(activeBatch?.id || "") === String(batchId || "");
   const pageLoading =
     !batchMatchesRoute || batchLoading || statsLoading || studentsLoading;
   const showPageSkeleton = useDelayedLoading(pageLoading);
@@ -147,14 +149,17 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container-fluid dashboard">
+    <div className="container-fluid dashboard page-enter">
       {/* PAGE TITLE */}
-      <div className="mb-4">
-        <h3 className="text-center fw-semibold mb-1">{batchName}</h3>
-        <h2 className="dashboard-title mt-3 mb-2">Dashboard</h2>
-        <p className="dashboard-subtitle mb-0">
-          Configure attendance for this batch
-        </p>
+      <div className="dashboard-hero">
+        <div>
+          <h1>{batchName}</h1>
+
+          <p>
+            Manage attendance, thresholds and recognition settings for this
+            batch.
+          </p>
+        </div>
       </div>
 
       {/* STATS ROW */}
@@ -194,7 +199,7 @@ const Dashboard = () => {
               </p>
               <input
                 type="text"
-                className="form-control mb-3 text-center fw-bold"
+                className="form-control mb-3 text-center fw-bold join-code-display"
                 value={code || "Loading..."}
                 readOnly
               />
@@ -264,7 +269,9 @@ const Dashboard = () => {
         <div className="col-12">
           <div className="card dashboard-card attendance-mode-card shadow-sm">
             <div className="card-body attendance-mode-body">
-              <h5 className="card-title attendance-mode-title">Attendance Mode</h5>
+              <h5 className="card-title attendance-mode-title">
+                Attendance Mode
+              </h5>
               <p className="dashboard-subtitle small attendance-mode-subtitle">
                 Choose how attendance will be taken
               </p>
@@ -303,7 +310,9 @@ const Dashboard = () => {
                     className="form-check-label attendance-mode-label"
                     htmlFor="attendance-mode-auto"
                   >
-                    <span className="attendance-mode-label-title">Automatic</span>
+                    <span className="attendance-mode-label-title">
+                      Automatic
+                    </span>
                     <span className="attendance-mode-label-copy">
                       Use a class photo or video for recognition
                     </span>
@@ -322,8 +331,8 @@ const Dashboard = () => {
                     ) : studentList.length === 0 ? (
                       <div className="alert alert-warning py-2 small mb-0 attendance-mode-state">
                         <i className="fa fa-exclamation-triangle me-1"></i>
-                        No students found in this batch. Add students first before
-                        taking attendance.
+                        No students found in this batch. Add students first
+                        before taking attendance.
                       </div>
                     ) : (
                       <ManualAttendancePanel
@@ -349,8 +358,8 @@ const Dashboard = () => {
                     ) : studentList.length === 0 ? (
                       <div className="alert alert-warning py-2 small mb-0 attendance-mode-state">
                         <i className="fa fa-exclamation-triangle me-1"></i>
-                        No students found in this batch. Add students first before
-                        taking attendance.
+                        No students found in this batch. Add students first
+                        before taking attendance.
                       </div>
                     ) : (
                       <AutoAttendancePanel

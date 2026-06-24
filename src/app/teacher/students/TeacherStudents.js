@@ -113,7 +113,8 @@ const Students = () => {
     }
   };
 
-  const batchMatchesRoute = String(activeBatch?.id || "") === String(batchId || "");
+  const batchMatchesRoute =
+    String(activeBatch?.id || "") === String(batchId || "");
 
   useEffect(() => {
     if (!batchMatchesRoute) return;
@@ -158,16 +159,18 @@ const Students = () => {
     !batchMatchesRoute || studentsLoading,
   );
 
-  if (showPageSkeleton || !batchMatchesRoute) return <TeacherStudentsSkeleton />;
+  if (showPageSkeleton || !batchMatchesRoute)
+    return <TeacherStudentsSkeleton />;
 
   return (
-    <div className="container-fluid students-page">
+    <div className="container-fluid students-page page-enter">
       {/* PAGE HEADER */}
-      <div className="mb-4">
-        <h2 className="students-title">Students</h2>
-        <p className="students-subtitle">
-          Manage students for {activeBatch.name}
-        </p>
+      <div className="students-hero">
+        <div>
+          <h1>Students</h1>
+
+          <p>Manage roster, attendance health and face registration.</p>
+        </div>
       </div>
 
       {/* FACE REGISTRATION STATUS CARD */}
@@ -344,19 +347,19 @@ const Students = () => {
         student={selectedStudent}
         onClose={() => setShowFaceRegister(false)}
         onSuccess={(payload) => {
-        setStudents((prev) =>
-          prev.map((s) =>
-            s.id === payload.studentId
-              ? { ...s, faceRegistered: true, avatar: payload.avatar }
-              : s
-          )
-        );
-        setSelectedStudent((prev) =>
-          prev && prev.id === payload.studentId
-            ? { ...prev, faceRegistered: true, avatar: payload.avatar }
-            : prev
-        );
-        showAlert(true, 'Face registered successfully!', 'success');
+          setStudents((prev) =>
+            prev.map((s) =>
+              s.id === payload.studentId
+                ? { ...s, faceRegistered: true, avatar: payload.avatar }
+                : s,
+            ),
+          );
+          setSelectedStudent((prev) =>
+            prev && prev.id === payload.studentId
+              ? { ...prev, faceRegistered: true, avatar: payload.avatar }
+              : prev,
+          );
+          showAlert(true, "Face registered successfully!", "success");
         }}
       />
     </div>

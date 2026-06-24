@@ -31,7 +31,8 @@ const Reports = () => {
   // Frequent absentees
   const [frequentAbsentees, setFrequentAbsentees] = useState([]);
 
-  const batchMatchesRoute = String(activeBatch?.id || "") === String(batchId || "");
+  const batchMatchesRoute =
+    String(activeBatch?.id || "") === String(batchId || "");
 
   const fetchFrequentAbsentees = async () => {
     if (!batchId) return;
@@ -250,33 +251,33 @@ const Reports = () => {
     {
       label: "Average Attendance",
       value: `${stats.avgAttendance || 0}%`,
-      detail: "From batch_attendances",
     },
     {
       label: "Total Classes",
       value: stats.totalClasses || 0,
-      detail: "Recorded attendance sessions",
     },
     {
       label: "Below Threshold",
       value: lowAttendanceStudents.length,
-      detail: "Students under current threshold",
     },
     {
       label: "Threshold",
       value: `${threshold || 0}%`,
-      detail: "Current batch warning level",
     },
   ];
 
   return (
-    <div className="container-fluid reports-page">
+    <div className="container-fluid reports-page page-enter">
       {/* HEADER */}
-      <div className="mb-4">
-        <h2 className="reports-title">Reports</h2>
-        <p className="reports-subtitle">
-          Insights and trends for {activeBatch.name}
-        </p>
+      <div className="reports-hero">
+        <div>
+          <h1>Reports & Analytics</h1>
+
+          <p>
+            Attendance trends, performance insights and risk indicators for{" "}
+            {activeBatch.name}
+          </p>
+        </div>
       </div>
 
       <div className="row g-4 mb-4">
@@ -286,7 +287,6 @@ const Reports = () => {
               <div className="card-body">
                 <p className="report-kpi-label">{card.label}</p>
                 <h3 className="report-kpi-value">{card.value}</h3>
-                <p className="reports-subtitle small mb-0">{card.detail}</p>
               </div>
             </div>
           </div>
@@ -315,7 +315,10 @@ const Reports = () => {
                     <i className="fa-solid fa-chevron-left"></i>
                   </button>
 
-                  <span className="week-label">{weekLabel}</span>
+                  <span className="week-label">
+                    <i className="fa-regular fa-calendar-days me-2"></i>
+                    {weekLabel}
+                  </span>
 
                   {/* prevent future weeks */}
                   <button
@@ -351,7 +354,7 @@ const Reports = () => {
                       <div className="bar-wrapper">
                         <div
                           className={`bar-fill ${
-                            d.percent < threshold ? "low" : ""
+                            d.percent < threshold ? "low" : "high"
                           }`}
                           style={{ height: `${d.percent}%` }}
                         >
