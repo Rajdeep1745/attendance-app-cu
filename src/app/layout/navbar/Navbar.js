@@ -3,8 +3,6 @@ import { NavLink, useParams } from "react-router-dom";
 import AuthContext from "../../../context/auth/AuthContext";
 import DeveloperModal from "../../../components/developerModal/DeveloperModal";
 
-import AppLogo from "./assets/Logo.png";
-
 import "./Navbar.css";
 
 const Navbar = (props) => {
@@ -42,7 +40,11 @@ const Navbar = (props) => {
       <nav className="navbar custom-navbar">
         <div className="navbar-left">
           <NavLink to={homePath} className="brand">
-            <img src={AppLogo} alt="logo" className="brand-logo" />
+            <img
+              src="/images/logos/logoTransparent.png"
+              alt="logo"
+              className="brand-logo"
+            />
             <span className="brand-text">Attendify</span>
           </NavLink>
 
@@ -181,7 +183,7 @@ const Navbar = (props) => {
             <i className="fa-solid fa-code"></i>
           </button>
         </div>
-        
+
         {mobileMenuOpen && (
           <div className="mobile-navbar-menu">
             <NavLink
