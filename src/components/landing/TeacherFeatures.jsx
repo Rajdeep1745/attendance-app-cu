@@ -1,166 +1,231 @@
 "use client";
 
 import "../landing/FeatureShowcase.css";
+import { useState } from "react";
 import {
-  Camera,
+  ChevronRight,
+  ChevronLeft,
+} from "lucide-react";
+import {
+  ScanFace,
   BarChart3,
   BookOpen,
-  ScanFace,
+  CalendarDays,
+  Clock3,
+  FileText,
+  GraduationCap,
+  Users,
 } from "lucide-react";
 
 export default function TeacherFeatures() {
+
+ const [screenshots, setScreenshots] = useState([
+  "/images/appscr2.png",
+  "/images/appscr4.png",
+  "/images/appscr3.png",
+  "/images/appscr1.png",
+]);
+
+const [direction, setDirection] = useState("right");
+const [animating, setAnimating] = useState(false);
+
+const nextSlide = () => {
+
+  if(animating) return;
+
+  setAnimating(true);
+  setDirection("right");
+
+  setTimeout(() => {
+
+    setScreenshots(prev => {
+      const updated = [...prev];
+      const first = updated.shift();
+
+      return [...updated, first];
+    });
+
+    setAnimating(false);
+
+  }, 250);
+
+};
+
+const prevSlide = () => {
+
+  if(animating) return;
+
+  setAnimating(true);
+  setDirection("left");
+
+  setTimeout(() => {
+
+    setScreenshots(prev => {
+      const updated = [...prev];
+
+      const last = updated.pop();
+
+      return [last, ...updated];
+    });
+
+    setAnimating(false);
+
+  }, 250);
+
+};
+
   return (
     <section className="teacherShowcase">
 
-      <div className="teacherLeft">
-
-        <span className="featureTag">
-          TEACHER DASHBOARD
-        </span>
-
+      <div className="teacherHeader">
+  
         <h2>
-          Built for
+          Built For
           <span> Modern Educators</span>
         </h2>
 
         <p>
-          Powerful AI tools to automate attendance,
-          manage classrooms and generate actionable
-          insights in real time.
+          Everything teachers need to automate attendance,
+          manage classrooms, monitor engagement and gain
+          powerful insights from a single intelligent platform.
         </p>
+      </div>
 
-        <div className="benefitList">
+      <div className="teacherContent">
 
-          <div className="benefitItem">
-            <ScanFace />
-            <div>
-              <h4>Save Time</h4>
-              <p>Automate attendance and reduce manual work.</p>
-            </div>
+        {/* LEFT SIDE */}
+
+        <div className="featureColumn">
+
+          <div className="glassCard blueCard">
+            <Clock3 size={32} />
+            <h4>Save Hours Weekly</h4>
+            <p>
+              Eliminate manual attendance and classroom paperwork.
+            </p>
           </div>
 
-          <div className="benefitItem">
-            <Camera />
-            <div>
-              <h4>Increase Accuracy</h4>
-              <p>99%+ face recognition precision.</p>
-            </div>
-          </div>
+          <div className="teacherGraphic">
 
-          <div className="benefitItem">
-            <BarChart3 />
-            <div>
-              <h4>Better Insights</h4>
-              <p>Attendance trends and performance analytics.</p>
-            </div>
+  <div className="orbit orbit1"></div>
+  <div className="orbit orbit2"></div>
+
+  <div className="graphicCenter">
+    <GraduationCap size={40}/>
+  </div>
+
+  <div className="graphicIcon icon1">
+    <CalendarDays size={20}/>
+  </div>
+
+  <div className="graphicIcon icon2">
+    <BarChart3 size={20}/>
+  </div>
+
+  <div className="graphicIcon icon3">
+    <FileText size={20}/>
+  </div>
+
+</div>
+
+          <div className="glassCard purpleCard">
+            <Users size={32} />
+            <h4>Manage Classes</h4>
+            <p>
+              Organize batches, records and attendance effortlessly.
+            </p>
           </div>
 
         </div>
 
-      </div>
+        {/* CENTER SCREENSHOTS */}
 
-      <div className="teacherCenter">
+        
 
-  <div className="dashboardGlass">
+        <div className="screenshotsShowcase">
 
-    <div className="dashboardSidebar">
+  <div className="showcaseFrame">
 
-      <div className="sideLogo">
-        Attendify
-      </div>
+    <div className="mainScreenshot">
 
-      <div className="sideMenu">
-        <span>Dashboard</span>
-        <span>Attendance</span>
-        <span>Students</span>
-        <span>Reports</span>
-        <span>AI Planner</span>
-      </div>
+  <button
+    className="carouselArrow leftArrow"
+    onClick={prevSlide}
+  >
+    <ChevronLeft size={28}/>
+  </button>
 
-    </div>
+  <img
+    key={screenshots[0]}
+    src={screenshots[0]}
+    alt=""
+    className={
+      direction === "right"
+        ? "slideRight"
+        : "slideLeft"
+    }
+  />
 
-    <div className="dashboardMain">
+  <button
+    className="carouselArrow rightArrow"
+    onClick={nextSlide}
+  >
+    <ChevronRight size={28}/>
+  </button>
 
-      <div className="dashboardHeader">
-        <h3>Good Morning, Professor 👋</h3>
-        <span>CS-4A</span>
-      </div>
+</div>
 
-      <div className="dashboardGrid">
+    <div className="secondaryGrid">
 
-        <div className="attendanceCard">
-          <div className="circle92">
-            <span>92%</span>
-          </div>
-
-          <div>
-            <h4>97 Present</h4>
-            <p>5 Absent</p>
-          </div>
+      {screenshots.slice(1).map((img,index)=>(
+        <div
+          className="thumbnailCard"
+          key={index}
+        >
+          <img src={img} alt="" />
         </div>
-
-        <div className="liveCard">
-
-          <div className="liveBadge">
-            LIVE
-          </div>
-
-          <h4>Face Recognition</h4>
-
-          <div className="avatars">
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
-
-          <strong>99.6%</strong>
-
-        </div>
-
-        <div className="chartCard">
-          <h4>Weekly Overview</h4>
-          <div className="chartLine"></div>
-        </div>
-
-        <div className="insightsCard">
-          <h4>Top Insights</h4>
-
-          <ul>
-            <li>3 students below 75%</li>
-            <li>Highest attendance in CS-4A</li>
-            <li>2 AI lecture plans generated</li>
-          </ul>
-        </div>
-
-      </div>
+      ))}
 
     </div>
 
   </div>
 
+
+  <div className="glowOrb orb1"></div>
+  <div className="glowOrb orb2"></div>
+
 </div>
 
+        {/* RIGHT SIDE */}
 
-      <div className="teacherRight">
+        <div className="featureColumn">
 
-        <div className="floatingPanel blue">
-          <ScanFace size={32}/>
-          <h4>AI Face Recognition</h4>
-          <p>99% Accuracy</p>
-        </div>
+          <div className="glassCard orangeCard">
+            <ScanFace size={32} />
+            <h4>AI Face Recognition</h4>
+            <p>
+              Highly accurate attendance with real-time recognition.
+            </p>
+          </div>
 
-        <div className="floatingPanel purple">
-          <BarChart3 size={32}/>
-          <h4>Analytics</h4>
-          <p>Smart Insights</p>
-        </div>
+          <div className="glassCard greyCard">
+            <BookOpen size={32} />
+            <h4>AI Lesson Planner</h4>
+            <p>
+              Generate teaching plans and topics in seconds.
+            </p>
+          </div>
 
-        <div className="floatingPanel green">
-          <BookOpen size={32}/>
-          <h4>AI Planner</h4>
-          <p>18 Topics Generated</p>
+          <div className="glassCard greenCard">
+            <BarChart3 size={32} />
+            <h4>Advanced Analytics</h4>
+            <p>
+              Discover trends and student attendance patterns instantly.
+            </p>
+          </div>
+
+          
+
         </div>
 
       </div>
