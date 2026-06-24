@@ -1,9 +1,9 @@
 import "./DeveloperModal.css";
-import rajdeepPic from "./developers/rajdeep.png";
-import jineaPic from "./developers/jinea.png";
 
 export default function DeveloperModal({ isOpen, onClose }) {
   if (!isOpen) return null;
+  const rajdeepPic = "/images/developers/rajdeep.png";
+  const jineaPic = "/images/developers/jinea.png";
 
   return (
     <div className="dev-modal-overlay" onClick={onClose}>
@@ -18,7 +18,7 @@ export default function DeveloperModal({ isOpen, onClose }) {
 
         <div className="developers-grid">
           <div className="developer-profile">
-            <div className="developer-avatar">
+            <div className="developer-avatar-modal">
               <img src={rajdeepPic} alt="Rajdeep Sarkar" />
             </div>
 
@@ -39,7 +39,7 @@ export default function DeveloperModal({ isOpen, onClose }) {
           </div>
 
           <div className="developer-profile">
-            <div className="developer-avatar">
+            <div className="developer-avatar-modal">
               <img src={jineaPic} alt="Jinea Saha" />
             </div>
 
