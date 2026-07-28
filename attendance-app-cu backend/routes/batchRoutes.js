@@ -6,9 +6,7 @@ const roleMiddleware = require("../middleware/roleMiddleware");
 const {
   getBatches,
   getSelectedBatches,
-  addBatch,
-  deleteBatch,
-  renameBatch,
+  getBatchBySubject,
   updateThreshold,
 } = require("../controllers/batchController");
 
@@ -19,9 +17,12 @@ router.get(
   roleMiddleware("teacher", "student"),
   getSelectedBatches,
 );
-router.post("/", authMiddleware, roleMiddleware("teacher"), addBatch);
-router.delete("/:id", authMiddleware, roleMiddleware("teacher"), deleteBatch);
-router.patch("/:id", authMiddleware, roleMiddleware("teacher"), renameBatch);
+router.get(
+  "/subject/:subjectId",
+  authMiddleware,
+  roleMiddleware("teacher", "student"),
+  getBatchBySubject,
+);
 router.patch(
   "/:id/threshold",
   authMiddleware,

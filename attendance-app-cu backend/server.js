@@ -24,6 +24,22 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use('/api', faceRoutes);  // exposes POST /api/students/:id/register-face
 
+app.use("/api", (req, res) => {
+  res.status(404).json({ error: "API route not found" });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err);
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  const statusCode = err.statusCode || err.status || 500;
+  res.status(statusCode).json({
+    error: err.message || "Server error",
+  });
+});
 
 const PORT = 5000;
 
