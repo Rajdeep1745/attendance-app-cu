@@ -1,7 +1,7 @@
 import { useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import AlertContext from "../../context/alert/AlertContext";
-import "./Auth.css";
+import "./authModal.css";
 
 const Login = () => {
   const { showAlert } = useContext(AlertContext);
