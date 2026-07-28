@@ -3,16 +3,16 @@ const bcrypt = require("bcryptjs");
 
 const TEACHER_CREATED_STUDENT_PASSWORD = "12345678";
 
-const ensureTeacherBatchAccess = async (batchId, teacherId) => {
+const ensureBatchExists = async (batchId) => {
   const { data, error } = await supabase
     .from("batches")
     .select("id")
     .eq("id", batchId)
-    .eq("teacher_id", teacherId)
     .maybeSingle();
 
   if (error) throw error;
-  return Boolean(data);
+
+  return !!data;
 };
 
 const getStudentRecordByUserId = async (userId) => {
@@ -43,7 +43,7 @@ const ensureStudentBatchAccess = async (batchId, userId) => {
 
 const ensureBatchAccess = async (batchId, user) => {
   if (user.role === "teacher") {
-    return ensureTeacherBatchAccess(batchId, user.id);
+    return ensureBatchExists(batchId);
   }
 
   if (user.role === "student") {
@@ -124,12 +124,15 @@ const getOrCreateStudentRecord = async (userId) => {
   throw new Error("Failed to create student profile");
 };
 
-const formatJoinedOn = (value) =>
-  new Intl.DateTimeFormat("en-US", {
+const formatJoinedOn = (value) => {
+  if (!value) return "-";
+
+  return new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   }).format(new Date(value));
+};
 
 const formatRecordedTime = (value) =>
   new Intl.DateTimeFormat("en-IN", {
@@ -146,42 +149,14 @@ const getBatchAverageAttendance = async (batchId) => {
     .eq("batch_id", batchId);
 
   if (error) throw error;
-  if (!data || data.length === 0) return 0;
+  if (!data?.length) return 0;
 
-  return Number(
-    (
-      data.reduce(
-        (sum, row) => sum + Number(row.attendance_percentage || 0),
-        0,
-      ) / data.length
-    ).toFixed(1),
+  const total = data.reduce(
+    (sum, row) => sum + Number(row.attendance_percentage || 0),
+    0,
   );
-};
 
-const getTeacherNameById = async (teacherId) => {
-  if (!teacherId) return "Teacher";
-
-  const { data, error } = await supabase
-    .from("users")
-    .select("name")
-    .eq("id", teacherId)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data?.name || "Teacher";
-};
-
-const getTeacherNamesByIds = async (teacherIds) => {
-  const uniqueIds = [...new Set((teacherIds || []).filter(Boolean))];
-  if (uniqueIds.length === 0) return new Map();
-
-  const { data, error } = await supabase
-    .from("users")
-    .select("id, name")
-    .in("id", uniqueIds);
-
-  if (error) throw error;
-  return new Map((data || []).map((teacher) => [teacher.id, teacher.name]));
+  return Number((total / data.length).toFixed(1));
 };
 
 // Get student details
@@ -196,12 +171,11 @@ exports.getStudentsByBatch = async (req, res) => {
 
     const { data: batchInfo, error: batchError } = await supabase
       .from("batches")
-      .select("name, teacher_id")
+      .select("subject_id")
       .eq("id", batchId)
       .single();
 
     if (batchError) throw batchError;
-    const teacherName = await getTeacherNameById(batchInfo.teacher_id);
 
     const { data, error } = await supabase
       .from("enrollments")
@@ -226,7 +200,6 @@ exports.getStudentsByBatch = async (req, res) => {
       .eq("batch_id", batchId);
 
     if (error) {
-      console.log(error);
       return res.status(500).json({ error: error.message });
     }
 
@@ -238,15 +211,14 @@ exports.getStudentsByBatch = async (req, res) => {
       department: e.students.users?.department,
       institution: e.students.users?.institution,
       avatar: e.students.users?.avatar,
-      batchName: batchInfo.name,
-      teacher: teacherName,
+      batchName: batchInfo.subject_id,
+      teacher: "-",
       faceRegistered: e.students.face_registered,
       attendance: e.students.attendance_percentage || 0,
     }));
 
     res.json(formatted);
   } catch (err) {
-    console.log(err);
     res.status(500).json({ error: "Server error" });
   }
 };
@@ -256,7 +228,7 @@ exports.addStudent = async (req, res) => {
   const { name, email, roll, batchId, department, institution } = req.body;
 
   try {
-    const hasAccess = await ensureTeacherBatchAccess(batchId, req.user.id);
+    const hasAccess = await ensureBatchExists(batchId);
     if (!hasAccess) {
       return res.status(403).json({ error: "Access denied" });
     }
@@ -305,7 +277,7 @@ exports.addStudent = async (req, res) => {
           isNewEnrollment = false;
           return res.json({
             id: studentId,
-            name: existingUser.name,
+            name,
             roll,
             attendance: 0,
             faceRegistered: false,
@@ -413,7 +385,6 @@ exports.addStudent = async (req, res) => {
       isNew: isNewEnrollment,
     });
   } catch (err) {
-    console.log(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -423,7 +394,7 @@ exports.removeStudentFromBatch = async (req, res) => {
   const { id, batchId } = req.params;
 
   try {
-    const hasAccess = await ensureTeacherBatchAccess(batchId, req.user.id);
+    const hasAccess = await ensureBatchExists(batchId);
     if (!hasAccess) {
       return res.status(403).json({ error: "Access denied" });
     }
@@ -493,9 +464,8 @@ exports.getMyBatches = async (req, res) => {
         created_at,
         batches!inner (
           id,
-          name,
+          subject_id,
           batch_code,
-          teacher_id,
           threshold,
           total_students
         )
@@ -505,24 +475,20 @@ exports.getMyBatches = async (req, res) => {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    const teacherNames = await getTeacherNamesByIds(
-      (data || []).map((row) => row.batches?.teacher_id),
-    );
 
     res.json(
       (data || []).map((row) => ({
         id: row.batches.id,
-        name: row.batches.name,
+        name: row.batches.subject_id,
         code: row.batches.batch_code,
         threshold: row.batches.threshold,
         totalStudents: row.batches.total_students,
-        teacher: teacherNames.get(row.batches.teacher_id) || "Teacher",
+        teacher: "-",
         joinedOn: formatJoinedOn(row.created_at),
         joinedAt: row.created_at,
       })),
     );
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -540,11 +506,10 @@ exports.joinBatchByCode = async (req, res) => {
       .select(
         `
         id,
-        name,
+        subject_id,
         batch_code,
         threshold,
-        total_students,
-        teacher_id
+        total_students        
       `,
       )
       .eq("batch_code", batchCode)
@@ -554,7 +519,6 @@ exports.joinBatchByCode = async (req, res) => {
     if (!batch) {
       return res.status(404).json({ error: "Invalid batch code" });
     }
-    const teacherName = await getTeacherNameById(batch.teacher_id);
 
     const student = await getOrCreateStudentRecord(req.user.id);
 
@@ -573,11 +537,11 @@ exports.joinBatchByCode = async (req, res) => {
         message: "You have already joined this class",
         batch: {
           id: batch.id,
-          name: batch.name,
+          name: batch.subject_id,
           code: batch.batch_code,
           threshold: batch.threshold,
           totalStudents: batch.total_students,
-          teacher: teacherName,
+          teacher: "-",
           joinedOn: formatJoinedOn(existingEnrollment.created_at),
           joinedAt: existingEnrollment.created_at,
         },
@@ -603,17 +567,16 @@ exports.joinBatchByCode = async (req, res) => {
       message: "Class joined successfully",
       batch: {
         id: batch.id,
-        name: batch.name,
+        name: batch.subject_id,
         code: batch.batch_code,
         threshold: batch.threshold,
         totalStudents: batch.total_students + 1,
-        teacher: teacherName,
+        teacher: "-",
         joinedOn: formatJoinedOn(createdEnrollment.created_at),
         joinedAt: createdEnrollment.created_at,
       },
     });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -643,7 +606,6 @@ exports.leaveMyBatch = async (req, res) => {
     await decrementBatchStudentCount(batchId);
     res.json({ message: "You left the batch successfully" });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -664,9 +626,8 @@ exports.getMyBatchOverview = async (req, res) => {
         created_at,
         batches!inner (
           id,
-          name,
+          subject_id,
           batch_code,
-          teacher_id,
           threshold,
           total_students
         )
@@ -680,7 +641,6 @@ exports.getMyBatchOverview = async (req, res) => {
     if (!enrollment) {
       return res.status(403).json({ error: "Access denied" });
     }
-    const teacherName = await getTeacherNameById(enrollment.batches.teacher_id);
 
     const avgAttendance = await getBatchAverageAttendance(batchId);
     const myAttendance = Number(student.attendance_percentage || 0);
@@ -689,8 +649,8 @@ exports.getMyBatchOverview = async (req, res) => {
 
     res.json({
       batchId: enrollment.batches.id,
-      name: enrollment.batches.name,
-      teacher: teacherName,
+      name: enrollment.batches.subject_id,
+      teacher: "-",
       code: enrollment.batches.batch_code,
       totalStudents: enrollment.batches.total_students || 0,
       avgAttendance,
@@ -702,7 +662,6 @@ exports.getMyBatchOverview = async (req, res) => {
       currentStanding: `${thresholdGap >= 0 ? "+" : ""}${thresholdGap}% vs threshold`,
     });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -723,7 +682,7 @@ exports.getMyBatchReports = async (req, res) => {
 
     const { data: batch, error: batchError } = await supabase
       .from("batches")
-      .select("name, threshold")
+      .select("subject_id, threshold")
       .eq("id", batchId)
       .single();
 
@@ -770,7 +729,7 @@ exports.getMyBatchReports = async (req, res) => {
 
     res.json({
       batchId,
-      batchName: batch.name,
+      batchName: batch.subject_id,
       myAttendance: Number(student.attendance_percentage || 0),
       batchAverage: avgAttendance,
       totalClasses: batchAttendanceRows?.length || 0,
@@ -779,7 +738,6 @@ exports.getMyBatchReports = async (req, res) => {
       recentAttendance,
     });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -804,7 +762,7 @@ exports.getMyAttendanceByDate = async (req, res) => {
         batch_id,
         batches!inner (
           id,
-          name
+          subject_id
         )
       `,
       )
@@ -830,7 +788,7 @@ exports.getMyAttendanceByDate = async (req, res) => {
         const attendance = attendanceMap.get(row.batch_id);
         return {
           batchId: row.batches.id,
-          batchName: row.batches.name,
+          batchName: row.batches.subject_id,
           status: attendance
             ? attendance.present
               ? "Present"
@@ -843,7 +801,6 @@ exports.getMyAttendanceByDate = async (req, res) => {
       }),
     );
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
