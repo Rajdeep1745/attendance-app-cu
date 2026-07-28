@@ -66,12 +66,11 @@ export default function TeacherFeatures() {
   return (
     <section className="teacherShowcase">
       <div className="teacherHeader">
-
         <span className="pss-teach">
           <Sparkles size={14} />
           TEACHER EXPERIENCE
         </span>
-  
+
         <h2>
           Built For
           <span> Modern Educators</span>

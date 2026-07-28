@@ -127,10 +127,10 @@
 }
 
 
-.teacherHeader{
-  text-align:center;
-  max-width:920px;
-  margin:0 auto clamp(20px,2.35vw,34px);
+.teacherHeader {
+  text-align: center;
+  max-width: 920px;
+  margin: 0 auto clamp(20px, 2.35vw, 34px);
 }
 
 .teacherHeader h2 {
