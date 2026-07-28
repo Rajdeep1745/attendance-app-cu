@@ -80,9 +80,9 @@ const Layout = () => {
             ) : (
               <>
                 <Outlet />
-                <Footer />
               </>
             )}
+            <Footer />
           </main>
         </div>
       </div>
