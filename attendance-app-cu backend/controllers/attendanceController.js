@@ -1,11 +1,10 @@
 const supabase = require("../config/supabaseClient");
 
-const ensureTeacherBatchAccess = async (batchId, teacherId) => {
+const ensureBatchExists = async (batchId) => {
   const { data, error } = await supabase
     .from("batches")
     .select("id")
     .eq("id", batchId)
-    .eq("teacher_id", teacherId)
     .maybeSingle();
 
   if (error) throw error;
@@ -16,7 +15,7 @@ const ensureTeacherBatchAccess = async (batchId, teacherId) => {
 exports.getAttendanceStats = async (req, res) => {
   const { id } = req.params;
 
-  const hasAccess = await ensureTeacherBatchAccess(id, req.user.id);
+  const hasAccess = await ensureBatchExists(id);
   if (!hasAccess) {
     return res.status(403).json({ error: "Access denied" });
   }
@@ -78,7 +77,7 @@ exports.getAttendanceStats = async (req, res) => {
 exports.getAttendanceGraph = async (req, res) => {
   const { id } = req.params;
 
-  const hasAccess = await ensureTeacherBatchAccess(id, req.user.id);
+  const hasAccess = await ensureBatchExists(id);
   if (!hasAccess) {
     return res.status(403).json({ error: "Access denied" });
   }
@@ -107,7 +106,7 @@ exports.getDailyAttendance = async (req, res) => {
   }
 
   try {
-    const hasAccess = await ensureTeacherBatchAccess(batchId, req.user.id);
+    const hasAccess = await ensureBatchExists(batchId);
     if (!hasAccess) {
       return res.status(403).json({ error: "Access denied" });
     }
@@ -170,7 +169,7 @@ exports.getFrequentAbsentees = async (req, res) => {
   const { id } = req.params; // batchId
 
   try {
-    const hasAccess = await ensureTeacherBatchAccess(id, req.user.id);
+    const hasAccess = await ensureBatchExists(id);
     if (!hasAccess) {
       return res.status(403).json({ error: "Access denied" });
     }
@@ -222,12 +221,12 @@ exports.getFrequentAbsentees = async (req, res) => {
 // NEW EXPORTS
 // ═══════════════════════════════════════════════════════════════════════
 
-const { recognizeFaces } = require('../utils/faceService');
+const { recognizeFaces } = require("../utils/faceService");
 
 function normalizeFaceEmbedding(rawEmbedding) {
   let embedding = rawEmbedding;
 
-  if (typeof embedding === 'string') {
+  if (typeof embedding === "string") {
     try {
       embedding = JSON.parse(embedding);
     } catch {
@@ -239,7 +238,7 @@ function normalizeFaceEmbedding(rawEmbedding) {
     return null;
   }
 
-  const numericEmbedding = embedding.map(value => Number(value));
+  const numericEmbedding = embedding.map((value) => Number(value));
   return numericEmbedding.every(Number.isFinite) ? numericEmbedding : null;
 }
 
@@ -256,27 +255,30 @@ function getStudentFaceEmbedding(studentRow) {
 // BUG FIX: now also writes presences (int4) which is a real column in schema
 async function recalcBatchDate(batchId, date) {
   const { data: rows, error } = await supabase
-    .from('student_attendances')
-    .select('present')
-    .eq('batch_id', batchId)
-    .eq('date', date);
+    .from("student_attendances")
+    .select("present")
+    .eq("batch_id", batchId)
+    .eq("date", date);
 
-  if (error || !rows || rows.length === 0) return;
+  if (error) {
+    console.error(error);
+    return;
+  }
 
-  const presentCount = rows.filter(r => r.present).length;
+  if (!rows.length) return;
+
+  const presentCount = rows.filter((r) => r.present).length;
   const pct = Math.round((presentCount / rows.length) * 100);
 
-  await supabase
-    .from('batch_attendances')
-    .upsert(
-      {
-        batch_id: batchId,
-        date,
-        attendance_percentage: pct,
-        presences: presentCount           // ✅ FIXED: was missing, presences is int4 column
-      },
-      { onConflict: 'batch_id,date' }
-    );
+  await supabase.from("batch_attendances").upsert(
+    {
+      batch_id: batchId,
+      date,
+      attendance_percentage: pct,
+      presences: presentCount,
+    },
+    { onConflict: "batch_id,date" },
+  );
 }
 
 // ── Helper: recalculate students.attendance_percentage for a batch ────
@@ -284,9 +286,9 @@ async function recalcBatchDate(batchId, date) {
 // BUG FIX: uses .eq('student_id', ...) — students PK is student_id not id
 async function recalcStudentPercentages(batchId) {
   const { data: records, error } = await supabase
-    .from('student_attendances')
-    .select('student_id, present')
-    .eq('batch_id', batchId);
+    .from("student_attendances")
+    .select("student_id, present")
+    .eq("batch_id", batchId);
 
   if (error || !records || records.length === 0) return;
 
@@ -301,15 +303,18 @@ async function recalcStudentPercentages(batchId) {
   }
 
   // Update each student's cached attendance_percentage
-  for (const [studentId, counts] of Object.entries(totals)) {
-    const pct = Math.round((counts.present / counts.total) * 100);
+  await Promise.all(
+    Object.entries(totals).map(([studentId, counts]) => {
+      const pct = Math.round((counts.present / counts.total) * 100);
 
-    // ✅ FIXED: students PK is student_id, NOT id
-    await supabase
-      .from('students')
-      .update({ attendance_percentage: pct })
-      .eq('student_id', studentId);      // ✅ FIXED: was the wrong column name
-  }
+      return supabase
+        .from("students")
+        .update({
+          attendance_percentage: pct,
+        })
+        .eq("student_id", studentId);
+    }),
+  );
 }
 
 /**
@@ -320,51 +325,50 @@ async function recalcStudentPercentages(batchId) {
 exports.markAttendanceByFace = async (req, res) => {
   const { batchId } = req.params;
   const { date } = req.body;
-  const teacherId = req.user.id;         // users.id
   const file = req.file;
 
-  if (!file)  return res.status(400).json({ error: 'No file provided' });
-  if (!date)  return res.status(400).json({ error: 'date is required (YYYY-MM-DD)' });
+  if (!file) return res.status(400).json({ error: "No file provided" });
+  if (!date)
+    return res.status(400).json({ error: "date is required (YYYY-MM-DD)" });
 
   // ── Verify teacher owns this batch ─────────────────────────────────
-  const { data: batch, error: batchErr } = await supabase
-    .from('batches')
-    .select('id')
-    .eq('id', batchId)
-    .eq('teacher_id', teacherId)         // batches.teacher_id = users.id
-    .single();
+  const batchExists = await ensureBatchExists(batchId);
 
-  if (batchErr || !batch) {
-    return res.status(403).json({ error: 'Access denied' });
+  if (!batchExists) {
+    return res.status(404).json({
+      error: "Batch not found",
+    });
   }
 
   // Load enrolled students with their face data
   const { data: enrolled, error: enrollErr } = await supabase
-    .from('enrollments')
-    .select(`
+    .from("enrollments")
+    .select(
+      `
       student_id,
       students (
         student_id,
         face_registered,
         student_face_data ( embedding )
       )
-    `)
-    .eq('batch_id', batchId);
+    `,
+    )
+    .eq("batch_id", batchId);
 
   if (enrollErr || !enrolled) {
-    return res.status(500).json({ error: 'Failed to load student roster' });
+    return res.status(500).json({ error: "Failed to load student roster" });
   }
 
   // All student IDs enrolled in this batch
-  const allStudentIds = enrolled.map(e => e.student_id);
+  const allStudentIds = enrolled.map((e) => e.student_id);
 
   // Accept both one-to-one object and array relation shapes from Supabase.
   const studentsWithFaces = enrolled
-    .map(e => ({
+    .map((e) => ({
       id: e.student_id,
-      embedding: getStudentFaceEmbedding(e.students)
+      embedding: getStudentFaceEmbedding(e.students),
     }))
-    .filter(student => student.embedding);
+    .filter((student) => student.embedding);
 
   let recognizedIds = [];
   let framesProcessed = 0;
@@ -375,33 +379,39 @@ exports.markAttendanceByFace = async (req, res) => {
         file.buffer,
         file.mimetype,
         studentsWithFaces,
-        0.5
+        0.5,
       );
-      recognizedIds  = result.recognized.map(r => r.id);
+      recognizedIds = result.recognized.map((r) => r.id);
       framesProcessed = result.frames_processed;
     } catch (err) {
-      console.error('[attendanceController] recognizeFaces error:', err.message);
+      console.error(
+        "[attendanceController] recognizeFaces error:",
+        err.message,
+      );
       return res.status(503).json({
-        error: 'Face recognition service unavailable. Is the Python service running on port 5001?'
+        error:
+          "Face recognition service unavailable. Is the Python service running on port 5001?",
       });
     }
   }
 
   // ── Write student_attendances rows ────────────────────────────────
-  const attendanceRows = allStudentIds.map(sid => ({
+  const recognizedSet = new Set(recognizedIds);
+
+  const attendanceRows = allStudentIds.map((sid) => ({
     student_id: sid,
-    batch_id:   batchId,
+    batch_id: batchId,
     date,
-    present:    recognizedIds.includes(sid)
+    present: recognizedSet.has(sid),
   }));
 
   const { error: saveErr } = await supabase
-    .from('student_attendances')
-    .upsert(attendanceRows, { onConflict: 'student_id,batch_id,date' });
+    .from("student_attendances")
+    .upsert(attendanceRows, { onConflict: "student_id,batch_id,date" });
 
   if (saveErr) {
-    console.error('[attendanceController] upsert error:', saveErr);
-    return res.status(500).json({ error: 'Failed to save attendance' });
+    console.error("[attendanceController] upsert error:", saveErr);
+    return res.status(500).json({ error: "Failed to save attendance" });
   }
 
   // ── Recalculate stats (non-blocking) ─────────────────────────────
@@ -411,18 +421,18 @@ exports.markAttendanceByFace = async (req, res) => {
   const unregisteredCount = allStudentIds.length - studentsWithFaces.length;
 
   return res.json({
-    message: 'Attendance marked',
-    present_count:      recognizedIds.length,
-    total_count:        allStudentIds.length,
+    message: "Attendance marked",
+    present_count: recognizedIds.length,
+    total_count: allStudentIds.length,
     unregistered_count: unregisteredCount,
-    frames_processed:   framesProcessed,
+    frames_processed: framesProcessed,
     // Full list so frontend can render the override UI immediately
-    attendance: attendanceRows.map(row => ({
-      student_id:       row.student_id,
-      present:          row.present,
-      auto_recognized:  recognizedIds.includes(row.student_id),
-      has_face:         studentsWithFaces.some(s => s.id === row.student_id)
-    }))
+    attendance: attendanceRows.map((row) => ({
+      student_id: row.student_id,
+      present: row.present,
+      auto_recognized: recognizedSet.has(row.student_id),
+      has_face: studentsWithFaces.some((s) => s.id === row.student_id),
+    })),
   });
 };
 
@@ -434,45 +444,41 @@ exports.markAttendanceByFace = async (req, res) => {
 exports.overrideAttendance = async (req, res) => {
   const { batchId } = req.params;
   const { date, overrides } = req.body;
-  const teacherId = req.user.id;
 
   if (!date || !Array.isArray(overrides) || overrides.length === 0) {
-    return res.status(400).json({ error: 'date and overrides[] are required' });
+    return res.status(400).json({ error: "date and overrides[] are required" });
   }
 
   // Verify teacher owns batch
-  const { data: batch, error: batchErr } = await supabase
-    .from('batches')
-    .select('id')
-    .eq('id', batchId)
-    .eq('teacher_id', teacherId)
-    .single();
+  const batchExists = await ensureBatchExists(batchId);
 
-  if (batchErr || !batch) {
-    return res.status(403).json({ error: 'Access denied' });
+  if (!batchExists) {
+    return res.status(404).json({
+      error: "Batch not found",
+    });
   }
 
-  const rows = overrides.map(o => ({
+  const rows = overrides.map((o) => ({
     student_id: o.student_id,
-    batch_id:   batchId,
+    batch_id: batchId,
     date,
-    present:    Boolean(o.present)
+    present: Boolean(o.present),
   }));
 
   const { error } = await supabase
-    .from('student_attendances')
-    .upsert(rows, { onConflict: 'student_id,batch_id,date' });
+    .from("student_attendances")
+    .upsert(rows, { onConflict: "student_id,batch_id,date" });
 
   if (error) {
-    console.error('[attendanceController] override error:', error);
-    return res.status(500).json({ error: 'Failed to save overrides' });
+    console.error("[attendanceController] override error:", error);
+    return res.status(500).json({ error: "Failed to save overrides" });
   }
 
   // Recalculate — now also writes presences column correctly
   await recalcBatchDate(batchId, date).catch(console.error);
   await recalcStudentPercentages(batchId).catch(console.error);
 
-  return res.json({ message: 'Overrides saved' });
+  return res.json({ message: "Overrides saved" });
 };
 
 /**
@@ -484,43 +490,41 @@ exports.overrideAttendance = async (req, res) => {
 exports.markManualAttendance = async (req, res) => {
   const { batchId } = req.params;
   const { date, attendance } = req.body;
-  const teacherId = req.user.id;
 
   if (!date || !Array.isArray(attendance) || attendance.length === 0) {
-    return res.status(400).json({ error: 'date and attendance[] are required' });
+    return res
+      .status(400)
+      .json({ error: "date and attendance[] are required" });
   }
 
-  const { data: batch, error: batchErr } = await supabase
-    .from('batches')
-    .select('id')
-    .eq('id', batchId)
-    .eq('teacher_id', teacherId)
-    .single();
+  const batchExists = await ensureBatchExists(batchId);
 
-  if (batchErr || !batch) {
-    return res.status(403).json({ error: 'Access denied' });
+  if (!batchExists) {
+    return res.status(404).json({
+      error: "Batch not found",
+    });
   }
 
-  const rows = attendance.map(a => ({
+  const rows = attendance.map((a) => ({
     student_id: a.student_id,
-    batch_id:   batchId,
+    batch_id: batchId,
     date,
-    present:    Boolean(a.present)
+    present: Boolean(a.present),
   }));
 
   const { error } = await supabase
-    .from('student_attendances')
-    .upsert(rows, { onConflict: 'student_id,batch_id,date' });
+    .from("student_attendances")
+    .upsert(rows, { onConflict: "student_id,batch_id,date" });
 
   if (error) {
-    return res.status(500).json({ error: 'Failed to save attendance' });
+    return res.status(500).json({ error: "Failed to save attendance" });
   }
 
   await recalcBatchDate(batchId, date).catch(console.error);
   await recalcStudentPercentages(batchId).catch(console.error);
 
-  const presentCount = rows.filter(r => r.present).length;
+  const presentCount = rows.filter((r) => r.present).length;
   const pct = Math.round((presentCount / rows.length) * 100);
 
-  return res.json({ message: 'Attendance saved', percentage: pct });
+  return res.json({ message: "Attendance saved", percentage: pct });
 };

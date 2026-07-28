@@ -69,11 +69,11 @@ const Layout = () => {
             {!batchId ? (
               <div className="empty-state">
                 <h2>
-                  {role === "teacher" ? "Select a batch" : "Choose a batch"}
+                  {role === "teacher" ? "Select a subject" : "Choose a batch"}
                 </h2>
                 <p>
                   {role === "teacher"
-                    ? "Please choose a batch from the sidebar to continue."
+                    ? "Please choose a subject from the sidebar to continue."
                     : "Join a batch using a valid batch code, or choose one of your real joined batches from the sidebar."}
                 </p>
               </div>

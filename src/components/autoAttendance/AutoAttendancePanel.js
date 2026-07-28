@@ -9,6 +9,22 @@ const formatLocalDate = (date = new Date()) => {
   return `${year}-${month}-${day}`;
 };
 
+const readApiResponse = async (response) => {
+  const contentType = response.headers.get('content-type') || '';
+
+  if (contentType.includes('application/json')) {
+    return response.json();
+  }
+
+  const text = await response.text();
+  const preview = text.replace(/\s+/g, ' ').trim().slice(0, 120);
+  throw new Error(
+    preview
+      ? `Server returned a non-JSON response: ${preview}`
+      : 'Server returned an empty response',
+  );
+};
+
 /**
  * AutoAttendancePanel
  *
@@ -70,7 +86,7 @@ const AutoAttendancePanel = ({ batchId, students = [], onSaved, showAlert }) => 
         }
       );
 
-      const data = await res.json();
+      const data = await readApiResponse(res);
       if (!res.ok) throw new Error(data.error || 'Processing failed');
 
       // Build a map for the override UI
@@ -129,7 +145,7 @@ const AutoAttendancePanel = ({ batchId, students = [], onSaved, showAlert }) => 
           body: JSON.stringify({ date, overrides })
         }
       );
-      const data = await res.json();
+      const data = await readApiResponse(res);
       if (!res.ok) throw new Error(data.error || 'Save failed');
 
       showAlert && showAlert(true, 'Attendance saved!', 'success');
