@@ -1,7 +1,7 @@
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import AlertContext from "../../context/alert/AlertContext";
-import "./Auth.css";
+import "./signupForm.css";
 
 const SignupForm = ({ switchToLogin }) => {
   const { showAlert } = useContext(AlertContext);

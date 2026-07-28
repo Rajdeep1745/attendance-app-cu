@@ -62,6 +62,14 @@ async function persistRegisteredFace(student, file) {
       throw error;
     }
 
+    if (code === "invalid_image") {
+      const error = new Error(
+        "Could not read this image. Please upload a valid JPEG, PNG, or WebP photo.",
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+
     console.error("[faceController] extractEmbedding error:", err.message);
     const error = new Error(
       "Face recognition service unavailable. Is the Python service running on port 5001?",
