@@ -165,7 +165,6 @@
 /* ====================================
    Content
 ==================================== */
-
 .hero-content {
   width: 100%;
   max-width: 850px;
@@ -378,8 +377,6 @@
 
 .hero-subtitle {
   max-width: 680px;
-  font-size: 1.05rem;
-
   margin: 0 auto;
 
   font-size: 1.18rem;
