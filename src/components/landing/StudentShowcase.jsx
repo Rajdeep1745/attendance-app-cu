@@ -12,7 +12,6 @@ import {
   ArrowRight,
   Clock,
   BarChart3,
-  GraduationCap,
   Award,
 } from "lucide-react";
 
