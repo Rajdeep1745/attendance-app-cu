@@ -92,7 +92,6 @@
       transparent 45%
     ),
     linear-gradient(90deg, #f2f7ff 0%, #fafaff 50%, #fdf4ff 100%);
-    linear-gradient(90deg, #f2f7ff 0%, #fafaff 50%, #fdf4ff 100%);
 }
 
 /* ====================================
@@ -115,20 +114,11 @@
 .bottom-left {
   bottom: 180px;
   left: 50px;
-.bottom-left {
-  bottom: 180px;
-  left: 50px;
 }
 
 /* ====================================
    Content
 ==================================== */
-
-.hero-content {
-  width: 100%;
-  max-width: 850px;
-  margin: 0 auto;
-  text-align: center;
 .hero-content {
   width: 100%;
   max-width: 850px;
@@ -151,9 +141,6 @@
 
   color: #081b5c;
 
-  text-align: center;
-  position: relative;
-  z-index: 2;
   text-align: center;
   position: relative;
   z-index: 2;
@@ -234,7 +221,6 @@
   object-fit: contain;
 
   filter: drop-shadow(0 10px 25px rgba(124, 58, 237, 0.18));
-  filter: drop-shadow(0 10px 25px rgba(124, 58, 237, 0.18));
 }
 
 /* ====================================
@@ -243,21 +229,12 @@
 
 .hero-subtitle {
   max-width: 680px;
-  font-size: 1.05rem;
-.hero-subtitle {
-  max-width: 680px;
-  font-size: 1.05rem;
-
-  margin: 0 auto;
   margin: 0 auto;
 
   font-size: 1.18rem;
-  font-size: 1.18rem;
 
   line-height: 1.8;
-  line-height: 1.8;
 
-  color: #4f5d7b;
   color: #4f5d7b;
 }
 
@@ -980,11 +957,6 @@
 
 /* RIGHT SIDE */
 
-.auth-form-side {
-  overflow-y: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 .auth-form-side {
   overflow-y: auto;
   display: flex;
