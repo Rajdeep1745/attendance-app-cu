@@ -83,7 +83,8 @@ const Lectures = () => {
   const [planSummary, setPlanSummary] = useState(null);
   const [expandedCurriculumUnits, setExpandedCurriculumUnits] = useState({});
 
-  const batchMatchesRoute = String(activeBatch?.id || "") === String(batchId || "");
+  const batchMatchesRoute =
+    String(activeBatch?.id || "") === String(batchId || "");
 
   const hasCurriculumTopics = useMemo(
     () => lectureTopics.some((unit) => unit.topics.length > 0),
@@ -212,7 +213,9 @@ const Lectures = () => {
 
         return {
           ...week,
-          topics: week.topics.filter((_, currentTopicIndex) => currentTopicIndex !== topicIndex),
+          topics: week.topics.filter(
+            (_, currentTopicIndex) => currentTopicIndex !== topicIndex,
+          ),
         };
       }),
     );
@@ -237,10 +240,7 @@ const Lectures = () => {
 
   const saveCurriculum = async (
     topicsData = lectureTopics,
-    {
-      refreshPlan = true,
-      successMessage = "Lecture topics updated",
-    } = {},
+    { refreshPlan = true, successMessage = "Lecture topics updated" } = {},
   ) => {
     try {
       const token = localStorage.getItem("token");
@@ -436,7 +436,8 @@ const Lectures = () => {
       setMode("ai");
       showAlert(
         "Draft Ready",
-        data?.message || "A teaching-plan draft is ready. Review and edit it before saving.",
+        data?.message ||
+          "A teaching-plan draft is ready. Review and edit it before saving.",
         "success",
       );
     } catch (err) {
@@ -475,8 +476,18 @@ const Lectures = () => {
 
                       if (!selectedTopic) return;
 
-                      updateTopic(weekIndex, topicIndex, "topicId", selectedTopic.id);
-                      updateTopic(weekIndex, topicIndex, "title", selectedTopic.name);
+                      updateTopic(
+                        weekIndex,
+                        topicIndex,
+                        "topicId",
+                        selectedTopic.id,
+                      );
+                      updateTopic(
+                        weekIndex,
+                        topicIndex,
+                        "title",
+                        selectedTopic.name,
+                      );
                     }}
                   >
                     <option value="">Select Topic</option>
@@ -556,17 +567,16 @@ const Lectures = () => {
       ))}
 
       <div className="manual-footer">
-        <button
-          className="btn btn-outline-secondary"
-          onClick={addWeek}
-        >
+        <button className="btn btn-outline-secondary" onClick={addWeek}>
           <i className="fa-solid fa-plus"></i> Add Week
         </button>
 
         <button
           className="btn btn-primary"
           onClick={savePlan}
-          disabled={weeks.some((week) => week.topics.some((topic) => !topic.topicId))}
+          disabled={weeks.some((week) =>
+            week.topics.some((topic) => !topic.topicId),
+          )}
         >
           <i className="fa-solid fa-save"></i> Save Plan
         </button>
@@ -578,15 +588,17 @@ const Lectures = () => {
     !batchMatchesRoute || curriculumLoading || planLoading,
   );
 
-  if (showPageSkeleton || !batchMatchesRoute) return <TeacherLecturesSkeleton />;
+  if (showPageSkeleton || !batchMatchesRoute)
+    return <TeacherLecturesSkeleton />;
 
   return (
-    <div className="container-fluid lectures-page">
-      <div className="mb-4">
-        <h2 className="lectures-title">Lecture Topics</h2>
-        <p className="lectures-subtitle">
-          Enter the semester syllabus manually, review it in a clean format, and use it while building the teaching plan.
-        </p>
+    <div className="container-fluid lectures-page page-enter">
+      <div className="lectures-hero">
+        <div>
+          <h1>Lecture Topics</h1>
+
+          <p>Build syllabus topics and generate structured teaching plans.</p>
+        </div>
       </div>
 
       <div className="card lectures-card mb-4">
@@ -595,7 +607,8 @@ const Lectures = () => {
             <div>
               <h5 className="card-title mb-1">Enter Semester Syllabus</h5>
               <p className="text-muted mb-0">
-                Manually add the main topics for this semester and list their subtopics under each heading.
+                Manually add the main topics for this semester and list their
+                subtopics under each heading.
               </p>
             </div>
 
@@ -616,7 +629,9 @@ const Lectures = () => {
             <div>
               <h5 className="card-title mb-1">Topics and Subtopics</h5>
               <p className="text-muted mb-0">
-                A clean, well-organized view of the semester syllabus for {activeBatch.name}. These topics feed both AI and manual teaching-plan creation.
+                A clean, well-organized view of the semester syllabus for{" "}
+                {activeBatch.name}. These topics feed both AI and manual
+                teaching-plan creation.
               </p>
             </div>
           </div>
@@ -625,7 +640,10 @@ const Lectures = () => {
             <div className="empty-syllabus-state mt-4">
               <i className="fa-solid fa-book-open-reader"></i>
               <p className="mb-1">No syllabus topics available yet</p>
-              <small>Use the section above to enter the semester topics and subtopics manually.</small>
+              <small>
+                Use the section above to enter the semester topics and subtopics
+                manually.
+              </small>
             </div>
           ) : (
             <div className="mt-4">
@@ -806,7 +824,9 @@ const Lectures = () => {
                     <div>
                       <h6 className="mb-1">Generate a weekly teaching draft</h6>
                       <p className="text-muted mb-0">
-                        The AI uses the saved syllabus topics and subtopics, then distributes them week by week based on your semester schedule.
+                        The AI uses the saved syllabus topics and subtopics,
+                        then distributes them week by week based on your
+                        semester schedule.
                       </p>
                     </div>
 
@@ -837,7 +857,10 @@ const Lectures = () => {
                         min="1"
                         value={generationSettings.workingWeeks}
                         onChange={(e) =>
-                          updateGenerationSetting("workingWeeks", e.target.value)
+                          updateGenerationSetting(
+                            "workingWeeks",
+                            e.target.value,
+                          )
                         }
                       />
                     </div>
@@ -849,7 +872,10 @@ const Lectures = () => {
                         min="1"
                         value={generationSettings.classesPerWeek}
                         onChange={(e) =>
-                          updateGenerationSetting("classesPerWeek", e.target.value)
+                          updateGenerationSetting(
+                            "classesPerWeek",
+                            e.target.value,
+                          )
                         }
                       />
                     </div>
@@ -862,7 +888,10 @@ const Lectures = () => {
                         step="0.5"
                         value={generationSettings.hoursPerClass}
                         onChange={(e) =>
-                          updateGenerationSetting("hoursPerClass", e.target.value)
+                          updateGenerationSetting(
+                            "hoursPerClass",
+                            e.target.value,
+                          )
                         }
                       />
                     </div>
@@ -892,7 +921,9 @@ const Lectures = () => {
                   {hasAiDraft && isEditing && weeks.length > 0 && (
                     <div className="mt-4">
                       <div className="ai-draft-note">
-                        Edit the generated draft below, then save it to publish the same teaching plan on the student lecture topics tab.
+                        Edit the generated draft below, then save it to publish
+                        the same teaching plan on the student lecture topics
+                        tab.
                       </div>
                       {renderPlanEditor()}
                     </div>
@@ -906,7 +937,8 @@ const Lectures = () => {
                   renderPlanEditor()
                 ) : (
                   <div className="text-muted">
-                    Please enter lecture topics and subtopics before creating a teaching plan.
+                    Please enter lecture topics and subtopics before creating a
+                    teaching plan.
                   </div>
                 ))}
             </>
