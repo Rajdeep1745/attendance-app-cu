@@ -175,13 +175,13 @@ const Navbar = (props) => {
             )}
           </div>
 
-          <button
+          {/* <button
             className="dev-info-btn"
             onClick={() => setDevModalOpen(true)}
             title="About Developers"
           >
             <i className="fa-solid fa-code"></i>
-          </button>
+          </button> */}
         </div>
 
         {mobileMenuOpen && (
