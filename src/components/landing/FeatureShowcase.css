@@ -6,27 +6,45 @@
 .studentShowcase {
   position: relative;
   overflow: hidden;
+.studentShowcase {
+  position: relative;
+  overflow: hidden;
 }
 
 .teacherShowcase::before {
   content: "";
+.teacherShowcase::before {
+  content: "";
 
+  position: absolute;
   position: absolute;
 
   width: 760px;
   height: 760px;
+  width: 760px;
+  height: 760px;
 
+  border-radius: 50%;
   border-radius: 50%;
 
   background: radial-gradient(circle, rgba(92, 32, 32, 0.34), transparent 65%);
+  background: radial-gradient(circle, rgba(92, 32, 32, 0.34), transparent 65%);
 
+  top: -460px;
+  right: -160px;
   top: -460px;
   right: -160px;
 
   filter: blur(95px);
   pointer-events: none;
+  filter: blur(95px);
+  pointer-events: none;
 }
 
+.studentShowcase::before {
+  background: rgba(215, 85, 247, 0.997);
+  left: -250px;
+  bottom: -250px;
 .studentShowcase::before {
   background: rgba(215, 85, 247, 0.997);
   left: -250px;
@@ -39,19 +57,32 @@
   line-height: 1.1;
   color: rgb(255, 255, 255);
   margin: 20px 0;
+.studentShowcase h2 {
+  font-size: 4rem;
+  line-height: 1.1;
+  color: rgb(255, 255, 255);
+  margin: 20px 0;
 }
 
 .teacherShowcase h2 span,
 .studentShowcase h2 span {
   display: block;
+.studentShowcase h2 span {
+  display: block;
 
   background: linear-gradient(135deg, #60a5fa, #8b5cf6);
+  background: linear-gradient(135deg, #60a5fa, #8b5cf6);
 
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .teacherShowcase p,
+.studentShowcase p {
+  color: #94a3b8;
+  line-height: 1.8;
 .studentShowcase p {
   color: #94a3b8;
   line-height: 1.8;
@@ -63,7 +94,13 @@
 
 .teacherShowcase {
   position: relative;
+.teacherShowcase {
+  position: relative;
 
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  box-sizing: border-box;
   width: 100%;
   max-width: none;
   min-height: 100vh;
@@ -71,9 +108,13 @@
 
   padding: clamp(18px, 2.1vw, 34px) clamp(28px, 4vw, 76px)
     clamp(24px, 2.4vw, 44px);
+  padding: clamp(18px, 2.1vw, 34px) clamp(28px, 4vw, 76px)
+    clamp(24px, 2.4vw, 44px);
 
   margin: 0;
+  margin: 0;
 
+  overflow: hidden;
   overflow: hidden;
 
   background:
@@ -137,10 +178,22 @@
   font-size: clamp(4.1rem, 4.75vw, 5.25rem);
   line-height: 0.92;
   font-weight: 900;
+.teacherHeader h2 {
+  font-size: clamp(4.1rem, 4.75vw, 5.25rem);
+  line-height: 0.92;
+  font-weight: 900;
 
   margin-top: 18px;
   margin-bottom: 18px;
+  margin-top: 18px;
+  margin-bottom: 18px;
 
+  background: linear-gradient(
+    180deg,
+    rgb(2, 30, 68) 20%,
+    rgb(29, 80, 220) 54%,
+    rgb(138, 194, 232) 95%
+  );
   background: linear-gradient(
     180deg,
     rgb(2, 30, 68) 20%,
@@ -153,19 +206,33 @@
   background-clip: text;
 
   text-shadow: 0 0 40px rgba(96, 165, 250, 0.25);
-}
-
-.teacherHeader h2 span {
-  display: block;
-
-  background: linear-gradient(0deg, #030962, #0b2061, #305bc8, #377de0);
-
-  background-clip: text;
+  -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 
   text-shadow: 0 0 40px rgba(96, 165, 250, 0.25);
 }
 
+.teacherHeader h2 span {
+  display: block;
+.teacherHeader h2 span {
+  display: block;
+
+  background: linear-gradient(0deg, #030962, #0b2061, #305bc8, #377de0);
+  background: linear-gradient(0deg, #030962, #0b2061, #305bc8, #377de0);
+
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  text-shadow: 0 0 40px rgba(96, 165, 250, 0.25);
+  text-shadow: 0 0 40px rgba(96, 165, 250, 0.25);
+}
+
+.teacherHeader p {
+  max-width: 810px;
+  margin: auto;
 .teacherHeader p {
   max-width: 810px;
   margin: auto;
@@ -173,7 +240,10 @@
   font-weight: 700;
   font-size: 1.15rem;
   line-height: 1.6;
+  font-size: 1.15rem;
+  line-height: 1.6;
 
+  color: rgb(73, 24, 146);
   color: rgb(73, 24, 146);
 }
 
@@ -181,17 +251,28 @@
 
 .teacherContent {
   display: grid;
+.teacherContent {
+  display: grid;
 
   grid-template-columns:
     minmax(210px, 250px)
     minmax(720px, 1040px)
     minmax(170px, 260px);
+    minmax(210px, 250px)
+    minmax(720px, 1040px)
+    minmax(170px, 260px);
 
+  gap: clamp(18px, 2vw, 34px);
   gap: clamp(18px, 2vw, 34px);
 
   align-items: center;
   justify-content: center;
+  align-items: center;
+  justify-content: center;
 
+  width: 100%;
+  max-width: 1710px;
+  margin: 0 auto;
   width: 100%;
   max-width: 1710px;
   margin: 0 auto;
@@ -203,28 +284,44 @@
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+.featureColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
 }
 
 /* ---------- GLASS CARDS ---------- */
 
 .glassCard {
   position: relative;
+.glassCard {
+  position: relative;
 
+  overflow: hidden;
   overflow: hidden;
 
   min-height: 100px;
   box-sizing: border-box;
+  min-height: 100px;
+  box-sizing: border-box;
 
+  padding: 20px 22px;
   padding: 20px 22px;
 
   border-radius: 22px;
+  border-radius: 22px;
 
+  backdrop-filter: blur(28px);
   backdrop-filter: blur(28px);
 
   border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.22);
 
   color: white;
+  color: white;
 
+  transition: 0.4s;
   transition: 0.4s;
 
   background:
@@ -233,17 +330,27 @@
       rgba(255, 255, 255, 0.24),
       rgba(255, 255, 255, 0.06) 28%,
       rgba(4, 10, 28, 0.72) 70%
+      rgba(255, 255, 255, 0.24),
+      rgba(255, 255, 255, 0.06) 28%,
+      rgba(4, 10, 28, 0.72) 70%
     ),
+    rgba(8, 14, 32, 0.72);
     rgba(8, 14, 32, 0.72);
 
   box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 22px 70px rgba(0, 0, 0, 0.42);
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
     0 22px 70px rgba(0, 0, 0, 0.42);
 }
 
 .glassCard::before {
   content: "";
+.glassCard::before {
+  content: "";
 
+  position: absolute;
+  inset: 0;
   position: absolute;
   inset: 0;
 
@@ -251,27 +358,38 @@
     radial-gradient(
       ellipse at 12% 0%,
       rgba(255, 255, 255, 0.28),
+      rgba(255, 255, 255, 0.28),
       transparent 43%
     ),
     radial-gradient(
       ellipse at 90% 90%,
       rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0.08),
       transparent 48%
     );
 
+  pointer-events: none;
   pointer-events: none;
 }
 
 .glassCard::after {
   content: "";
+.glassCard::after {
+  content: "";
 
+  position: absolute;
   position: absolute;
 
   width: 230px;
   height: 150px;
+  width: 230px;
+  height: 150px;
 
   border-radius: 45%;
+  border-radius: 45%;
 
+  top: -58px;
+  right: -72px;
   top: -58px;
   right: -72px;
 
@@ -280,15 +398,26 @@
     rgba(255, 255, 255, 0.13),
     rgba(255, 255, 255, 0.02)
   );
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.13),
+    rgba(255, 255, 255, 0.02)
+  );
 
+  filter: blur(18px);
+  transform: rotate(-28deg);
   filter: blur(18px);
   transform: rotate(-28deg);
 }
 
 .glassCard:hover {
   transform: translateY(-6px);
+.glassCard:hover {
+  transform: translateY(-6px);
 
   box-shadow:
+    0 0 40px rgba(96, 165, 250, 0.15),
+    0 20px 70px rgba(0, 0, 0, 0.45);
     0 0 40px rgba(96, 165, 250, 0.15),
     0 20px 70px rgba(0, 0, 0, 0.45);
 }
@@ -296,28 +425,47 @@
 .glassCard svg {
   position: relative;
   z-index: 1;
+.glassCard svg {
+  position: relative;
+  z-index: 1;
 
+  width: 50px;
+  height: 50px;
+  box-sizing: border-box;
   width: 50px;
   height: 50px;
   box-sizing: border-box;
 
   margin-bottom: 17px;
   padding: 10px;
+  margin-bottom: 17px;
+  padding: 10px;
 
+  border-radius: 999px;
   border-radius: 999px;
 
   color: white;
+  color: white;
 
+  border: 1px solid rgba(255, 255, 255, 0.26);
   border: 1px solid rgba(255, 255, 255, 0.26);
 }
 
 .glassCard h4 {
   position: relative;
   z-index: 1;
+.glassCard h4 {
+  position: relative;
+  z-index: 1;
 
   margin-bottom: 8px;
   color: white;
+  margin-bottom: 8px;
+  color: white;
 
+  font-size: 1.22rem;
+  line-height: 1.15;
+  font-weight: 800;
   font-size: 1.22rem;
   line-height: 1.15;
   font-weight: 800;
@@ -326,7 +474,13 @@
 .glassCard p {
   position: relative;
   z-index: 1;
+.glassCard p {
+  position: relative;
+  z-index: 1;
 
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.91rem;
+  line-height: 1.48;
   color: rgba(255, 255, 255, 0.86);
   font-size: 0.91rem;
   line-height: 1.48;
@@ -334,8 +488,16 @@
 
 .blueCard {
   border-color: rgba(6, 40, 56, 0.933);
+.blueCard {
+  border-color: rgba(6, 40, 56, 0.933);
 
   background:
+    linear-gradient(
+      135deg,
+      rgba(96, 165, 250, 0.25),
+      rgba(10, 22, 54, 0.82) 58%,
+      rgba(39, 50, 91, 0.86)
+    ),
     linear-gradient(
       135deg,
       rgba(96, 165, 250, 0.25),
@@ -348,8 +510,14 @@
     0 0 0 1px rgba(125, 211, 252, 0.12),
     0 0 36px rgba(56, 189, 248, 0.42),
     0 28px 78px rgba(0, 0, 0, 0.45);
+    0 0 0 1px rgba(125, 211, 252, 0.12),
+    0 0 36px rgba(56, 189, 248, 0.42),
+    0 28px 78px rgba(0, 0, 0, 0.45);
 }
 
+.blueCard svg {
+  background: rgba(6, 35, 97, 0.753);
+  box-shadow: 0 0 26px rgba(59, 130, 246, 0.7);
 .blueCard svg {
   background: rgba(6, 35, 97, 0.753);
   box-shadow: 0 0 26px rgba(59, 130, 246, 0.7);
@@ -357,8 +525,16 @@
 
 .purpleCard {
   border-color: rgba(34, 8, 60, 0.78);
+.purpleCard {
+  border-color: rgba(34, 8, 60, 0.78);
 
   background:
+    linear-gradient(
+      135deg,
+      rgba(198, 160, 233, 0.603),
+      rgba(13, 13, 42, 0.85) 58%,
+      rgba(48, 19, 93, 0.7)
+    ),
     linear-gradient(
       135deg,
       rgba(198, 160, 233, 0.603),
@@ -371,8 +547,14 @@
     0 0 0 1px rgba(192, 132, 252, 0.12),
     0 0 36px rgba(168, 85, 247, 0.42),
     0 28px 78px rgba(0, 0, 0, 0.45);
+    0 0 0 1px rgba(192, 132, 252, 0.12),
+    0 0 36px rgba(168, 85, 247, 0.42),
+    0 28px 78px rgba(0, 0, 0, 0.45);
 }
 
+.purpleCard svg {
+  background: rgba(52, 5, 94, 0.678);
+  box-shadow: 0 0 26px rgba(168, 85, 247, 0.7);
 .purpleCard svg {
   background: rgba(52, 5, 94, 0.678);
   box-shadow: 0 0 26px rgba(168, 85, 247, 0.7);
@@ -380,8 +562,16 @@
 
 .orangeCard {
   border-color: rgba(255, 166, 0, 0.9);
+.orangeCard {
+  border-color: rgba(255, 166, 0, 0.9);
 
   background:
+    linear-gradient(
+      135deg,
+      rgba(245, 227, 141, 0.963),
+      rgba(145, 62, 2, 0.936) 58%,
+      rgba(239, 159, 123, 0.853)
+    ),
     linear-gradient(
       135deg,
       rgba(245, 227, 141, 0.963),
@@ -395,19 +585,35 @@
     0 0 42px rgba(255, 166, 0, 0.42),
     0 0 90px rgba(255, 132, 0, 0.22),
     0 28px 78px rgba(0, 0, 0, 0.45);
+    0 0 0 1px rgba(255, 200, 120, 0.18),
+    0 0 42px rgba(255, 166, 0, 0.42),
+    0 0 90px rgba(255, 132, 0, 0.22),
+    0 28px 78px rgba(0, 0, 0, 0.45);
 }
 
 .orangeCard svg {
   background: rgba(133, 67, 6, 0.868);
+.orangeCard svg {
+  background: rgba(133, 67, 6, 0.868);
   box-shadow:
+    0 0 22px rgba(255, 183, 77, 0.75),
+    0 0 40px rgba(255, 132, 0, 0.35);
     0 0 22px rgba(255, 183, 77, 0.75),
     0 0 40px rgba(255, 132, 0, 0.35);
 }
 
 .greenCard {
   border-color: rgba(110, 231, 183, 0.82);
+.greenCard {
+  border-color: rgba(110, 231, 183, 0.82);
 
   background:
+    linear-gradient(
+      135deg,
+      rgba(52, 211, 153, 0.83),
+      rgba(7, 55, 42, 0.83) 58%,
+      rgba(10, 108, 92, 0.77)
+    ),
     linear-gradient(
       135deg,
       rgba(52, 211, 153, 0.83),
@@ -421,19 +627,35 @@
     0 0 42px rgba(52, 211, 153, 0.38),
     0 0 90px rgba(16, 185, 129, 0.2),
     0 28px 78px rgba(0, 0, 0, 0.45);
+    0 0 0 1px rgba(110, 231, 183, 0.15),
+    0 0 42px rgba(52, 211, 153, 0.38),
+    0 0 90px rgba(16, 185, 129, 0.2),
+    0 28px 78px rgba(0, 0, 0, 0.45);
 }
 
 .greenCard svg {
   background: rgba(21, 64, 47, 0.538);
+.greenCard svg {
+  background: rgba(21, 64, 47, 0.538);
   box-shadow:
+    0 0 22px rgba(110, 231, 183, 0.72),
+    0 0 40px rgba(16, 185, 129, 0.32);
     0 0 22px rgba(110, 231, 183, 0.72),
     0 0 40px rgba(16, 185, 129, 0.32);
 }
 
 .greyCard {
   border-color: rgba(215, 220, 230, 0.85);
+.greyCard {
+  border-color: rgba(215, 220, 230, 0.85);
 
   background:
+    linear-gradient(
+      135deg,
+      rgba(203, 201, 201, 0.988),
+      rgba(70, 74, 81, 0.927) 58%,
+      rgba(115, 114, 112, 0.988)
+    ),
     linear-gradient(
       135deg,
       rgba(203, 201, 201, 0.988),
@@ -447,11 +669,20 @@
     0 0 40px rgba(200, 210, 225, 0.22),
     0 0 80px rgba(130, 140, 155, 0.18),
     0 28px 78px rgba(0, 0, 0, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 40px rgba(200, 210, 225, 0.22),
+    0 0 80px rgba(130, 140, 155, 0.18),
+    0 28px 78px rgba(0, 0, 0, 0.45);
 }
 
 .greyCard svg {
   background: rgba(78, 80, 78, 0.89);
+.greyCard svg {
+  background: rgba(78, 80, 78, 0.89);
   box-shadow:
+    0 0 20px rgba(240, 245, 255, 0.45),
+    0 0 36px rgba(180, 190, 205, 0.22);
     0 0 20px rgba(240, 245, 255, 0.45),
     0 0 36px rgba(180, 190, 205, 0.22);
 }
@@ -460,18 +691,33 @@
 
 .teacherGraphic {
   position: relative;
+.teacherGraphic {
+  position: relative;
 
+  width: 210px;
+  height: 188px;
   width: 210px;
   height: 188px;
 
   margin: 2px auto;
+  margin: 2px auto;
 
+  display: flex;
+  align-items: center;
+  justify-content: center;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .teacherGraphic::before,
+.teacherGraphic::after {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #7dd3fc;
 .teacherGraphic::after {
   content: "";
   position: absolute;
@@ -487,8 +733,17 @@
     164px 12px 12px rgba(96, 165, 250, 0.75),
     12px 68px 0 rgba(34, 211, 238, 0.8),
     12px 68px 12px rgba(34, 211, 238, 0.75);
+    90px -28px 0 rgba(168, 85, 247, 0.9),
+    90px -28px 14px rgba(168, 85, 247, 0.8),
+    164px 12px 0 rgba(96, 165, 250, 0.8),
+    164px 12px 12px rgba(96, 165, 250, 0.75),
+    12px 68px 0 rgba(34, 211, 238, 0.8),
+    12px 68px 12px rgba(34, 211, 238, 0.75);
 }
 
+.teacherGraphic::before {
+  left: 12px;
+  top: 50px;
 .teacherGraphic::before {
   left: 12px;
   top: 50px;
@@ -498,7 +753,14 @@
   right: 14px;
   bottom: 24px;
   background: #c084fc;
+.teacherGraphic::after {
+  right: 14px;
+  bottom: 24px;
+  background: #c084fc;
   box-shadow:
+    0 0 16px rgba(192, 132, 252, 0.9),
+    -58px 12px 0 rgba(125, 211, 252, 0.8),
+    -58px 12px 12px rgba(125, 211, 252, 0.75);
     0 0 16px rgba(192, 132, 252, 0.9),
     -58px 12px 0 rgba(125, 211, 252, 0.8),
     -58px 12px 12px rgba(125, 211, 252, 0.75);
@@ -507,64 +769,101 @@
 .orbit {
   position: absolute;
   border-radius: 50%;
+.orbit {
+  position: absolute;
+  border-radius: 50%;
 }
 
 .orbit1 {
   inset: 3px 0;
+.orbit1 {
+  inset: 3px 0;
 
   border: 2px dashed rgba(209, 193, 247, 0.873);
+  border: 2px dashed rgba(209, 193, 247, 0.873);
 
+  box-shadow: 0 0 44px rgba(139, 92, 246, 0.28);
   box-shadow: 0 0 44px rgba(139, 92, 246, 0.28);
 }
 
 .orbit2 {
   inset: 20px 20px;
+.orbit2 {
+  inset: 20px 20px;
 
+  border: 1px solid rgba(144, 194, 255, 0.885);
   border: 1px solid rgba(144, 194, 255, 0.885);
 }
 
 .graphicCenter {
   width: 60px;
   height: 60px;
+.graphicCenter {
+  width: 60px;
+  height: 60px;
 
+  border-radius: 50%;
   border-radius: 50%;
 
   display: flex;
   align-items: center;
   justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
+  color: white;
   color: white;
 
   background: radial-gradient(circle at 50% 20%, #7dd3fc, #6366f1 64%, #8057f2);
+  background: radial-gradient(circle at 50% 20%, #7dd3fc, #6366f1 64%, #8057f2);
 
   box-shadow:
+    0 0 44px rgba(96, 165, 250, 0.58),
+    0 0 82px rgba(139, 92, 246, 0.34);
     0 0 44px rgba(96, 165, 250, 0.58),
     0 0 82px rgba(139, 92, 246, 0.34);
 }
 
 .graphicIcon {
   position: absolute;
+.graphicIcon {
+  position: absolute;
 
   width: 40px;
   height: 40px;
+  width: 40px;
+  height: 40px;
 
+  border-radius: 15px;
   border-radius: 15px;
 
   display: flex;
   align-items: center;
   justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
+  color: #8bd6ff;
   color: #8bd6ff;
 
   backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
 
+  background: rgba(8, 15, 35, 0.85);
   background: rgba(8, 15, 35, 0.85);
 
   border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.38);
   box-shadow: 0 0 30px rgba(59, 130, 246, 0.38);
 }
 
+.icon1 {
+  top: 20px;
+  left: 16px;
 .icon1 {
   top: 20px;
   left: 16px;
@@ -573,7 +872,12 @@
 .icon2 {
   top: 20px;
   right: 15px;
+.icon2 {
+  top: 20px;
+  right: 15px;
 
+  color: #c084fc;
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.42);
   color: #c084fc;
   box-shadow: 0 0 30px rgba(168, 85, 247, 0.42);
 }
@@ -581,7 +885,12 @@
 .icon3 {
   bottom: 14px;
   right: 18px;
+.icon3 {
+  bottom: 14px;
+  right: 18px;
 
+  color: #81bac5;
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.42);
   color: #81bac5;
   box-shadow: 0 0 30px rgba(168, 85, 247, 0.42);
 }
@@ -594,12 +903,22 @@
   position: relative;
   min-width: 0;
   z-index: 1;
+.screenshotsShowcase {
+  position: relative;
+  min-width: 0;
+  z-index: 1;
 }
 
 .showcaseFrame {
   position: relative;
   z-index: 1;
+.showcaseFrame {
+  position: relative;
+  z-index: 1;
 
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -615,11 +934,40 @@
 
   position: absolute;
   inset: 0;
+.mainScreenshot {
+}
+
+.mainScreenshot::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
 
   border-radius: inherit;
 
   padding: 4px;
+  border-radius: inherit;
 
+  padding: 4px;
+
+  background: linear-gradient(
+    135deg,
+    #013a53 0%,
+    #42a6e9 35%,
+    #516877 65%,
+    #3c4753 100%
+  );
+
+  /* Creates a true gradient border */
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+
+  pointer-events: none;
+  z-index: 2;
   background: linear-gradient(
     135deg,
     #013a53 0%,
@@ -644,12 +992,20 @@
   width: 100%;
   aspect-ratio: 2/1;
   height: auto;
+.mainScreenshot img {
+  width: 100%;
+  aspect-ratio: 2/1;
+  height: auto;
 
+  object-fit: cover;
+  object-position: top center;
   object-fit: cover;
   object-position: top center;
 
   display: block;
+  display: block;
 
+  border-radius: 26px;
   border-radius: 26px;
 }
 
@@ -657,9 +1013,13 @@
 
 .secondaryGrid {
   display: grid;
+.secondaryGrid {
+  display: grid;
 
   grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 
+  gap: 16px;
   gap: 16px;
 }
 
@@ -667,13 +1027,23 @@
   width: 100%;
   aspect-ratio: 2.45/1;
   height: 150px;
+.secondaryGrid img {
+  width: 100%;
+  aspect-ratio: 2.45/1;
+  height: 150px;
 
+  object-fit: cover;
+  object-position: top center;
   object-fit: cover;
   object-position: top center;
 
   border-radius: 18px;
+  border-radius: 18px;
 }
 
+.secondaryGrid img:hover {
+  transform: translateY(-6px) scale(1.02);
+}
 .secondaryGrid img:hover {
   transform: translateY(-6px) scale(1.02);
 }
@@ -686,14 +1056,26 @@
   border-radius: 50%;
   filter: blur(100px);
   pointer-events: none;
+.glowOrb {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
 }
 
 .orb1 {
   width: 400px;
   height: 400px;
+.orb1 {
+  width: 400px;
+  height: 400px;
 
   background: rgba(226, 232, 240, 0.22);
+  background: rgba(226, 232, 240, 0.22);
 
+  top: 24px;
+  left: 80px;
   top: 24px;
   left: 80px;
 }
@@ -701,9 +1083,15 @@
 .orb2 {
   width: 460px;
   height: 460px;
+.orb2 {
+  width: 460px;
+  height: 460px;
 
   background: rgba(100, 116, 139, 0.22);
+  background: rgba(100, 116, 139, 0.22);
 
+  right: 20px;
+  bottom: 20px;
   right: 20px;
   bottom: 20px;
 }
@@ -713,8 +1101,15 @@
 @media (max-width: 1400px) {
   .teacherContent {
     grid-template-columns: 1fr;
+@media (max-width: 1400px) {
+  .teacherContent {
+    grid-template-columns: 1fr;
   }
 
+  .featureColumn {
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
   .featureColumn {
     flex-direction: row;
     justify-content: center;
@@ -723,21 +1118,59 @@
 
   .glassCard {
     position: relative;
+  .glassCard {
+    position: relative;
 
+    padding: 20px;
     padding: 20px;
 
     border-radius: 32px;
+    border-radius: 32px;
 
+    overflow: hidden;
     overflow: hidden;
 
     color: white;
+    color: white;
 
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.08);
 
     backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
 
     transition: 0.4s ease;
+    transition: 0.4s ease;
 
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.05),
+      0 10px 40px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  .glassCard:hover {
+    transform: translateY(-10px);
+
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+  }
+
+  .glassCard svg {
+    margin-bottom: 18px;
+
+    width: 38px;
+    height: 38px;
+  }
+
+  .glassCard h4 {
+    font-size: 1.45rem;
+    margin-bottom: 12px;
+  }
+
+  .glassCard p {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: #d1d5db;
+  }
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.05),
       0 10px 40px rgba(0, 0, 0, 0.45),
@@ -770,14 +1203,21 @@
 
   .screenshotsShowcase {
     order: -1;
+  .screenshotsShowcase {
+    order: -1;
   }
 }
 
 @media (max-width: 768px) {
   .teacherHeader h2 {
     font-size: 3rem;
+@media (max-width: 768px) {
+  .teacherHeader h2 {
+    font-size: 3rem;
   }
 
+  .screenshotsShowcase {
+    height: 520px;
   .screenshotsShowcase {
     height: 520px;
   }
@@ -804,52 +1244,97 @@
     0 0 38px rgba(139, 92, 246, 0.62),
     0 0 84px rgba(56, 189, 248, 0.26),
     0 0 100px rgba(244, 114, 182, 0.16);
+.mainScreenshot {
+  position: relative;
+  overflow: hidden;
+  position: relative;
+
+  padding: 4px;
+
+  border-radius: 28px;
+
+  overflow: hidden;
+
+  background: #fff; /* Inner background */
+
+  box-shadow:
+    0 0 38px rgba(139, 92, 246, 0.62),
+    0 0 84px rgba(56, 189, 248, 0.26),
+    0 0 100px rgba(244, 114, 182, 0.16);
 }
 
+.mainScreenshot::after {
+  content: "";
 .mainScreenshot::after {
   content: "";
 
   position: absolute;
   inset: 0;
+  position: absolute;
+  inset: 0;
 
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.08), transparent 35%);
   background: linear-gradient(to top, rgba(0, 0, 0, 0.08), transparent 35%);
 
   pointer-events: none;
+  pointer-events: none;
 
+  border-radius: 26px;
   border-radius: 26px;
 }
 
 .carouselArrow {
   position: absolute;
+.carouselArrow {
+  position: absolute;
 
+  top: 50%;
+  transform: translateY(-50%);
   top: 50%;
   transform: translateY(-50%);
 
   width: 56px;
   height: 56px;
+  width: 56px;
+  height: 56px;
 
+  border: none;
+  outline: none;
   border: none;
   outline: none;
 
   cursor: pointer;
+  cursor: pointer;
 
+  z-index: 20;
   z-index: 20;
 
   display: flex;
   align-items: center;
   justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
+  border-radius: 50%;
   border-radius: 50%;
 
   color: white;
+  color: white;
 
+  backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 
   background: rgba(15, 23, 42, 0.78);
+  background: rgba(15, 23, 42, 0.78);
 
+  border: 1px solid rgba(148, 163, 184, 0.48);
   border: 1px solid rgba(148, 163, 184, 0.48);
 
   box-shadow:
+    0 0 0 1px rgba(96, 165, 250, 0.18),
+    0 0 24px rgba(59, 130, 246, 0.22),
+    0 18px 44px rgba(0, 0, 0, 0.38);
     0 0 0 1px rgba(96, 165, 250, 0.18),
     0 0 24px rgba(59, 130, 246, 0.22),
     0 18px 44px rgba(0, 0, 0, 0.38);
@@ -858,26 +1343,40 @@
     transform 0.3s ease,
     background 0.3s ease,
     opacity 0.3s ease;
+    transform 0.3s ease,
+    background 0.3s ease,
+    opacity 0.3s ease;
 }
 
 .carouselArrow:hover {
   background: rgba(4, 106, 153, 0.814);
+.carouselArrow:hover {
+  background: rgba(4, 106, 153, 0.814);
 
+  transform: translateY(-50%) scale(1.05);
   transform: translateY(-50%) scale(1.05);
 }
 
+.leftArrow {
+  left: 18px;
 .leftArrow {
   left: 18px;
 }
 
 .rightArrow {
   right: 18px;
+.rightArrow {
+  right: 18px;
 }
 
 .slideRight {
   animation: smoothSlideRight 0.65s cubic-bezier(0.22, 0.61, 0.36, 1);
+.slideRight {
+  animation: smoothSlideRight 0.65s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
+.slideLeft {
+  animation: smoothSlideLeft 0.65s cubic-bezier(0.22, 0.61, 0.36, 1);
 .slideLeft {
   animation: smoothSlideLeft 0.65s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
@@ -886,8 +1385,15 @@
   0% {
     opacity: 0;
     transform: translateX(80px) scale(0.96);
+@keyframes smoothSlideRight {
+  0% {
+    opacity: 0;
+    transform: translateX(80px) scale(0.96);
   }
 
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
   100% {
     opacity: 1;
     transform: translateX(0) scale(1);
@@ -898,8 +1404,15 @@
   0% {
     opacity: 0;
     transform: translateX(-80px) scale(0.96);
+@keyframes smoothSlideLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-80px) scale(0.96);
   }
 
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
   100% {
     opacity: 1;
     transform: translateX(0) scale(1);
@@ -908,25 +1421,39 @@
 
 .thumbnailCard {
   padding: 2px;
+.thumbnailCard {
+  padding: 2px;
 
   border-radius: 20px;
+  border-radius: 20px;
 
+  background: linear-gradient(135deg, #60a5fa, #8b5cf6);
   background: linear-gradient(135deg, #60a5fa, #8b5cf6);
 
   box-shadow:
     0 0 24px rgba(139, 92, 246, 0.32),
     0 0 34px rgba(56, 189, 248, 0.12);
+    0 0 24px rgba(139, 92, 246, 0.32),
+    0 0 34px rgba(56, 189, 248, 0.12);
 
+  overflow: hidden;
   overflow: hidden;
 }
 
 .thumbnailCard img {
   width: 100%;
   display: block;
+.thumbnailCard img {
+  width: 100%;
+  display: block;
 
+  border-radius: 18px;
   border-radius: 18px;
 }
 
+.thumbnailCard:hover img {
+  transform: scale(1.04);
+}
 .thumbnailCard:hover img {
   transform: scale(1.04);
 }
@@ -937,39 +1464,59 @@
 
 .studentShowcase {
   padding: 180px 6%;
+.studentShowcase {
+  padding: 180px 6%;
 
+  display: grid;
   display: grid;
 
   grid-template-columns: 1fr 340px 1fr;
+  grid-template-columns: 1fr 340px 1fr;
 
+  gap: 70px;
   gap: 70px;
 
   align-items: center;
+  align-items: center;
 }
 
+.studentInfo {
+  max-width: 450px;
 .studentInfo {
   max-width: 450px;
 }
 
 .privacyCard {
   margin-top: 40px;
+.privacyCard {
+  margin-top: 40px;
 
+  display: flex;
+  gap: 16px;
   display: flex;
   gap: 16px;
 
   padding: 24px;
+  padding: 24px;
 
+  border-radius: 24px;
   border-radius: 24px;
 
   background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.04);
 
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .privacyCard svg {
   color: #8b5cf6;
+.privacyCard svg {
+  color: #8b5cf6;
 }
 
+.privacyCard h4 {
+  color: white;
 .privacyCard h4 {
   color: white;
 }
@@ -979,23 +1526,37 @@
 .phoneMockup {
   display: flex;
   justify-content: center;
+.phoneMockup {
+  display: flex;
+  justify-content: center;
 }
 
 .phoneScreen {
   width: 320px;
   height: 650px;
+.phoneScreen {
+  width: 320px;
+  height: 650px;
 
+  border-radius: 42px;
   border-radius: 42px;
 
   padding: 30px;
+  padding: 30px;
 
+  background: linear-gradient(180deg, #101828, #0f172a);
   background: linear-gradient(180deg, #101828, #0f172a);
 
   border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 
+  box-shadow: 0 50px 120px rgba(0, 0, 0, 0.45);
   box-shadow: 0 50px 120px rgba(0, 0, 0, 0.45);
 }
 
+.phoneScreen h4 {
+  color: white;
+  text-align: center;
 .phoneScreen h4 {
   color: white;
   text-align: center;
@@ -1004,28 +1565,45 @@
 .phoneAttendance {
   text-align: center;
   margin-top: 40px;
+.phoneAttendance {
+  text-align: center;
+  margin-top: 40px;
 }
 
 .phoneCircle {
   width: 160px;
   height: 160px;
+.phoneCircle {
+  width: 160px;
+  height: 160px;
 
   border-radius: 50%;
+  border-radius: 50%;
 
+  margin: auto;
   margin: auto;
 
   display: flex;
   align-items: center;
   justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
+  color: white;
   color: white;
 
   font-size: 2rem;
   font-weight: 700;
+  font-size: 2rem;
+  font-weight: 700;
 
+  background: conic-gradient(#60a5fa 0 92%, rgba(255, 255, 255, 0.1) 92%);
   background: conic-gradient(#60a5fa 0 92%, rgba(255, 255, 255, 0.1) 92%);
 }
 
+.phoneAttendance p {
+  margin-top: 18px;
 .phoneAttendance p {
   margin-top: 18px;
 }
@@ -1033,15 +1611,23 @@
 .subjectRow {
   display: flex;
   justify-content: space-between;
+.subjectRow {
+  display: flex;
+  justify-content: space-between;
 
+  margin-top: 24px;
   margin-top: 24px;
 
   padding: 18px;
+  padding: 18px;
 
+  border-radius: 18px;
   border-radius: 18px;
 
   background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.05);
 
+  color: white;
   color: white;
 }
 
@@ -1051,25 +1637,41 @@
   display: flex;
   flex-direction: column;
   gap: 25px;
+.timelineFeatures {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
 }
 
 .timelineItem {
   display: flex;
   gap: 18px;
+.timelineItem {
+  display: flex;
+  gap: 18px;
 
+  padding: 22px;
   padding: 22px;
 
   border-radius: 22px;
+  border-radius: 22px;
 
   background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.04);
 
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .timelineItem svg {
   color: #60a5fa;
+.timelineItem svg {
+  color: #60a5fa;
 }
 
+.timelineItem h4 {
+  color: white;
+  margin-bottom: 8px;
 .timelineItem h4 {
   color: white;
   margin-bottom: 8px;
@@ -1079,16 +1681,24 @@
 
 .successCard {
   position: absolute;
+.successCard {
+  position: absolute;
 
+  right: 10%;
+  bottom: 120px;
   right: 10%;
   bottom: 120px;
 
   width: 220px;
+  width: 220px;
 
+  text-align: center;
   text-align: center;
 
   padding: 24px;
+  padding: 24px;
 
+  border-radius: 26px;
   border-radius: 26px;
 
   background: linear-gradient(
@@ -1096,12 +1706,21 @@
     rgba(16, 185, 129, 0.15),
     rgba(16, 185, 129, 0.05)
   );
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.15),
+    rgba(16, 185, 129, 0.05)
+  );
 
+  border: 1px solid rgba(16, 185, 129, 0.25);
   border: 1px solid rgba(16, 185, 129, 0.25);
 
   backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
 }
 
+.successCard h3 {
+  color: white;
 .successCard h3 {
   color: white;
 }
@@ -1109,19 +1728,30 @@
 .successCircle {
   width: 70px;
   height: 70px;
+.successCircle {
+  width: 70px;
+  height: 70px;
 
   margin: 20px auto 0;
+  margin: 20px auto 0;
 
+  border-radius: 50%;
   border-radius: 50%;
 
   display: flex;
   align-items: center;
   justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
+  color: white;
   color: white;
 
   font-size: 1.8rem;
+  font-size: 1.8rem;
 
+  background: #10b981;
   background: #10b981;
 }
 
@@ -1133,7 +1763,14 @@
   .teacherShowcase {
     grid-template-columns: 1fr;
   }
+@media (max-width: 1200px) {
+  .teacherShowcase {
+    grid-template-columns: 1fr;
+  }
 
+  .studentShowcase {
+    grid-template-columns: 1fr;
+  }
   .studentShowcase {
     grid-template-columns: 1fr;
   }
@@ -1143,11 +1780,25 @@
     max-width: 100%;
     text-align: center;
   }
+  .teacherLeft,
+  .studentInfo {
+    max-width: 100%;
+    text-align: center;
+  }
 
   .teacherRight {
     flex-direction: row;
   }
+  .teacherRight {
+    flex-direction: row;
+  }
 
+  .successCard {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    margin: auto;
+  }
   .successCard {
     position: relative;
     right: auto;
@@ -1161,7 +1812,16 @@
   .studentShowcase {
     padding: 100px 25px;
   }
+@media (max-width: 768px) {
+  .teacherShowcase,
+  .studentShowcase {
+    padding: 100px 25px;
+  }
 
+  .teacherShowcase h2,
+  .studentShowcase h2 {
+    font-size: 2.8rem;
+  }
   .teacherShowcase h2,
   .studentShowcase h2 {
     font-size: 2.8rem;
@@ -1170,7 +1830,13 @@
   .dashboardGrid {
     grid-template-columns: 1fr;
   }
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
 
+  .chartCard {
+    grid-column: span 1;
+  }
   .chartCard {
     grid-column: span 1;
   }
@@ -1178,7 +1844,178 @@
   .teacherRight {
     flex-direction: column;
   }
+  .teacherRight {
+    flex-direction: column;
+  }
 
+  .phoneScreen {
+    width: 100%;
+    max-width: 320px;
+  }
+}
+
+@media (max-width: 840px) {
+  .secondaryGrid img {
+    height: 5.5rem;
+  }
+}
+
+/* ===================================================
+   MOBILE RESPONSIVENESS FIX
+=================================================== */
+
+@media (max-width: 768px) {
+  .teacherShowcase {
+    min-height: auto;
+    padding: 60px 18px;
+  }
+
+  .teacherHeader {
+    margin-bottom: 28px;
+  }
+
+  .teacherHeader h2 {
+    font-size: clamp(2.2rem, 10vw, 3rem);
+    line-height: 1.05;
+    margin: 0 0 16px;
+  }
+
+  .teacherHeader p {
+    margin-top: 0;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    max-width: 100%;
+    padding: 0 8px;
+  }
+
+  /* Layout */
+  .teacherContent {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    margin-top: 24px;
+  }
+
+  /* Screenshot comes first */
+  .screenshotsShowcase {
+    order: -1;
+    width: 100%;
+    height: auto;
+  }
+
+  .showcaseFrame {
+    gap: 14px;
+  }
+
+  .mainScreenshot {
+    border-radius: 22px;
+  }
+
+  .mainScreenshot img {
+    aspect-ratio: 16 / 10;
+    border-radius: 20px;
+  }
+
+  .carouselArrow {
+    width: 44px;
+    height: 44px;
+  }
+
+  .leftArrow {
+    left: 10px;
+  }
+
+  .rightArrow {
+    right: 10px;
+  }
+
+  .secondaryGrid {
+    gap: 10px;
+  }
+
+  .thumbnailCard {
+    border-radius: 14px;
+  }
+
+  .thumbnailCard img {
+    border-radius: 12px;
+  }
+
+  /* Feature columns */
+  .featureColumn {
+    width: 100%;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .glassCard {
+    min-height: auto;
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .glassCard svg {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 12px;
+  }
+
+  .glassCard h4 {
+    font-size: 1.05rem;
+    margin-bottom: 6px;
+  }
+
+  .glassCard p {
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+
+  /* Hide decorative orbit */
+  .teacherGraphic {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .teacherShowcase {
+    padding: 50px 16px;
+  }
+
+  .teacherHeader h2 {
+    font-size: clamp(2rem, 11vw, 2.6rem);
+  }
+
+  .teacherHeader p {
+    font-size: 0.9rem;
+  }
+
+  .glassCard {
+    padding: 16px;
+  }
+
+  .glassCard svg {
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+  }
+
+  .glassCard h4 {
+    font-size: 1rem;
+  }
+
+  .glassCard p {
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .carouselArrow {
+    width: 40px;
+    height: 40px;
+  }
+
+  .secondaryGrid {
+    grid-template-columns: 1fr;
+  }
   .phoneScreen {
     width: 100%;
     max-width: 320px;

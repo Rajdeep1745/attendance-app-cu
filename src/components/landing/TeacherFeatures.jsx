@@ -3,6 +3,7 @@
 import "../landing/FeatureShowcase.css";
 import { useState } from "react";
 import { ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 import {
   ScanFace,
   BarChart3,
@@ -22,13 +23,25 @@ export default function TeacherFeatures() {
     "/images/featureScreenshots/appscr3.png",
     "/images/featureScreenshots/appscr1.png",
   ]);
+  const [screenshots, setScreenshots] = useState([
+    "/images/featureScreenshots/appscr2.png",
+    "/images/featureScreenshots/appscr4.png",
+    "/images/featureScreenshots/appscr3.png",
+    "/images/featureScreenshots/appscr1.png",
+  ]);
 
+  const [direction, setDirection] = useState("right");
+  const [animating, setAnimating] = useState(false);
   const [direction, setDirection] = useState("right");
   const [animating, setAnimating] = useState(false);
 
   const nextSlide = () => {
     if (animating) return;
+  const nextSlide = () => {
+    if (animating) return;
 
+    setAnimating(true);
+    setDirection("right");
     setAnimating(true);
     setDirection("right");
 
@@ -36,29 +49,51 @@ export default function TeacherFeatures() {
       setScreenshots((prev) => {
         const updated = [...prev];
         const first = updated.shift();
+    setTimeout(() => {
+      setScreenshots((prev) => {
+        const updated = [...prev];
+        const first = updated.shift();
 
+        return [...updated, first];
+      });
         return [...updated, first];
       });
 
       setAnimating(false);
     }, 250);
   };
+      setAnimating(false);
+    }, 250);
+  };
 
   const prevSlide = () => {
     if (animating) return;
+  const prevSlide = () => {
+    if (animating) return;
 
+    setAnimating(true);
+    setDirection("left");
     setAnimating(true);
     setDirection("left");
 
     setTimeout(() => {
       setScreenshots((prev) => {
         const updated = [...prev];
+    setTimeout(() => {
+      setScreenshots((prev) => {
+        const updated = [...prev];
 
+        const last = updated.pop();
         const last = updated.pop();
 
         return [last, ...updated];
       });
+        return [last, ...updated];
+      });
 
+      setAnimating(false);
+    }, 250);
+  };
       setAnimating(false);
     }, 250);
   };
@@ -80,6 +115,9 @@ export default function TeacherFeatures() {
           Everything teachers need to automate attendance, manage classrooms,
           monitor engagement and gain powerful insights from a single
           intelligent platform.
+          Everything teachers need to automate attendance, manage classrooms,
+          monitor engagement and gain powerful insights from a single
+          intelligent platform.
         </p>
       </div>
 
@@ -91,12 +129,18 @@ export default function TeacherFeatures() {
             <Clock3 size={32} />
             <h4>Save Hours Weekly</h4>
             <p>Eliminate manual attendance and classroom paperwork.</p>
+            <p>Eliminate manual attendance and classroom paperwork.</p>
           </div>
 
           <div className="teacherGraphic">
             <div className="orbit orbit1"></div>
             <div className="orbit orbit2"></div>
+            <div className="orbit orbit1"></div>
+            <div className="orbit orbit2"></div>
 
+            <div className="graphicCenter">
+              <GraduationCap size={40} />
+            </div>
             <div className="graphicCenter">
               <GraduationCap size={40} />
             </div>
@@ -104,7 +148,13 @@ export default function TeacherFeatures() {
             <div className="graphicIcon icon1">
               <CalendarDays size={20} />
             </div>
+            <div className="graphicIcon icon1">
+              <CalendarDays size={20} />
+            </div>
 
+            <div className="graphicIcon icon2">
+              <BarChart3 size={20} />
+            </div>
             <div className="graphicIcon icon2">
               <BarChart3 size={20} />
             </div>
@@ -113,10 +163,15 @@ export default function TeacherFeatures() {
               <FileText size={20} />
             </div>
           </div>
+            <div className="graphicIcon icon3">
+              <FileText size={20} />
+            </div>
+          </div>
 
           <div className="glassCard purpleCard">
             <Users size={32} />
             <h4>Manage Classes</h4>
+            <p>Organize batches, records and attendance effortlessly.</p>
             <p>Organize batches, records and attendance effortlessly.</p>
           </div>
         </div>
@@ -129,6 +184,11 @@ export default function TeacherFeatures() {
               <button className="carouselArrow leftArrow" onClick={prevSlide}>
                 <ChevronLeft size={28} />
               </button>
+          <div className="showcaseFrame">
+            <div className="mainScreenshot">
+              <button className="carouselArrow leftArrow" onClick={prevSlide}>
+                <ChevronLeft size={28} />
+              </button>
 
               <img
                 key={screenshots[0]}
@@ -136,7 +196,17 @@ export default function TeacherFeatures() {
                 alt=""
                 className={direction === "right" ? "slideRight" : "slideLeft"}
               />
+              <img
+                key={screenshots[0]}
+                src={screenshots[0]}
+                alt=""
+                className={direction === "right" ? "slideRight" : "slideLeft"}
+              />
 
+              <button className="carouselArrow rightArrow" onClick={nextSlide}>
+                <ChevronRight size={28} />
+              </button>
+            </div>
               <button className="carouselArrow rightArrow" onClick={nextSlide}>
                 <ChevronRight size={28} />
               </button>
@@ -150,7 +220,18 @@ export default function TeacherFeatures() {
               ))}
             </div>
           </div>
+            <div className="secondaryGrid">
+              {screenshots.slice(1).map((img, index) => (
+                <div className="thumbnailCard" key={index}>
+                  <img src={img} alt="" />
+                </div>
+              ))}
+            </div>
+          </div>
 
+          <div className="glowOrb orb1"></div>
+          <div className="glowOrb orb2"></div>
+        </div>
           <div className="glowOrb orb1"></div>
           <div className="glowOrb orb2"></div>
         </div>
@@ -162,17 +243,20 @@ export default function TeacherFeatures() {
             <ScanFace size={32} />
             <h4>AI Face Recognition</h4>
             <p>Highly accurate attendance with real-time recognition.</p>
+            <p>Highly accurate attendance with real-time recognition.</p>
           </div>
 
           <div className="glassCard greyCard">
             <BookOpen size={32} />
             <h4>AI Lesson Planner</h4>
             <p>Generate teaching plans and topics in seconds.</p>
+            <p>Generate teaching plans and topics in seconds.</p>
           </div>
 
           <div className="glassCard greenCard">
             <BarChart3 size={32} />
             <h4>Advanced Analytics</h4>
+            <p>Discover trends and student attendance patterns instantly.</p>
             <p>Discover trends and student attendance patterns instantly.</p>
           </div>
         </div>
