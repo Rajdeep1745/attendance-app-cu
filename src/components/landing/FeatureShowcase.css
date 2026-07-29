@@ -147,6 +147,24 @@
 
 /* ---------- HEADER ---------- */
 
+.pss-teach{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  margin-bottom: 20px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgb(15 135 241 / 43%), rgb(123 215 241 / 33%));
+  border: 1px solid rgba(85, 109, 247, 0.599);
+  color: #123e7d;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  backdrop-filter: blur(10px);
+}
+
+
 .teacherHeader{
   text-align:center;
   max-width:920px;

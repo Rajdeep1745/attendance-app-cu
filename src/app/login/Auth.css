@@ -449,9 +449,7 @@
   background:
     linear-gradient(
       135deg,
-      #2563eb 0%,
-      #4f46e5 50%,
-      #7c3aed 100%
+      #191d25 0%, #2063bc 50%, #683ff9 100%
     );
 
   color:white;
@@ -475,9 +473,7 @@
   background:
     linear-gradient(
       135deg,
-      #032671 0%,
-      #5d97ef 50%,
-      #555e67 100%
+      #032671 0%, #578ad7 50%, #14477a 100%
     );
 
   backdrop-filter:blur(20px);

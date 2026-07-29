@@ -180,9 +180,10 @@
 }
 
 .pss-subtitle {
-  color: #94a3b8;
+  color: #c8d3e2;
   font-size: 1.15rem;
   line-height: 1.7;
+  font-weight: 400;
   max-width: 680px;
   margin: auto;
 }

@@ -15,6 +15,7 @@ import {
   FileText,
   GraduationCap,
   Users,
+  Sparkles,
 } from "lucide-react";
 
 export default function TeacherFeatures() {
@@ -78,6 +79,11 @@ const prevSlide = () => {
     <section className="teacherShowcase">
 
       <div className="teacherHeader">
+
+        <span className="pss-teach">
+          <Sparkles size={14} />
+          TEACHER EXPERIENCE
+        </span>
   
         <h2>
           Built For
