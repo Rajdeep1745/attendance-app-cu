@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const FACE_SERVICE_URL = process.env.FACE_SERVICE_URL || 'http://localhost:5001';
+const FACE_SERVICE_URL = process.env.FACE_SERVICE_URL || 'http://127.0.0.1:5001';
 
 /**
  * Send an image buffer to Python service and get back a 128-dim embedding.

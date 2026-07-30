@@ -10,12 +10,18 @@
   padding: 14px;
   overflow: hidden;
   background:
-    radial-gradient(circle at top left, rgba(124, 58, 237, 0.08), transparent 38%),
+    radial-gradient(
+      circle at top left,
+      rgba(124, 58, 237, 0.08),
+      transparent 38%
+    ),
     linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
   border-right: 1px solid rgba(148, 163, 184, 0.18);
   box-shadow: 18px 0 40px rgba(15, 23, 42, 0.06);
-  transition: width 0.3s ease, transform 0.3s ease;
-  z-index: 1050;
+  transition:
+    width 0.3s ease,
+    transform 0.3s ease;
+  z-index: 1000;
 }
 
 .sidebar.open {
@@ -31,7 +37,10 @@
 /* ===== Content ===== */
 .sidebar-content,
 .sidebar-footer {
-  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease,
+    transform 0.2s ease;
 }
 
 .sidebar-content {
@@ -78,6 +87,17 @@
   line-height: 1.45;
 }
 
+.empty-state h2 {
+  font-weight: 700;
+  background: linear-gradient(135deg, #4134b3, #4f46e5);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.empty-state p {
+  max-width: 500px;
+}
+
 .sidebar-footer {
   padding: 14px 16px 16px;
   border-top: 1px solid rgba(226, 232, 240, 0.95);
@@ -109,24 +129,6 @@
   border-radius: 999px;
 }
 
-/* ===== List items ===== */
-.list-group-item {
-  border: 1px solid transparent;
-  border-radius: 16px;
-  margin-bottom: 10px;
-  padding: 14px 14px 13px;
-  color: #1f2937;
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
-  transition:
-    transform 0.18s ease,
-    background-color 0.18s ease,
-    border-color 0.18s ease,
-    box-shadow 0.18s ease;
-  white-space: normal;
-  word-break: break-word;
-}
-
 .sidebar.closed .list-group-item {
   opacity: 0;
   pointer-events: none;
@@ -136,7 +138,8 @@
   background: #ffffff;
   border-color: rgba(124, 58, 237, 0.12);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-  transform: translateY(-1px);
+  transform: translateY(-3px);
+  scale: 1.01;
 }
 
 .list-group-item.active {
@@ -144,11 +147,33 @@
   border-color: rgba(124, 58, 237, 0.18);
   color: #5b21b6;
   font-weight: 600;
-  box-shadow: 0 14px 28px rgba(124, 58, 237, 0.12);
+  box-shadow:
+    0 14px 30px rgba(124, 58, 237, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .list-group-item.active .text-muted {
   color: #6d28d9 !important;
+}
+
+.list-group-item.active::before {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+
+  width: 4px;
+
+  border-radius: 999px;
+
+  background: #7c3aed;
+}
+
+.list-group-item {
+  position: relative;
 }
 
 /* ===== Button ===== */
@@ -160,11 +185,14 @@
   border: none;
   border-radius: 14px;
   box-shadow: 0 10px 24px rgba(124, 58, 237, 0.22);
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .addBatchButton:hover {
   background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
   color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(124, 58, 237, 0.3);
 }
 
 .addBatchButton:focus {
@@ -188,89 +216,52 @@
   gap: 10px;
 }
 
-.batch-name {
-  flex: 1;
-  cursor: pointer;
-  line-height: 1.35;
-  font-weight: 600;
-  color: inherit;
-}
-
 .batch-item small {
   line-height: 1.35;
 }
 
-.batch-card {
-  width: 100%;
-  align-items: flex-start;
+/* ---------- Tree ---------- */
+
+.tree-programme {
+  margin-bottom: 8px;
 }
 
-.batch-card-main {
-  flex: 1;
-  min-width: 0;
+.tree-programme-header,
+.tree-semester-header,
+.tree-subject {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 8px 12px;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  transition: background 0.2s;
+}
+
+.tree-programme-header:hover,
+.tree-semester-header:hover,
+.tree-subject:hover {
+  background: #f3f0ff;
+}
+
+.tree-semester {
+  margin-left: 18px;
+}
+
+.tree-subject-list {
+  margin-left: 20px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
 }
 
-/* ===== Menu ===== */
-.batch-menu {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.batch-menu i {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #64748b;
-  opacity: 0.9;
-  transition: background-color 0.18s ease, color 0.18s ease;
-}
-
-.batch-menu i:hover,
-.batch-item:hover .batch-menu i {
-  background: rgba(148, 163, 184, 0.14);
-  color: #334155;
-}
-
-/* ===== Dropdown ===== */
-.batch-dropdown {
-  position: absolute;
-  top: 36px;
-  right: 0;
-  min-width: 156px;
-  overflow: hidden;
-  z-index: 2000;
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  border-radius: 14px;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
-  backdrop-filter: blur(12px);
-}
-
-.batch-dropdown button {
-  width: 100%;
-  padding: 10px 14px;
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  font-size: 13px;
-  color: #334155;
-}
-
-.batch-dropdown button:hover {
-  background: #f8fafc;
-}
-
-.batch-dropdown .danger {
-  color: #dc2626;
+.tree-subject.active {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: white;
+  font-weight: 600;
 }
 
 /* ===== Responsive ===== */
@@ -314,5 +305,71 @@
   .list-group-item {
     padding: 12px;
     border-radius: 12px;
+  }
+}
+
+/* =========================================
+   RESPONSIVE SIDEBAR POLISH
+========================================= */
+
+.sidebar {
+  transition:
+    width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sidebar.open {
+  width: 280px;
+}
+
+/* Better touch targets */
+
+.list-group-item {
+  min-height: 60px;
+}
+
+.addBatchButton {
+  min-height: 52px;
+}
+
+/* Tablet */
+
+@media (max-width: 991px) {
+  .sidebar {
+    z-index: 999;
+  }
+
+  .sidebar.open {
+    width: min(300px, 86vw);
+  }
+
+  .sidebar.closed {
+    transform: translateX(-100%);
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 768px) {
+  .sidebar {
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+  }
+
+  .sidebar.open {
+    width: min(280px, 88vw);
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar-content {
+    padding: 12px 8px;
+  }
+
+  .sidebar-footer {
+    padding: 12px 8px;
+  }
+
+  .list-group-item {
+    padding: 12px;
   }
 }

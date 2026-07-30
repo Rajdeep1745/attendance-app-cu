@@ -93,9 +93,11 @@ const Attendance = () => {
           roll: s.roll,
           present: s.present,
           percentage: s.percentage,
+          avatar: s.avatar || null,
         }));
 
         setRecords(formatted);
+        console.log(data[0]);
         setThreshold(activeBatch?.threshold || 0);
 
         await fetchAttendanceDetails(batchId);
@@ -109,28 +111,31 @@ const Attendance = () => {
     fetchDailyAttendance();
   }, [activeBatch, batchId, selectedDate]);
 
-  const batchMatchesRoute = String(activeBatch?.id || "") === String(batchId || "");
+  const batchMatchesRoute =
+    String(activeBatch?.id || "") === String(batchId || "");
   const showPageSkeleton = useDelayedLoading(
     !batchMatchesRoute || attendanceLoading,
   );
 
-  if (showPageSkeleton || !batchMatchesRoute) return <TeacherAttendanceSkeleton />;
+  if (showPageSkeleton || !batchMatchesRoute)
+    return <TeacherAttendanceSkeleton />;
 
   return (
-    <div className="container-fluid attendance-page">
+    <div className="container-fluid attendance-page page-enter">
       {/* HEADER */}
-      <div className="mb-4">
-        <h2 className="attendance-title">Attendance Records</h2>
-        <p className="attendance-subtitle">
-          View attendance records for {activeBatch.name || "Loading..."}
-        </p>
+      <div className="attendance-hero">
+        <div>
+          <h1>Attendance Records</h1>
+
+          <p>View daily attendance history and class performance.</p>
+        </div>
       </div>
 
       {/* DATE + SUMMARY ROW */}
       <div className="row g-4 mb-4">
         {/* CALENDAR */}
         <div className="col-md-6">
-          <div className="card attendance-card h-100">
+          <div className="card attendance-card calendar-card h-100">
             <div className="card-body attendance-calendar-card-body">
               <div className="attendance-page-calendar-shell">
                 <div className="premium-date-picker-calendar attendance-page-calendar">
@@ -162,14 +167,25 @@ const Attendance = () => {
           <div className="card attendance-card h-100 batch-summary">
             <div className="card-body batch-summary-body">
               {/* LEFT MAIN AVG */}
-              <div className="summary-left">
+              <div className="mx-5 summary-left">
                 <p className="stats-title mb-1">Average Attendance</p>
+
                 <h1 className="stats-value-main">
                   {attendanceStats.avgAttendance || 0}%
                 </h1>
+
                 <small className="text-muted">
                   Based on last {attendanceStats.totalClasses || 0} classes
                 </small>
+
+                <div className="analytics-progress">
+                  <div
+                    className="analytics-progress-bar"
+                    style={{
+                      width: `${attendanceStats.avgAttendance || 0}%`,
+                    }}
+                  />
+                </div>
               </div>
 
               {/* RIGHT SIDE STATS */}
@@ -191,14 +207,6 @@ const Attendance = () => {
                 </div>
               </div>
             </div>
-
-            {/* PROGRESS BAR FOR AVERAGE */}
-            <div className="progress mt-3">
-              <div
-                className="progress-bar"
-                style={{ width: `${attendanceStats.avgAttendance || 0}%` }}
-              />
-            </div>
           </div>
         </div>
       </div>
@@ -206,7 +214,11 @@ const Attendance = () => {
       {/* STUDENT LIST */}
       <div className="card attendance-card">
         <div className="card-body">
-          <h5 className="card-title mb-3">Students</h5>
+          <div className="students-header">
+            <h5 className="students-title">Students</h5>
+
+            <span className="students-count">{records.length} Students</span>
+          </div>
 
           {records.length === 0 ? (
             <p className="text-muted">No students in this batch</p>
@@ -215,8 +227,17 @@ const Attendance = () => {
               {records.map((s) => (
                 <div key={s.id} className="attendance-row">
                   <div className="student-info">
-                    <p className="student-name">{s.name}</p>
-                    <small className="text-muted">Roll No: {s.roll}</small>
+                    <img
+                      src={s.avatar || "https://i.pravatar.cc/150"}
+                      alt={s.name}
+                      className="student-avatar"
+                    />
+
+                    <div>
+                      <p className="student-name">{s.name}</p>
+
+                      <small className="text-muted">Roll No: {s.roll}</small>
+                    </div>
                   </div>
 
                   <div className="student-metrics">

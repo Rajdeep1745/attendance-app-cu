@@ -34,9 +34,40 @@ const BatchState = ({ children }) => {
     }
   }, []);
 
+  const fetchBatchBySubject = useCallback(async (subjectId) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/batches/subject/${subjectId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch batch");
+      }
+
+      return data;
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  }, []);
+
   return (
     <BatchContext.Provider
-      value={{ activeBatch, setActiveBatch, fetchBatchById }}
+      value={{
+        activeBatch,
+        setActiveBatch,
+        fetchBatchById,
+        fetchBatchBySubject,
+      }}     
     >
       {children}
     </BatchContext.Provider>

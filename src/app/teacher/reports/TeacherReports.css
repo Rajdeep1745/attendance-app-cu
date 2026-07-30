@@ -1,12 +1,10 @@
+/* ==================================================
+PAGE LAYOUT
+================================================== */
+
 .reports-page {
   font-size: 16px;
   color: #111827;
-}
-
-/* Titles */
-.reports-title {
-  font-size: 30px;
-  font-weight: 700;
 }
 
 .reports-subtitle {
@@ -14,80 +12,235 @@
   color: #6b7280;
 }
 
-/* Cards */
-.reports-card {
-  border: none;
-  border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+/* ==================================================
+HERO SECTION
+================================================== */
+
+.reports-hero {
+  position: relative;
+  overflow: hidden;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 32px;
+  margin-bottom: 28px;
+
+  border-radius: 28px;
+  border: 1px solid rgba(124, 58, 237, 0.12);
+  border-top: 4px solid #7c3aed;
+
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(124, 58, 237, 0.18),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(99, 102, 241, 0.12),
+      transparent 40%
+    ),
+    linear-gradient(135deg, #ffffff 0%, #faf7ff 50%, #f8fafc 100%);
+
+  box-shadow:
+    0 24px 60px rgba(15, 23, 42, 0.08),
+    0 10px 20px rgba(124, 58, 237, 0.04);
 }
 
-.report-kpi-label {
+.reports-hero h1 {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
   margin-bottom: 8px;
-  font-size: 13px;
+}
+
+.reports-hero p {
+  margin-bottom: 0;
   color: #64748b;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
 
-.report-kpi-value {
-  margin-bottom: 8px;
-  font-size: 36px;
-  font-weight: 700;
+/* ==================================================
+SHARED REPORT CARDS
+================================================== */
+
+.reports-card {
+  position: relative;
+  overflow: hidden;
+
+  border: none;
+  border-radius: 20px;
+
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(124, 58, 237, 0.08),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at bottom left,
+      rgba(99, 102, 241, 0.05),
+      transparent 40%
+    ),
+    linear-gradient(135deg, #ffffff 0%, #faf7ff 55%, #f8fafc 100%);
+
+  backdrop-filter: blur(14px);
+
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.reports-card::before {
+  content: "";
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 4px;
+
+  background: linear-gradient(90deg, #7c3aed, #8b5cf6);
+}
+
+.reports-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 28px 56px rgba(15, 23, 42, 0.12);
+}
+
+.reports-card .card-title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
   color: #111827;
 }
 
-/* ===== Bar Chart ===== */
+/* ==================================================
+KPI SUMMARY CARDS
+================================================== */
+
+.report-kpi-label {
+  margin-bottom: 10px;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+
+  color: #94a3b8;
+}
+
+.report-kpi-value {
+  margin-bottom: 6px;
+
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1;
+
+  background: linear-gradient(135deg, #111827, #4f46e5);
+
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ==================================================
+WEEKLY ATTENDANCE GRAPH
+================================================== */
+
 .bar-chart.improved {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
+
   gap: 28px;
+
   height: 260px;
   padding: 0 20px;
+
   border-bottom: 1px dashed #e5e7eb;
 }
 
 .bar-item {
+  position: relative;
   flex: 1;
   text-align: center;
-  position: relative;
 }
 
 .bar-wrapper {
-  height: 200px;
   display: flex;
   align-items: flex-end;
-  background: linear-gradient(to top, #f3f4f6 0%, #fafafa 100%);
-  border-radius: 14px;
-  padding: 6px;
+
+  height: 200px;
+  padding: 8px;
+
+  border-radius: 16px;
+
+  background: linear-gradient(
+    180deg,
+    rgba(248, 250, 252, 0.5),
+    rgba(226, 232, 240, 0.5)
+  );
 }
 
 .bar-fill {
-  width: 100%;
-  background: linear-gradient(180deg, #8b5cf6 0%, #7c3aed 100%);
-  border-radius: 10px;
   position: relative;
-  transition: height 0.4s ease;
+
+  width: 100%;
+  border-radius: 12px;
+
+  background: linear-gradient(180deg, #8b5cf6, #7c3aed);
+
+  box-shadow: 0 12px 28px rgba(124, 58, 237, 0.18);
+
+  transition:
+    height 0.35s ease,
+    transform 0.25s ease;
 }
 
-/* Low attendance bars */
+.bar-fill:hover {
+  transform: translateY(-4px);
+}
+
+/* Low attendance day */
+
 .bar-fill.low {
   background: linear-gradient(180deg, #f87171 0%, #dc2626 100%);
+
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.2);
+}
+
+/* Good attendance day */
+
+.bar-fill.high {
+  background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%);
+
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.22);
 }
 
 .bar-tooltip {
   position: absolute;
+
   top: -28px;
   left: 50%;
+
   transform: translateX(-50%);
-  background: #111827;
-  color: white;
-  font-size: 12px;
+
   padding: 4px 8px;
+
   border-radius: 6px;
+
+  background: #111827;
+  color: #fff;
+
+  font-size: 12px;
+
   opacity: 0;
+
   transition: opacity 0.2s ease;
 }
 
@@ -97,15 +250,20 @@
 
 .bar-label {
   margin-top: 10px;
+
   font-weight: 600;
   color: #374151;
 }
 
-/* ===== Graph Header ===== */
+/* ==================================================
+GRAPH CONTROLS
+================================================== */
+
 .reports-graph-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   gap: 16px;
   flex-wrap: wrap;
 }
@@ -113,46 +271,95 @@
 .graph-controls {
   display: flex;
   align-items: center;
+
   gap: 10px;
-  flex-wrap: wrap;
+  padding: 8px;
+
+  border-radius: 18px;
+
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 8px 20px rgba(15, 23, 42, 0.04);
 }
 
 .icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 42px;
+  height: 42px;
+
   border: none;
-  background: #f3f4f6;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  cursor: pointer;
+  border-radius: 12px;
+
+  background: #fff;
+  color: #475569;
+
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+
+  transition: all 0.25s ease;
 }
 
-.icon-btn:hover {
-  background: #e5e7eb;
+.icon-btn:hover:not(:disabled) {
+  background: #7c3aed;
+  color: white;
+  transform: translateY(-2px);
 }
 
 .icon-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
 .week-label {
-  font-size: 14px;
-  font-weight: 500;
   min-width: 160px;
+  padding: 0 8px;
+
   text-align: center;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  color: #334155;
 }
 
 .week-select {
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 6px 10px;
-  font-size: 14px;
+  height: 42px;
+  padding: 0 14px;
+
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+
+  background: #fff;
+
+  font-weight: 600;
+  color: #334155;
+
+  transition: all 0.25s ease;
 }
 
-/* ===== Empty Graph ===== */
+.week-select:hover {
+  border-color: rgba(124, 58, 237, 0.25);
+}
+
+.week-select:focus {
+  outline: none;
+  border-color: #7c3aed;
+
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+}
+
+/* ==================================================
+EMPTY GRAPH STATE
+================================================== */
+
 .empty-graph {
-  text-align: center;
   padding: 60px 20px;
+  text-align: center;
   color: #6b7280;
 }
 
@@ -161,7 +368,13 @@
   margin-bottom: 10px;
 }
 
-/* ===== Absence List ===== */
+/* ==================================================
+STUDENT LISTS
+
+* Below Threshold
+* Frequent Absentees
+  ================================================== */
+
 .absence-list {
   display: flex;
   flex-direction: column;
@@ -170,11 +383,29 @@
 
 .absence-row {
   display: grid;
-  grid-template-columns: 40px 1fr auto;
+  grid-template-columns: 50px 1fr auto;
   align-items: center;
-  background: #f9fafb;
-  padding: 12px 14px;
-  border-radius: 12px;
+
+  padding: 18px;
+
+  border-radius: 18px;
+
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(248, 250, 252, 0.95)
+  );
+
+  border: 1px solid rgba(226, 232, 240, 0.85);
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.absence-row:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.07);
 }
 
 .rank {
@@ -187,16 +418,44 @@
 }
 
 .count {
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 72px;
+  height: 36px;
+
+  padding: 0 12px;
+
+  border-radius: 999px;
+
+  background: rgba(239, 68, 68, 0.1);
   color: #dc2626;
-  font-weight: 500;
+
+  font-weight: 700;
+}
+
+/* ==================================================
+TABLET & MOBILE
+================================================== */
+
+@media (max-width: 768px) {
+  .graph-controls {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .week-label {
+    min-width: auto;
+  }
+
+  .week-select {
+    width: 100%;
+  }
 }
 
 @media (max-width: 767px) {
-  .reports-title {
-    font-size: 25px;
-  }
-
   .reports-subtitle {
     font-size: 14px;
   }
@@ -207,20 +466,11 @@
 
   .reports-card .card-body {
     padding: 16px;
+    overflow-x: auto;
   }
 
   .report-kpi-value {
     font-size: 30px;
-  }
-
-  .bar-chart.improved {
-    min-width: 560px;
-    gap: 18px;
-    padding: 0 12px;
-  }
-
-  .reports-card .card-body {
-    overflow-x: auto;
   }
 
   .reports-graph-header {
@@ -234,6 +484,12 @@
   .week-label {
     min-width: 0;
     flex: 1 1 150px;
+  }
+
+  .bar-chart.improved {
+    min-width: 560px;
+    gap: 18px;
+    padding: 0 12px;
   }
 
   .absence-row {

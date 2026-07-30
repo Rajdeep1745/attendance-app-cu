@@ -1,0 +1,231 @@
+/* ===== Overlay ===== */
+
+.dev-modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 5000;
+
+  animation: fadeIn 0.2s ease;
+}
+
+/* ===== Modal ===== */
+
+.dev-modal {
+  width: min(92vw, 900px);
+  max-width: 900px;
+
+  background: #ffffff;
+
+  border-radius: 24px;
+
+  box-shadow:
+    0 30px 60px rgba(15, 23, 42, 0.18),
+    0 8px 24px rgba(15, 23, 42, 0.08);
+
+  overflow: hidden;
+
+  animation: slideUp 0.25s ease;
+}
+
+/* ===== Header ===== */
+
+.dev-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 20px 24px;
+
+  border-bottom: 1px solid #e5e7eb;
+
+  background: linear-gradient(135deg, #faf5ff, #f5f3ff);
+}
+
+.dev-modal-header h3 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.dev-modal-header button {
+  width: 38px;
+  height: 38px;
+
+  border: none;
+  border-radius: 12px;
+
+  background: rgba(124, 58, 237, 0.08);
+  color: #7c3aed;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.dev-modal-header button:hover {
+  background: #7c3aed;
+  color: white;
+}
+
+/* ===== Grid ===== */
+
+.developers-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(300px, 1fr));
+
+  gap: 24px;
+
+  padding: 28px;
+}
+
+/* ===== Cards ===== */
+
+.developer-profile {
+  background: #ffffff;
+
+  border: 1px solid #ede9fe;
+
+  border-radius: 20px;
+
+  overflow: hidden;
+
+  transition: all 0.25s ease;
+}
+
+.developer-profile:hover {
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 16px 32px rgba(124, 58, 237, 0.12),
+    0 4px 12px rgba(124, 58, 237, 0.08);
+}
+
+/* ===== Avatar ===== */
+
+.developer-avatar-modal {
+  width: 100%;
+  height: 280px;
+
+  overflow: hidden;
+
+  background: #f8fafc;
+}
+
+.developer-avatar-modal img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center top;
+
+  display: block;
+}
+
+/* ===== Content ===== */
+
+.developer-content {
+  padding: 18px;
+}
+
+.developer-profile h5 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.developer-profile p {
+  margin: 4px 0;
+
+  color: #64748b;
+
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.role {
+  margin-top: 4px !important;
+  margin-bottom: 16px !important;
+
+  color: #7c3aed !important;
+
+  font-weight: 600;
+}
+
+/* ===== Contact Items ===== */
+
+.contact-row {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  margin-top: 12px;
+
+  color: #64748b;
+
+  font-size: 15px;
+}
+
+.contact-row i {
+  width: 20px;
+
+  color: #7c3aed;
+
+  font-size: 16px;
+}
+
+/* ===== Animations ===== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Mobile ===== */
+
+@media (max-width: 768px) {
+  .developers-grid {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .dev-modal {
+    width: calc(100vw - 24px);
+  }
+
+  .developer-avatar {
+    height: 320px;
+  }
+}
