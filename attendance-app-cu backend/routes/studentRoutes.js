@@ -4,68 +4,30 @@ const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 
 const {
-  getStudentsByBatch,
-  addStudent,
-  removeStudentFromBatch,
-  deleteStudent,
-  getMyBatches,
-  joinBatchByCode,
-  leaveMyBatch,
-  getMyBatchOverview,
-  getMyBatchReports,
-  getMyAttendanceByDate,
+  getStudentsBySubject,
+  addStudentToSubject,
+  removeStudentFromSubject,
 } = require("../controllers/studentController");
 
 router.get(
-  "/me/batches",
-  authMiddleware,
-  roleMiddleware("student"),
-  getMyBatches,
-);
-router.post(
-  "/me/join",
-  authMiddleware,
-  roleMiddleware("student"),
-  joinBatchByCode,
-);
-router.delete(
-  "/me/batches/:batchId",
-  authMiddleware,
-  roleMiddleware("student"),
-  leaveMyBatch,
-);
-router.get(
-  "/me/batches/:batchId/overview",
-  authMiddleware,
-  roleMiddleware("student"),
-  getMyBatchOverview,
-);
-router.get(
-  "/me/batches/:batchId/reports",
-  authMiddleware,
-  roleMiddleware("student"),
-  getMyBatchReports,
-);
-router.get(
-  "/me/attendance",
-  authMiddleware,
-  roleMiddleware("student"),
-  getMyAttendanceByDate,
-);
-
-router.get(
-  "/:batchId",
+  "/:subjectId",
   authMiddleware,
   roleMiddleware("teacher", "student"),
-  getStudentsByBatch,
+  getStudentsBySubject,
 );
-router.post("/", authMiddleware, roleMiddleware("teacher"), addStudent);
-router.delete(
-  "/:id/:batchId",
+
+router.post(
+  "/",
   authMiddleware,
   roleMiddleware("teacher"),
-  removeStudentFromBatch,
+  addStudentToSubject,
 );
-router.delete("/:id", authMiddleware, roleMiddleware("teacher"), deleteStudent);
+
+router.delete(
+  "/:studentId/:subjectId",
+  authMiddleware,
+  roleMiddleware("teacher"),
+  removeStudentFromSubject,
+);
 
 module.exports = router;

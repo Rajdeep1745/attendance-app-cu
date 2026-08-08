@@ -1,8 +1,12 @@
-const supabase = require("../config/supabaseClient");
+const db = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET is missing");
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const normalizeEmail = (email) => email?.trim().toLowerCase();
 
@@ -10,53 +14,82 @@ const normalizeEmail = (email) => email?.trim().toLowerCase();
 exports.signup = async (req, res) => {
   const { name, email, password, department, role } = req.body;
   const normalizedEmail = normalizeEmail(email);
+  const trimmedName = name?.trim();
+  const trimmedDepartment = department?.trim() || null;
 
-  if (!name?.trim() || !normalizedEmail || !password) {
-    return res.status(400).json({ error: "Name, email, and password are required" });
+  if (!trimmedName || !normalizedEmail || !password) {
+    return res
+      .status(400)
+      .json({ error: "Name, email, and password are required" });
   }
 
+  const allowedRoles = ["teacher", "student"];
+
+  if (!allowedRoles.includes(role)) {
+    return res.status(400).json({
+      error: "Invalid role",
+    });
+  }
+
+  const client = await db.pool.connect();
+
   try {
+    await client.query("BEGIN");
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const userRole = role || "student";
+    const result = await client.query(
+      `INSERT INTO users (name,email,password,department,role,avatar)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id`,
+      [
+        trimmedName,
+        normalizedEmail,
+        hashedPassword,
+        trimmedDepartment,
+        role,
+        "https://i.pravatar.cc/150",
+      ],
+    );
 
-    const { data, error } = await supabase
-      .from("users")
-      .insert([
-        {
-          name: name.trim(),
-          email: normalizedEmail,
-          password: hashedPassword,
-          department,
-          role: userRole,
-          avatar: "https://i.pravatar.cc/150",
-        },
-      ])
-      .select()
-      .single();
+    const data = result.rows[0];
 
-    if (error) throw error;
-
-    if (userRole === "teacher") {
-      const { error: teacherError } = await supabase.from("teachers").insert([
-        {
-          teacher_id: data.id,
-          default_mode: "manual",
-          default_threshold: 75,
-        },
-      ]);
-
-      if (teacherError) throw teacherError;
+    if (role === "teacher") {
+      await client.query(
+        `INSERT INTO teachers (teacher_id, default_mode, default_threshold)
+         VALUES ($1, $2, $3)`,
+        [data.id, "manual", 75],
+      );
+    } else if (role === "student") {
+      await client.query(
+        `INSERT INTO students (student_id)
+        VALUES ($1)`,
+        [data.id],
+      );
     }
 
-    res.json({ message: "User created" });
+    await client.query("COMMIT");
+
+    res.status(201).json({
+      message: "User created",
+      userId: data.id,
+      role,
+    });
   } catch (err) {
+    await client.query("ROLLBACK");
+
     if (err.code === "23505") {
-      return res.status(409).json({ error: "An account with this email already exists" });
+      return res.status(409).json({
+        error: "An account with this email already exists",
+      });
     }
 
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message,
+    });
+  } finally {
+    client.release();
   }
 };
 
@@ -70,14 +103,19 @@ exports.login = async (req, res) => {
   }
 
   try {
-    const { data: user, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("email", normalizedEmail)
-      .single();
+    const result = await db.query(
+      `SELECT id, name, email, password, role, avatar
+      FROM users
+      WHERE email = $1`,
+      [normalizedEmail],
+    );
 
-    if (error || !user) {
-      return res.status(401).json({ error: "Invalid email or password" });
+    const user = result.rows[0];
+
+    if (!user) {
+      return res.status(401).json({
+        error: "Invalid email or password",
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);

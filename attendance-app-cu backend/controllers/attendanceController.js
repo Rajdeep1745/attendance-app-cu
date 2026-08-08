@@ -528,3 +528,69 @@ exports.markManualAttendance = async (req, res) => {
 
   return res.json({ message: "Attendance saved", percentage: pct });
 };
+
+exports.getStudentAttendanceByDate = async (req, res) => {
+  const { date } = req.query;
+
+  if (!date) {
+    return res.status(400).json({ error: "Date is required" });
+  }
+
+  try {
+    const student = await getStudentRecordByStudentId(req.user.id);
+
+    if (!student) {
+      return res.json([]);
+    }
+
+    // Subjects joined by the student
+    const { rows: joinedSubjects } = await db.query(
+      `SELECT
+          e.subject_id,
+          s.subject_id
+       FROM enrollments e
+       JOIN subjects s
+         ON s.subject_id = e.subject_id
+       WHERE e.student_id = $1
+       ORDER BY e.subject_id`,
+      [studentId],
+    );
+
+    // Attendance for the requested date
+    const { rows: attendanceRows } = await db.query(
+      `SELECT
+          subject_id,
+          present,
+          created_at
+       FROM student_attendances
+       WHERE student_id = $1
+         AND date = $2`,
+      [studentId, date],
+    );
+
+    const attendanceMap = new Map(
+      attendanceRows.map((row) => [row.subject_id, row]),
+    );
+
+    res.json(
+      joinedSubjects.map((row) => {
+        const attendance = attendanceMap.get(row.subject_id);
+
+        return {
+          subjectId: row.subject_id,
+          batchName: row.subject_id,
+          status: attendance
+            ? attendance.present
+              ? "Present"
+              : "Absent"
+            : "No Class",
+          recordedAt: attendance?.created_at
+            ? formatRecordedTime(attendance.created_at)
+            : "-",
+        };
+      }),
+    );
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

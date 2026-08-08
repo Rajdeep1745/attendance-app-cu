@@ -8,6 +8,7 @@ const {
   getAttendanceGraph,
   getDailyAttendance,
   getFrequentAbsentees,
+  getStudentAttendanceByDate,
 } = require("../controllers/attendanceController");
 
 router.get(
@@ -35,40 +36,47 @@ router.get(
   getFrequentAbsentees,
 );
 
+router.get(
+  "/me/attendance",
+  authMiddleware,
+  roleMiddleware("student"),
+  getStudentAttendanceByDate,
+);
+
 module.exports = router;
 
 // ── Add at the top with other requires ──────────────────────────────
-const { faceMediaUpload } = require('../middleware/uploadMiddleware');
+const { faceMediaUpload } = require("../middleware/uploadMiddleware");
 const {
   // ... existing imports ...
   markAttendanceByFace,
   overrideAttendance,
   markManualAttendance,
-} = require('../controllers/attendanceController');
+} = require("../controllers/attendanceController");
 
 // ── Add after existing GET routes ──────────────────────────────────
 
 // Auto attendance from class photo or video
 router.post(
-  '/:batchId/face',
+  "/:batchId/face",
   authMiddleware,
-  roleMiddleware('teacher'),
-  faceMediaUpload.single('faceMedia'),
-  markAttendanceByFace
+  roleMiddleware("teacher"),
+  faceMediaUpload.single("faceMedia"),
+  markAttendanceByFace,
 );
 
 // Override individual student status after face scan
 router.patch(
-  '/:batchId/override',
+  "/:batchId/override",
   authMiddleware,
-  roleMiddleware('teacher'),
-  overrideAttendance
+  roleMiddleware("teacher"),
+  overrideAttendance,
 );
 
 // Fully manual attendance (also fixes the missing endpoint noted in the guide)
 router.post(
-  '/:batchId/mark',
+  "/:batchId/mark",
   authMiddleware,
-  roleMiddleware('teacher'),
-  markManualAttendance
+  roleMiddleware("teacher"),
+  markManualAttendance,
 );

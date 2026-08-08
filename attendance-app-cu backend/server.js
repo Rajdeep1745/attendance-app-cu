@@ -3,26 +3,26 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
-const batchRoutes = require("./routes/batchRoutes");
+const batchRoutes = require("./routes/subjectRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const lectureRoutes = require("./routes/lectureRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/users");
-const faceRoutes = require('./routes/faceRoutes');
+const faceRoutes = require("./routes/faceRoutes");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/batches", batchRoutes);
+app.use("/api/subject", batchRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/lectures", lectureRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use('/api', faceRoutes);  // exposes POST /api/students/:id/register-face
+app.use("/api", faceRoutes); // exposes POST /api/students/:id/register-face
 
 app.use("/api", (req, res) => {
   res.status(404).json({ error: "API route not found" });
