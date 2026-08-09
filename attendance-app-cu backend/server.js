@@ -3,7 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
-const batchRoutes = require("./routes/subjectRoutes");
+const subjectRoutes = require("./routes/subjectRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const lectureRoutes = require("./routes/lectureRoutes");

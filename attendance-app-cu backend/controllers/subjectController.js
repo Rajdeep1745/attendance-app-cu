@@ -37,13 +37,47 @@ const ensureTeacherSubjectAccess = async (subjectId, userId) => {
 
 const getStudentRecordByStudentId = async (studentId) => {
   const result = await db.query(
-    `SELECT roll_no, attendance_percentage, face_registered
+    `SELECT
+        roll_no,
+        attendance_percentage,
+        face_registered
      FROM students
      WHERE student_id = $1`,
     [studentId],
   );
 
   return result.rows[0] || null;
+};
+
+const getStudentSubjectAttendance = async (studentId, subjectId) => {
+  const { rows } = await db.query(
+    `SELECT
+        COUNT(*)::int AS total_classes,
+        COUNT(*) FILTER (
+          WHERE present = true
+        )::int AS attended_classes
+     FROM student_attendances
+     WHERE student_id = $1
+       AND subject_id = $2`,
+    [studentId, subjectId],
+  );
+
+  const totalClasses = rows[0]?.total_classes || 0;
+  const attendedClasses = rows[0]?.attended_classes || 0;
+
+  if (totalClasses === 0) {
+    return {
+      totalClasses: 0,
+      attendedClasses: 0,
+      percentage: 0,
+    };
+  }
+
+  return {
+    totalClasses,
+    attendedClasses,
+    percentage: Number(((attendedClasses / totalClasses) * 100).toFixed(1)),
+  };
 };
 
 const getSubjectAverageAttendance = async (subjectId) => {
@@ -163,7 +197,6 @@ exports.getStudentSubjects = async (req, res) => {
       `SELECT
           e.subject_id,
           e.created_at,
-          s.subject_id,
           s.threshold,
           s.total_students,
           u.name AS teacher_name
@@ -231,7 +264,11 @@ exports.getStudentSubjectOverview = async (req, res) => {
     const enrollment = rows[0];
 
     const avgAttendance = await getSubjectAverageAttendance(subjectId);
-    const myAttendance = Number(student.attendance_percentage || 0);
+    const myAttendanceData = await getStudentSubjectAttendance(
+      studentId,
+      subjectId,
+    );
+    const myAttendance = myAttendanceData.percentage;
     const threshold = Number(enrollment.threshold || 0);
     const thresholdGap = Number((myAttendance - threshold).toFixed(1));
 
@@ -324,12 +361,17 @@ exports.getStudentSubjectReports = async (req, res) => {
       (row) => row.present === true,
     ).length;
 
+    const myAttendanceData = await getStudentSubjectAttendance(
+      studentId,
+      subjectId,
+    );
+
     res.json({
       subjectId,
-      myAttendance: Number(student.attendance_percentage || 0),
+      myAttendance: myAttendanceData.percentage,
       subjectAverage: avgAttendance,
       totalClasses: subjectAttendanceRows.length,
-      attendedClasses,
+      attendedClasses: myAttendanceData.attendedClasses,
       threshold: Number(subject.threshold || 0),
       recentAttendance,
     });

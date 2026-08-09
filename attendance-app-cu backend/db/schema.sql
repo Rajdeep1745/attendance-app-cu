@@ -45,9 +45,6 @@ CREATE TABLE IF NOT EXISTS subjects (
         REFERENCES teachers(teacher_id)
         ON DELETE CASCADE,
 
-    -- kept for backend compatibility
-    name TEXT NOT NULL,
-
     threshold INTEGER NOT NULL
         DEFAULT 75
         CHECK (threshold BETWEEN 0 AND 100),
@@ -58,7 +55,7 @@ CREATE TABLE IF NOT EXISTS subjects (
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
-    );
+);
 
 -- =====================================================
 -- STUDENTS
@@ -69,7 +66,7 @@ CREATE TABLE IF NOT EXISTS students (
         REFERENCES users(id)
         ON DELETE CASCADE,
 
-    roll_no TEXT NOT NULL DEFAULT '0',
+    roll_no TEXT NOT NULL DEFAULT '-',
 
     face_registered BOOLEAN NOT NULL DEFAULT FALSE,
 
@@ -112,7 +109,7 @@ CREATE TABLE IF NOT EXISTS subject_attendances (
         REFERENCES subjects(subject_id)
         ON DELETE CASCADE,
 
-        date DATE NOT NULL,
+    date DATE NOT NULL,
 
     attendance_percentage NUMERIC(5,2)
         NOT NULL
@@ -184,38 +181,6 @@ ON student_attendances(subject_id, date);
 
 CREATE INDEX IF NOT EXISTS idx_subject_attendances_subject_date
 ON subject_attendances(subject_id, date);
-
--- =====================================================
--- TRIGGER: KEEP subject_id AND name IN SYNC
--- =====================================================
-
-CREATE OR REPLACE FUNCTION sync_batch_subject_name()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-AS $$
-BEGIN
-    -- If only name is supplied
-    IF NEW.subject_id IS NULL OR TRIM(NEW.subject_id) = '' THEN
-        NEW.subject_id := NEW.name;
-    END IF;
-
-    -- If only subject_id is supplied
-    IF NEW.name IS NULL OR TRIM(NEW.name) = '' THEN
-        NEW.name := NEW.subject_id;
-    END IF;
-
-    RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_sync_batch_subject_name
-ON subjects;
-
-CREATE TRIGGER trg_sync_batch_subject_name
-BEFORE INSERT OR UPDATE
-ON subjects
-FOR EACH ROW
-EXECUTE FUNCTION sync_batch_subject_name();
 
 -- =====================================================
 -- RPC: FREQUENT ABSENTEES

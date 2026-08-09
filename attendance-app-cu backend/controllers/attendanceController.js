@@ -1,227 +1,32 @@
-const supabase = require("../config/supabaseClient");
-
-const ensureBatchExists = async (batchId) => {
-  const { data, error } = await supabase
-    .from("batches")
-    .select("id")
-    .eq("id", batchId)
-    .maybeSingle();
-
-  if (error) throw error;
-  return Boolean(data);
-};
-
-// Get attendance stats
-exports.getAttendanceStats = async (req, res) => {
-  const { id } = req.params;
-
-  const hasAccess = await ensureBatchExists(id);
-  if (!hasAccess) {
-    return res.status(403).json({ error: "Access denied" });
-  }
-
-  const { data, error } = await supabase
-    .from("batch_attendances")
-    .select("attendance_percentage, date")
-    .eq("batch_id", id)
-    .order("date", { ascending: true });
-
-  if (error) {
-    console.log("FETCH ERROR:", error);
-    return res.status(500).json({ error });
-  }
-
-  if (!data || data.length === 0) {
-    return res.json({
-      totalClasses: 0,
-      avgAttendance: 0,
-      bestAttendance: { percentage: 0, date: null },
-      worstAttendance: { percentage: 0, date: null },
-    });
-  }
-
-  const totalClasses = data.length;
-
-  const avgAttendance = (
-    data.reduce((sum, row) => sum + row.attendance_percentage, 0) / totalClasses
-  ).toFixed(1);
-
-  // Find best
-  let best = data[0];
-  let worst = data[0];
-
-  data.forEach((row) => {
-    if (row.attendance_percentage > best.attendance_percentage) {
-      best = row;
-    }
-    if (row.attendance_percentage < worst.attendance_percentage) {
-      worst = row;
-    }
-  });
-
-  res.json({
-    totalClasses,
-    avgAttendance,
-    bestAttendance: {
-      percentage: best.attendance_percentage,
-      date: best.date,
-    },
-    worstAttendance: {
-      percentage: worst.attendance_percentage,
-      date: worst.date,
-    },
-  });
-};
-
-// GET WEEKLY ATTENDANCE GRAPH
-exports.getAttendanceGraph = async (req, res) => {
-  const { id } = req.params;
-
-  const hasAccess = await ensureBatchExists(id);
-  if (!hasAccess) {
-    return res.status(403).json({ error: "Access denied" });
-  }
-
-  const { data, error } = await supabase
-    .from("batch_attendances")
-    .select("attendance_percentage, date")
-    .eq("batch_id", id)
-    .order("date", { ascending: true });
-
-  if (error) {
-    console.log(error);
-    return res.status(500).json({ error });
-  }
-
-  res.json(data);
-};
-
-// GET daily attendance for a batch on a specific date
-exports.getDailyAttendance = async (req, res) => {
-  const { batchId } = req.params;
-  const { date } = req.query; // YYYY-MM-DD
-
-  if (!date) {
-    return res.status(400).json({ error: "Date is required" });
-  }
-
-  try {
-    const hasAccess = await ensureBatchExists(batchId);
-    if (!hasAccess) {
-      return res.status(403).json({ error: "Access denied" });
-    }
-
-    // 1. Get all students in batch
-    const { data: students, error: studentsError } = await supabase
-      .from("enrollments")
-      .select(
-        `
-        student_id,
-        students!enrollments_student_id_fkey (
-          student_id,
-          roll_no,
-          attendance_percentage,
-          users!students_user_id_fkey (
-            name,
-            avatar
-          )
-        )
-      `,
-      )
-      .eq("batch_id", batchId);
-
-    if (studentsError) throw studentsError;
-
-    // 2. Get attendance for that date
-    const { data: attendance, error: attendanceError } = await supabase
-      .from("student_attendances")
-      .select("student_id, present")
-      .eq("batch_id", batchId)
-      .eq("date", date);
-
-    if (attendanceError) throw attendanceError;
-
-    // 3. Map attendance
-    const attendanceMap = {};
-    attendance.forEach((a) => {
-      attendanceMap[a.student_id] = a.present;
-    });
-
-    // 4. Format response
-    const formatted = students.map((s) => ({
-      id: s.students.student_id,
-      name: s.students.users.name,
-      avatar: s.students.users.avatar,
-      roll: s.students.roll_no,
-      percentage: s.students.attendance_percentage || 0,
-      present: attendanceMap[s.students.student_id] ?? null,
-    }));
-
-    res.json(formatted);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Get frequent absentees
-exports.getFrequentAbsentees = async (req, res) => {
-  const { id } = req.params; // batchId
-
-  try {
-    const hasAccess = await ensureBatchExists(id);
-    if (!hasAccess) {
-      return res.status(403).json({ error: "Access denied" });
-    }
-
-    const { data, error } = await supabase
-      .from("student_attendances")
-      .select(
-        `
-        student_id,
-        students!student_attendances_student_id_fkey (
-          student_id,
-          users!students_user_id_fkey (
-            name
-          )
-        )
-      `,
-      )
-      .eq("batch_id", id)
-      .eq("present", false);
-
-    if (error) throw error;
-
-    const absencesByStudent = new Map();
-
-    (data || []).forEach((row) => {
-      const studentId = row.student_id;
-      const name = row.students?.users?.name || "Unknown Student";
-      const current = absencesByStudent.get(studentId);
-
-      absencesByStudent.set(studentId, {
-        id: studentId,
-        name,
-        absences: (current?.absences || 0) + 1,
-      });
-    });
-
-    const frequentAbsentees = Array.from(absencesByStudent.values()).sort(
-      (a, b) => b.absences - a.absences || a.name.localeCompare(b.name),
-    );
-
-    res.json(frequentAbsentees);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// ═══════════════════════════════════════════════════════════════════════
-// NEW EXPORTS
-// ═══════════════════════════════════════════════════════════════════════
-
+const db = require("../config/db");
 const { recognizeFaces } = require("../utils/faceService");
+
+const ensureTeacherSubjectAccess = async (subjectId, teacherId) => {
+  const result = await db.query(
+    `SELECT 1
+     FROM subjects
+     WHERE subject_id = $1
+       AND teacher_id = $2
+     LIMIT 1`,
+    [subjectId, teacherId],
+  );
+
+  return result.rows.length > 0;
+};
+
+const getStudentRecordByStudentId = async (studentId) => {
+  const result = await db.query(
+    `SELECT
+        roll_no,
+        attendance_percentage,
+        face_registered
+     FROM students
+     WHERE student_id = $1`,
+    [studentId],
+  );
+
+  return result.rows[0] || null;
+};
 
 function normalizeFaceEmbedding(rawEmbedding) {
   let embedding = rawEmbedding;
@@ -239,305 +44,321 @@ function normalizeFaceEmbedding(rawEmbedding) {
   }
 
   const numericEmbedding = embedding.map((value) => Number(value));
+
   return numericEmbedding.every(Number.isFinite) ? numericEmbedding : null;
 }
 
-function getStudentFaceEmbedding(studentRow) {
-  const faceData = studentRow?.student_face_data;
-  const rawEmbedding = Array.isArray(faceData)
-    ? faceData[0]?.embedding
-    : faceData?.embedding;
+// function getStudentFaceEmbedding(studentRow) {
+//   const faceData = studentRow?.student_face_data;
 
-  return normalizeFaceEmbedding(rawEmbedding);
-}
+//   const rawEmbedding = Array.isArray(faceData)
+//     ? faceData[0]?.embedding
+//     : faceData?.embedding;
 
-// ── Helper: recalculate batch_attendances for one date ────────────────
-// BUG FIX: now also writes presences (int4) which is a real column in schema
-async function recalcBatchDate(batchId, date) {
-  const { data: rows, error } = await supabase
-    .from("student_attendances")
-    .select("present")
-    .eq("batch_id", batchId)
-    .eq("date", date);
+//   return normalizeFaceEmbedding(rawEmbedding);
+// }
 
-  if (error) {
-    console.error(error);
+// Recalculate subject attendance for one date
+async function recalcSubjectDate(subjectId, date) {
+  const { rows } = await db.query(
+    `SELECT present
+     FROM student_attendances
+     WHERE subject_id = $1
+       AND date = $2`,
+    [subjectId, date],
+  );
+
+  if (rows.length === 0) {
     return;
   }
 
-  if (!rows.length) return;
+  const presentCount = rows.filter((row) => row.present === true).length;
 
-  const presentCount = rows.filter((r) => r.present).length;
-  const pct = Math.round((presentCount / rows.length) * 100);
+  const totalStudents = rows.length;
 
-  await supabase.from("batch_attendances").upsert(
-    {
-      batch_id: batchId,
-      date,
-      attendance_percentage: pct,
-      presences: presentCount,
-    },
-    { onConflict: "batch_id,date" },
+  const percentage = Math.round((presentCount / totalStudents) * 100);
+
+  await db.query(
+    `INSERT INTO subject_attendances (
+       subject_id,
+       date,
+       attendance_percentage,
+       presences
+     )
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (subject_id, date)
+     DO UPDATE SET
+       attendance_percentage = EXCLUDED.attendance_percentage,
+       presences = EXCLUDED.presences`,
+    [subjectId, date, percentage, presentCount],
   );
 }
 
-// ── Helper: recalculate students.attendance_percentage for a batch ────
-// BUG FIX: was a no-op placeholder — now actually updates students table
-// BUG FIX: uses .eq('student_id', ...) — students PK is student_id not id
-async function recalcStudentPercentages(batchId) {
-  const { data: records, error } = await supabase
-    .from("student_attendances")
-    .select("student_id, present")
-    .eq("batch_id", batchId);
+const formatRecordedTime = (value) => {
+  if (!value) return "-";
 
-  if (error || !records || records.length === 0) return;
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(value));
+};
 
-  // Group totals by student
-  const totals = {};
-  for (const row of records) {
-    if (!totals[row.student_id]) {
-      totals[row.student_id] = { total: 0, present: 0 };
+// GET ATTENDANCE STATS
+exports.getAttendanceStats = async (req, res) => {
+  const { subjectId } = req.params;
+  const teacherId = req.user.id;
+
+  try {
+    const hasAccess = await ensureTeacherSubjectAccess(subjectId, teacherId);
+
+    if (!hasAccess) {
+      return res.status(403).json({ error: "Access denied" });
     }
-    totals[row.student_id].total++;
-    if (row.present) totals[row.student_id].present++;
-  }
 
-  // Update each student's cached attendance_percentage
-  await Promise.all(
-    Object.entries(totals).map(([studentId, counts]) => {
-      const pct = Math.round((counts.present / counts.total) * 100);
+    const { rows } = await db.query(
+      `SELECT attendance_percentage, date
+       FROM subject_attendances
+       WHERE subject_id = $1
+       ORDER BY date ASC`,
+      [subjectId],
+    );
 
-      return supabase
-        .from("students")
-        .update({
-          attendance_percentage: pct,
-        })
-        .eq("student_id", studentId);
-    }),
-  );
-}
-
-/**
- * POST /api/attendance/:batchId/face
- * Multipart field: faceMedia (image or video)
- * Body field:      date (YYYY-MM-DD string)
- */
-exports.markAttendanceByFace = async (req, res) => {
-  const { batchId } = req.params;
-  const { date } = req.body;
-  const file = req.file;
-
-  if (!file) return res.status(400).json({ error: "No file provided" });
-  if (!date)
-    return res.status(400).json({ error: "date is required (YYYY-MM-DD)" });
-
-  // ── Verify teacher owns this batch ─────────────────────────────────
-  const batchExists = await ensureBatchExists(batchId);
-
-  if (!batchExists) {
-    return res.status(404).json({
-      error: "Batch not found",
-    });
-  }
-
-  // Load enrolled students with their face data
-  const { data: enrolled, error: enrollErr } = await supabase
-    .from("enrollments")
-    .select(
-      `
-      student_id,
-      students (
-        student_id,
-        face_registered,
-        student_face_data ( embedding )
-      )
-    `,
-    )
-    .eq("batch_id", batchId);
-
-  if (enrollErr || !enrolled) {
-    return res.status(500).json({ error: "Failed to load student roster" });
-  }
-
-  // All student IDs enrolled in this batch
-  const allStudentIds = enrolled.map((e) => e.student_id);
-
-  // Accept both one-to-one object and array relation shapes from Supabase.
-  const studentsWithFaces = enrolled
-    .map((e) => ({
-      id: e.student_id,
-      embedding: getStudentFaceEmbedding(e.students),
-    }))
-    .filter((student) => student.embedding);
-
-  let recognizedIds = [];
-  let framesProcessed = 0;
-
-  if (studentsWithFaces.length > 0) {
-    try {
-      const result = await recognizeFaces(
-        file.buffer,
-        file.mimetype,
-        studentsWithFaces,
-        0.5,
-      );
-      recognizedIds = result.recognized.map((r) => r.id);
-      framesProcessed = result.frames_processed;
-    } catch (err) {
-      console.error(
-        "[attendanceController] recognizeFaces error:",
-        err.message,
-      );
-      return res.status(503).json({
-        error:
-          "Face recognition service unavailable. Is the Python service running on port 5001?",
+    if (rows.length === 0) {
+      return res.json({
+        totalClasses: 0,
+        avgAttendance: 0,
+        bestAttendance: {
+          percentage: 0,
+          date: null,
+        },
+        worstAttendance: {
+          percentage: 0,
+          date: null,
+        },
       });
     }
+
+    const totalClasses = rows.length;
+
+    const avgAttendance = (
+      rows.reduce(
+        (sum, row) => sum + Number(row.attendance_percentage || 0),
+        0,
+      ) / totalClasses
+    ).toFixed(1);
+
+    let best = rows[0];
+    let worst = rows[0];
+
+    rows.forEach((row) => {
+      const attendance = Number(row.attendance_percentage || 0);
+
+      if (attendance > Number(best.attendance_percentage || 0)) {
+        best = row;
+      }
+
+      if (attendance < Number(worst.attendance_percentage || 0)) {
+        worst = row;
+      }
+    });
+
+    return res.json({
+      totalClasses,
+      avgAttendance,
+      bestAttendance: {
+        percentage: Number(best.attendance_percentage || 0),
+        date: best.date,
+      },
+      worstAttendance: {
+        percentage: Number(worst.attendance_percentage || 0),
+        date: worst.date,
+      },
+    });
+  } catch (err) {
+    console.error("GET ATTENDANCE STATS ERROR:", err);
+
+    return res.status(500).json({
+      error: err.message,
+    });
   }
-
-  // ── Write student_attendances rows ────────────────────────────────
-  const recognizedSet = new Set(recognizedIds);
-
-  const attendanceRows = allStudentIds.map((sid) => ({
-    student_id: sid,
-    batch_id: batchId,
-    date,
-    present: recognizedSet.has(sid),
-  }));
-
-  const { error: saveErr } = await supabase
-    .from("student_attendances")
-    .upsert(attendanceRows, { onConflict: "student_id,batch_id,date" });
-
-  if (saveErr) {
-    console.error("[attendanceController] upsert error:", saveErr);
-    return res.status(500).json({ error: "Failed to save attendance" });
-  }
-
-  // ── Recalculate stats (non-blocking) ─────────────────────────────
-  recalcBatchDate(batchId, date).catch(console.error);
-  recalcStudentPercentages(batchId).catch(console.error);
-
-  const unregisteredCount = allStudentIds.length - studentsWithFaces.length;
-
-  return res.json({
-    message: "Attendance marked",
-    present_count: recognizedIds.length,
-    total_count: allStudentIds.length,
-    unregistered_count: unregisteredCount,
-    frames_processed: framesProcessed,
-    // Full list so frontend can render the override UI immediately
-    attendance: attendanceRows.map((row) => ({
-      student_id: row.student_id,
-      present: row.present,
-      auto_recognized: recognizedSet.has(row.student_id),
-      has_face: studentsWithFaces.some((s) => s.id === row.student_id),
-    })),
-  });
 };
 
-/**
- * PATCH /api/attendance/:batchId/override
- * Body: { date: "YYYY-MM-DD", overrides: [{ student_id, present }] }
- * Teacher corrects individual student status after face recognition.
- */
-exports.overrideAttendance = async (req, res) => {
-  const { batchId } = req.params;
-  const { date, overrides } = req.body;
+// GET WEEKLY ATTENDANCE GRAPH
+exports.getAttendanceGraph = async (req, res) => {
+  const { subjectId } = req.params;
+  const teacherId = req.user.id;
 
-  if (!date || !Array.isArray(overrides) || overrides.length === 0) {
-    return res.status(400).json({ error: "date and overrides[] are required" });
+  try {
+    const hasAccess = await ensureTeacherSubjectAccess(subjectId, teacherId);
+
+    if (!hasAccess) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const { rows } = await db.query(
+      `SELECT attendance_percentage, date
+       FROM subject_attendances
+       WHERE subject_id = $1
+       ORDER BY date ASC`,
+      [subjectId],
+    );
+
+    return res.json(rows);
+  } catch (err) {
+    console.error("GET ATTENDANCE GRAPH ERROR:", err);
+
+    return res.status(500).json({
+      error: err.message,
+    });
   }
+};
 
-  // Verify teacher owns batch
-  const batchExists = await ensureBatchExists(batchId);
+// GET DAILY ATTENDANCE FOR A SUBJECT ON A SPECIFIC DATE
+exports.getDailyAttendance = async (req, res) => {
+  const { subjectId } = req.params;
+  const { date } = req.query;
+  const teacherId = req.user.id;
 
-  if (!batchExists) {
-    return res.status(404).json({
-      error: "Batch not found",
+  if (!date) {
+    return res.status(400).json({
+      error: "Date is required",
     });
   }
 
-  const rows = overrides.map((o) => ({
-    student_id: o.student_id,
-    batch_id: batchId,
-    date,
-    present: Boolean(o.present),
-  }));
+  try {
+    // 1. Verify that the logged-in teacher owns this subject
+    const hasAccess = await ensureTeacherSubjectAccess(subjectId, teacherId);
 
-  const { error } = await supabase
-    .from("student_attendances")
-    .upsert(rows, { onConflict: "student_id,batch_id,date" });
+    if (!hasAccess) {
+      return res.status(403).json({
+        error: "Access denied",
+      });
+    }
 
-  if (error) {
-    console.error("[attendanceController] override error:", error);
-    return res.status(500).json({ error: "Failed to save overrides" });
-  }
+    // 2. Get all students enrolled in this subject
+    //    and their attendance status for the requested date.
+    const { rows } = await db.query(
+      `SELECT
+          s.student_id,
+          s.roll_no,
+          u.name,
+          u.avatar,
+          sa.present,
+          COALESCE(
+            ROUND(
+              100.0 * (
+                SELECT COUNT(*)
+                FROM student_attendances spa
+                WHERE spa.student_id = s.student_id
+                  AND spa.subject_id = $1
+                  AND spa.present = true
+              ) / NULLIF(
+                (
+                  SELECT COUNT(*)
+                  FROM student_attendances spa
+                  WHERE spa.student_id = s.student_id
+                    AND spa.subject_id = $1
+                ),
+                0
+              )
+            ),
+            0
+          )::int AS percentage
+      FROM enrollments e
+      JOIN students s
+        ON s.student_id = e.student_id
+      JOIN users u
+        ON u.id = s.student_id
+      LEFT JOIN student_attendances sa
+        ON sa.student_id = s.student_id
+        AND sa.subject_id = e.subject_id
+        AND sa.date = $2
+      WHERE e.subject_id = $1
+      ORDER BY s.roll_no ASC`,
+      [subjectId, date],
+    );
 
-  // Recalculate — now also writes presences column correctly
-  await recalcBatchDate(batchId, date).catch(console.error);
-  await recalcStudentPercentages(batchId).catch(console.error);
+    // 3. Convert database rows into the response
+    //    expected by the frontend.
+    const formatted = rows.map((row) => ({
+      studentId: row.student_id,
+      name: row.name,
+      avatar: row.avatar,
+      roll: row.roll_no,
+      percentage: Number(row.attendance_percentage || 0),
+      present: row.present === null ? null : Boolean(row.present),
+    }));
 
-  return res.json({ message: "Overrides saved" });
-};
+    return res.json(formatted);
+  } catch (err) {
+    console.error("GET DAILY ATTENDANCE ERROR:", err);
 
-/**
- * POST /api/attendance/:batchId/mark
- * Body: { date: "YYYY-MM-DD", attendance: [{ student_id, present }] }
- * Fully manual attendance — no face recognition.
- * This also fills the missing endpoint the project guide flagged.
- */
-exports.markManualAttendance = async (req, res) => {
-  const { batchId } = req.params;
-  const { date, attendance } = req.body;
-
-  if (!date || !Array.isArray(attendance) || attendance.length === 0) {
-    return res
-      .status(400)
-      .json({ error: "date and attendance[] are required" });
-  }
-
-  const batchExists = await ensureBatchExists(batchId);
-
-  if (!batchExists) {
-    return res.status(404).json({
-      error: "Batch not found",
+    return res.status(500).json({
+      error: err.message,
     });
   }
-
-  const rows = attendance.map((a) => ({
-    student_id: a.student_id,
-    batch_id: batchId,
-    date,
-    present: Boolean(a.present),
-  }));
-
-  const { error } = await supabase
-    .from("student_attendances")
-    .upsert(rows, { onConflict: "student_id,batch_id,date" });
-
-  if (error) {
-    return res.status(500).json({ error: "Failed to save attendance" });
-  }
-
-  await recalcBatchDate(batchId, date).catch(console.error);
-  await recalcStudentPercentages(batchId).catch(console.error);
-
-  const presentCount = rows.filter((r) => r.present).length;
-  const pct = Math.round((presentCount / rows.length) * 100);
-
-  return res.json({ message: "Attendance saved", percentage: pct });
 };
 
+// GET FREQUENT ABSENTEES
+exports.getFrequentAbsentees = async (req, res) => {
+  const { subjectId } = req.params;
+  const teacherId = req.user.id;
+
+  try {
+    // 1. Verify that the logged-in teacher owns this subject
+    const hasAccess = await ensureTeacherSubjectAccess(subjectId, teacherId);
+
+    if (!hasAccess) {
+      return res.status(403).json({
+        error: "Access denied",
+      });
+    }
+
+    // 2. Find students who were absent and count
+    //    how many times each student was absent.
+    const { rows } = await db.query(
+      `SELECT
+          sa.student_id AS id,
+          u.name,
+          COUNT(*)::int AS absences
+       FROM student_attendances sa
+       JOIN students s
+         ON s.student_id = sa.student_id
+       JOIN users u
+         ON u.id = s.student_id
+       WHERE sa.subject_id = $1
+         AND sa.present = false
+       GROUP BY
+          sa.student_id,
+          u.name
+       ORDER BY
+          absences DESC,
+          u.name ASC`,
+      [subjectId],
+    );
+
+    return res.json(rows);
+  } catch (err) {
+    console.error("GET FREQUENT ABSENTEES ERROR:", err);
+
+    return res.status(500).json({
+      error: err.message,
+    });
+  }
+};
+
+// GET STUDENT ATTENDANCE BY DATE
 exports.getStudentAttendanceByDate = async (req, res) => {
   const { date } = req.query;
+  const studentId = req.user.id;
 
   if (!date) {
     return res.status(400).json({ error: "Date is required" });
   }
 
   try {
-    const student = await getStudentRecordByStudentId(req.user.id);
+    const student = await getStudentRecordByStudentId(studentId);
 
     if (!student) {
       return res.json([]);
@@ -545,14 +366,10 @@ exports.getStudentAttendanceByDate = async (req, res) => {
 
     // Subjects joined by the student
     const { rows: joinedSubjects } = await db.query(
-      `SELECT
-          e.subject_id,
-          s.subject_id
-       FROM enrollments e
-       JOIN subjects s
-         ON s.subject_id = e.subject_id
-       WHERE e.student_id = $1
-       ORDER BY e.subject_id`,
+      `SELECT subject_id
+        FROM enrollments
+        WHERE student_id = $1
+        ORDER BY subject_id`,
       [studentId],
     );
 
@@ -578,7 +395,6 @@ exports.getStudentAttendanceByDate = async (req, res) => {
 
         return {
           subjectId: row.subject_id,
-          batchName: row.subject_id,
           status: attendance
             ? attendance.present
               ? "Present"
@@ -592,5 +408,394 @@ exports.getStudentAttendanceByDate = async (req, res) => {
     );
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+// async function recalcStudentPercentages(subjectId) {
+//   const { data: records, error } = await supabase
+//     .from("student_attendances")
+//     .select("student_id, present")
+//     .eq("batch_id", subjectId);
+
+//   if (error || !records || records.length === 0) return;
+
+//   // Group totals by student
+//   const totals = {};
+//   for (const row of records) {
+//     if (!totals[row.student_id]) {
+//       totals[row.student_id] = { total: 0, present: 0 };
+//     }
+//     totals[row.student_id].total++;
+//     if (row.present) totals[row.student_id].present++;
+//   }
+
+//   // Update each student's cached attendance_percentage
+//   await Promise.all(
+//     Object.entries(totals).map(([studentId, counts]) => {
+//       const pct = Math.round((counts.present / counts.total) * 100);
+
+//       return supabase
+//         .from("students")
+//         .update({
+//           attendance_percentage: pct,
+//         })
+//         .eq("student_id", studentId);
+//     }),
+//   );
+// }
+
+exports.markAttendanceByFace = async (req, res) => {
+  const { subjectId } = req.params;
+  const { date } = req.body;
+  const teacherId = req.user.id;
+  const file = req.file;
+
+  if (!file) {
+    return res.status(400).json({
+      error: "No file provided",
+    });
+  }
+
+  if (!date) {
+    return res.status(400).json({
+      error: "date is required (YYYY-MM-DD)",
+    });
+  }
+
+  try {
+    // 1. Verify that the logged-in teacher owns this subject
+    const hasAccess = await ensureTeacherSubjectAccess(subjectId, teacherId);
+
+    if (!hasAccess) {
+      return res.status(404).json({
+        error: "Subject not found",
+      });
+    }
+
+    // 2. Load all students enrolled in this subject
+    //    together with their face registration data.
+    const { rows: enrolled } = await db.query(
+      `SELECT
+          e.student_id,
+          s.face_registered,
+          sfd.embedding
+       FROM enrollments e
+       JOIN students s
+         ON s.student_id = e.student_id
+       LEFT JOIN student_face_data sfd
+         ON sfd.student_id = s.student_id
+       WHERE e.subject_id = $1
+       ORDER BY e.student_id`,
+      [subjectId],
+    );
+
+    // 3. Get every enrolled student ID
+    const allStudentIds = enrolled.map((row) => row.student_id);
+
+    if (allStudentIds.length === 0) {
+      return res.status(400).json({
+        error: "No students are enrolled in this subject",
+      });
+    }
+
+    // 4. Build the list of students who actually have
+    //    a usable face embedding.
+    const studentsWithFaces = enrolled
+      .map((row) => ({
+        id: row.student_id,
+        embedding: normalizeFaceEmbedding(row.embedding),
+      }))
+      .filter((student) => student.embedding);
+
+    let recognizedIds = [];
+    let framesProcessed = 0;
+
+    // 5. Run face recognition only if there are
+    //    registered faces available.
+    if (studentsWithFaces.length > 0) {
+      try {
+        const result = await recognizeFaces(
+          file.buffer,
+          file.mimetype,
+          studentsWithFaces,
+          0.5,
+        );
+
+        recognizedIds = result.recognized.map((row) => row.id);
+
+        framesProcessed = result.frames_processed || 0;
+      } catch (err) {
+        console.error(
+          "[attendanceController] recognizeFaces error:",
+          err.message,
+        );
+
+        return res.status(503).json({
+          error:
+            "Face recognition service unavailable. Is the Python service running on port 5001?",
+        });
+      }
+    }
+
+    // 6. Convert recognized IDs into a Set for fast lookup.
+    const recognizedSet = new Set(recognizedIds);
+
+    // 7. Every enrolled student gets an attendance row.
+    //    Recognized students = Present.
+    //    Everyone else = Absent.
+    const attendanceRows = allStudentIds.map((studentId) => ({
+      student_id: studentId,
+      subject_id: subjectId,
+      date,
+      present: recognizedSet.has(studentId),
+    }));
+
+    // 8. Insert/update attendance records.
+    //
+    //    The unique key is:
+    //    (student_id, subject_id, date)
+    //
+    //    so ON CONFLICT updates an existing attendance
+    //    record instead of creating a duplicate.
+    for (const row of attendanceRows) {
+      await db.query(
+        `INSERT INTO student_attendances (
+           student_id,
+           subject_id,
+           date,
+           present
+         )
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (
+           student_id,
+           subject_id,
+           date
+         )
+         DO UPDATE SET
+           present = EXCLUDED.present`,
+        [row.student_id, row.subject_id, row.date, row.present],
+      );
+    }
+
+    // 9. Recalculate the subject's attendance
+    //    summary for this date.
+    await recalcSubjectDate(subjectId, date);
+
+    const unregisteredCount = allStudentIds.length - studentsWithFaces.length;
+
+    // 10. Return the result to the frontend.
+    return res.json({
+      message: "Attendance marked",
+      present_count: recognizedIds.length,
+      total_count: allStudentIds.length,
+      unregistered_count: unregisteredCount,
+      frames_processed: framesProcessed,
+
+      attendance: attendanceRows.map((row) => ({
+        student_id: row.student_id,
+        present: row.present,
+        auto_recognized: recognizedSet.has(row.student_id),
+        has_face: studentsWithFaces.some(
+          (student) => student.id === row.student_id,
+        ),
+      })),
+    });
+  } catch (err) {
+    console.error("MARK ATTENDANCE BY FACE ERROR:", err);
+
+    return res.status(500).json({
+      error: err.message,
+    });
+  }
+};
+
+exports.overrideAttendance = async (req, res) => {
+  const { subjectId } = req.params;
+  const { date, overrides } = req.body;
+  const teacherId = req.user.id;
+
+  if (!date || !Array.isArray(overrides) || overrides.length === 0) {
+    return res.status(400).json({
+      error: "date and overrides[] are required",
+    });
+  }
+
+  try {
+    // 1. Verify that the logged-in teacher owns this subject
+    const hasAccess = await ensureTeacherSubjectAccess(subjectId, teacherId);
+
+    if (!hasAccess) {
+      return res.status(404).json({
+        error: "Subject not found",
+      });
+    }
+
+    // 2. Make sure every student being overridden
+    //    is actually enrolled in this subject.
+    const studentIds = overrides.map((override) => override.student_id);
+
+    const { rows: enrolledStudents } = await db.query(
+      `SELECT student_id
+       FROM enrollments
+       WHERE subject_id = $1
+         AND student_id = ANY($2::text[])`,
+      [subjectId, studentIds],
+    );
+
+    const enrolledIds = new Set(enrolledStudents.map((row) => row.student_id));
+
+    const invalidStudentIds = studentIds.filter(
+      (studentId) => !enrolledIds.has(studentId),
+    );
+
+    if (invalidStudentIds.length > 0) {
+      return res.status(400).json({
+        error: "One or more students are not enrolled in this subject",
+        student_ids: invalidStudentIds,
+      });
+    }
+
+    // 3. Save each override.
+    for (const override of overrides) {
+      await db.query(
+        `INSERT INTO student_attendances (
+           student_id,
+           subject_id,
+           date,
+           present
+         )
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (
+           student_id,
+           subject_id,
+           date
+         )
+         DO UPDATE SET
+           present = EXCLUDED.present`,
+        [override.student_id, subjectId, date, Boolean(override.present)],
+      );
+    }
+
+    // 4. Recalculate the subject-level attendance
+    //    for this date.
+    await recalcSubjectDate(subjectId, date);
+
+    return res.json({
+      message: "Overrides saved",
+    });
+  } catch (err) {
+    console.error("OVERRIDE ATTENDANCE ERROR:", err);
+
+    return res.status(500).json({
+      error: err.message,
+    });
+  }
+};
+
+exports.markManualAttendance = async (req, res) => {
+  const { subjectId } = req.params;
+  const { date, attendance } = req.body;
+  const teacherId = req.user.id;
+
+  if (!date || !Array.isArray(attendance) || attendance.length === 0) {
+    return res.status(400).json({
+      error: "date and attendance[] are required",
+    });
+  }
+
+  try {
+    // 1. Verify that the logged-in teacher owns this subject.
+    const hasAccess = await ensureTeacherSubjectAccess(subjectId, teacherId);
+
+    if (!hasAccess) {
+      return res.status(404).json({
+        error: "Subject not found",
+      });
+    }
+
+    // 2. Get all students enrolled in this subject.
+    const { rows: enrolledStudents } = await db.query(
+      `SELECT student_id
+       FROM enrollments
+       WHERE subject_id = $1`,
+      [subjectId],
+    );
+
+    const enrolledIds = new Set(enrolledStudents.map((row) => row.student_id));
+
+    // 3. Make sure the submitted students actually
+    //    belong to this subject.
+    const submittedIds = attendance.map((row) => row.student_id);
+
+    const invalidStudentIds = submittedIds.filter(
+      (studentId) => !enrolledIds.has(studentId),
+    );
+
+    if (invalidStudentIds.length > 0) {
+      return res.status(400).json({
+        error: "One or more students are not enrolled in this subject",
+        student_ids: invalidStudentIds,
+      });
+    }
+
+    // 4. Make sure attendance has been supplied for
+    //    every enrolled student.
+    const submittedIdSet = new Set(submittedIds);
+
+    const missingStudentIds = enrolledStudents
+      .map((row) => row.student_id)
+      .filter((studentId) => !submittedIdSet.has(studentId));
+
+    if (missingStudentIds.length > 0) {
+      return res.status(400).json({
+        error: "Attendance must be provided for every enrolled student",
+        missing_student_ids: missingStudentIds,
+      });
+    }
+
+    // 5. Save attendance records.
+    for (const record of attendance) {
+      await db.query(
+        `INSERT INTO student_attendances (
+           student_id,
+           subject_id,
+           date,
+           present
+         )
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (
+           student_id,
+           subject_id,
+           date
+         )
+         DO UPDATE SET
+           present = EXCLUDED.present`,
+        [record.student_id, subjectId, date, Boolean(record.present)],
+      );
+    }
+
+    // 6. Recalculate subject-level attendance.
+    await recalcSubjectDate(subjectId, date);
+
+    // 7. Calculate the percentage from the submitted
+    //    attendance records.
+    const presentCount = attendance.filter((record) =>
+      Boolean(record.present),
+    ).length;
+
+    const totalCount = attendance.length;
+
+    const percentage = Math.round((presentCount / totalCount) * 100);
+
+    return res.json({
+      message: "Attendance saved",
+      percentage,
+    });
+  } catch (err) {
+    console.error("MARK MANUAL ATTENDANCE ERROR:", err);
+
+    return res.status(500).json({
+      error: err.message,
+    });
   }
 };

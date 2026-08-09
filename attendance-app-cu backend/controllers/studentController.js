@@ -82,24 +82,6 @@ const decrementSubjectStudentCount = async (subjectId) => {
   );
 };
 
-const formatJoinedOn = (value) => {
-  if (!value) return "-";
-
-  return new Intl.DateTimeFormat("en-US", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
-};
-
-const formatRecordedTime = (value) =>
-  new Intl.DateTimeFormat("en-IN", {
-    timeZone: "Asia/Kolkata",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  }).format(new Date(value));
-
 // Get student details
 exports.getStudentsBySubject = async (req, res) => {
   const { subjectId } = req.params;
