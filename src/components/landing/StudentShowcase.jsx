@@ -40,14 +40,6 @@ const studentFeatures = [
     glow: "rgba(251,146,60,.45)",
     accent: "#fdba74",
   },
-  {
-    icon: BookOpen,
-    title: "Lecture Topics",
-    desc: "Access every class plan, topic, and resource instantly — your entire syllabus, always in your pocket.",
-    gradient: "linear-gradient(135deg,#34d399,#06b6d4)",
-    glow: "rgba(52,211,153,.45)",
-    accent: "#6ee7b7",
-  },
 ];
 
 export default function StudentShowcase() {

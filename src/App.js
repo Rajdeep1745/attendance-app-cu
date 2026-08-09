@@ -14,12 +14,10 @@ import TeacherDashboard from "./app/teacher/dashboard/TeacherDashboard";
 import TeacherAttendance from "./app/teacher/attendance/TeacherAttendance";
 import TeacherStudents from "./app/teacher/students/TeacherStudents";
 import TeacherReports from "./app/teacher/reports/TeacherReports";
-import TeacherLectures from "./app/teacher/lectures/TeacherLectures";
 import StudentDashboard from "./app/student/dashboard/StudentDashboard";
 import StudentAttendance from "./app/student/attendance/StudentAttendance";
 import StudentStudents from "./app/student/students/StudentStudents";
 import StudentReports from "./app/student/reports/StudentReports";
-import StudentLectures from "./app/student/lectures/StudentLectures";
 
 import Alert from "./components/alert/Alert";
 
@@ -90,16 +88,6 @@ function App() {
             path=":batchId/reports"
             element={
               user?.role === "teacher" ? <TeacherReports /> : <StudentReports />
-            }
-          />
-          <Route
-            path=":batchId/lectures"
-            element={
-              user?.role === "teacher" ? (
-                <TeacherLectures />
-              ) : (
-                <StudentLectures />
-              )
             }
           />
         </Route>

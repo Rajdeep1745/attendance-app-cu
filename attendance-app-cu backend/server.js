@@ -6,7 +6,6 @@ const cors = require("cors");
 const subjectRoutes = require("./routes/subjectRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
-const lectureRoutes = require("./routes/lectureRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/users");
 const faceRoutes = require("./routes/faceRoutes");
@@ -19,7 +18,6 @@ app.use(express.json());
 app.use("/api/subject", subjectRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/attendance", attendanceRoutes);
-app.use("/api/lectures", lectureRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api", faceRoutes); // exposes POST /api/students/:id/register-face

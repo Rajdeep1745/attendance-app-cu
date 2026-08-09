@@ -283,40 +283,6 @@ export const TeacherReportsSkeleton = () => (
   </div>
 );
 
-export const TeacherLecturesSkeleton = () => (
-  <div className="container-fluid lectures-page skeleton-page" aria-busy="true">
-    <div className="mb-4 skeleton-page-heading-left">
-      <SkeletonBlock width="235px" height="34px" />
-      <SkeletonBlock width="620px" height="16px" />
-    </div>
-
-    <SkeletonCard className="lectures-card mb-4">
-      <div className="skeleton-card-toolbar">
-        <SkeletonText lines={2} widths={["230px", "520px"]} />
-        <SkeletonBlock width="128px" height="40px" radius="10px" />
-      </div>
-    </SkeletonCard>
-
-    <SkeletonCard className="lectures-card mb-4">
-      <SkeletonText lines={2} widths={["210px", "640px"]} />
-      <div className="curriculum-list mt-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <SkeletonBlock key={index} width="100%" height="72px" radius="16px" />
-        ))}
-      </div>
-    </SkeletonCard>
-
-    <SkeletonCard className="lectures-card">
-      <SkeletonText lines={2} widths={["220px", "360px"]} />
-      <div className="skeleton-mode-grid mt-3 mb-4">
-        <SkeletonBlock height="48px" radius="12px" />
-        <SkeletonBlock height="48px" radius="12px" />
-      </div>
-      <SkeletonBlock width="100%" height="220px" radius="16px" />
-    </SkeletonCard>
-  </div>
-);
-
 export const StudentDashboardSkeleton = () => (
   <div className="container-fluid dashboard student-dashboard skeleton-page" aria-busy="true">
     <div className="mb-4 skeleton-page-header">
@@ -447,32 +413,5 @@ export const StudentReportsSkeleton = () => (
         </SkeletonCard>
       </div>
     </div>
-  </div>
-);
-
-export const StudentLecturesSkeleton = () => (
-  <div className="container-fluid student-lectures-page skeleton-page" aria-busy="true">
-    <div className="mb-4 skeleton-page-heading-left">
-      <SkeletonBlock width="235px" height="34px" />
-      <SkeletonBlock width="510px" height="16px" />
-    </div>
-
-    <SkeletonCard className="student-lectures-card mb-4">
-      <SkeletonText lines={2} widths={["220px", "390px"]} />
-      <div className="student-unit-grid mt-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <SkeletonBlock key={index} height="150px" radius="16px" />
-        ))}
-      </div>
-    </SkeletonCard>
-
-    <SkeletonCard className="student-lectures-card">
-      <SkeletonText lines={2} widths={["170px", "430px"]} />
-      <div className="student-plan-list mt-4">
-        {Array.from({ length: 3 }).map((_, index) => (
-          <SkeletonBlock key={index} width="100%" height="150px" radius="16px" />
-        ))}
-      </div>
-    </SkeletonCard>
   </div>
 );
