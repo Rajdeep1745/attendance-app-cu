@@ -125,7 +125,7 @@ const Navbar = (props) => {
               Reports
             </NavLink>
           </li>
-
+          {/* 
           <li>
             <NavLink
               to={basePath ? `${basePath}/lectures` : "#"}
@@ -138,7 +138,7 @@ const Navbar = (props) => {
               <i className="fa-solid fa-book-open"></i>
               Lecture Topics
             </NavLink>
-          </li>
+          </li> */}
         </ul>
 
         <div className="navbar-right" ref={dropdownRef}>
@@ -214,12 +214,12 @@ const Navbar = (props) => {
               Reports
             </NavLink>
 
-            <NavLink
+            {/* <NavLink
               to={`${basePath}/lectures`}
               onClick={() => setMobileMenuOpen(false)}
             >
               Lectures
-            </NavLink>
+            </NavLink> */}
           </div>
         )}
       </nav>

@@ -10,7 +10,7 @@ const {
   updateThreshold,
   getStudentSubjectOverview,
   getStudentSubjectReports,
-} = require("../controllers/batchController");
+} = require("../controllers/subjectController");
 
 router.get(
   "/teacher",
