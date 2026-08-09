@@ -277,7 +277,7 @@
 .primary-btn {
   border: none;
 
-  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%);
+  background: linear-gradient(135deg,rgba(2, 0, 36, 1) 9%, rgba(32, 117, 227, 1) 47%, rgba(138, 49, 222, 1) 94%);
 
   color: white;
 
@@ -297,7 +297,7 @@
 /* Secondary */
 
 .secondary-btn {
-  background: linear-gradient(135deg, #032671 0%, #5d97ef 50%, #555e67 100%);
+  background: linear-gradient(135deg, #032671 0%, #5d97ef 50%, #b292dd 100%);
 
   backdrop-filter: blur(20px);
 
