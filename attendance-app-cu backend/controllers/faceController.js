@@ -1,44 +1,49 @@
-const supabase = require("../config/supabaseClient");
+const db = require("../config/db");
 const { extractEmbedding } = require("../utils/faceService");
 
-async function teacherOwnsStudent(studentId, teacherId) {
-  const { data, error } = await supabase
-    .from("enrollments")
-    .select("batch_id, batches!inner(teacher_id)")
-    .eq("student_id", studentId)
-    .eq("batches.teacher_id", teacherId)
-    .limit(1);
+const teacherOwnsStudent = async (studentId, teacherId) => {
+  const result = await db.query(
+    `SELECT 1
+     FROM enrollments e
+     JOIN subjects s
+       ON s.subject_id = e.subject_id
+     WHERE e.student_id = $1
+       AND s.teacher_id = $2
+     LIMIT 1`,
+    [studentId, teacherId],
+  );
 
-  return !error && data && data.length > 0;
-}
+  return result.rows.length > 0;
+};
 
-async function getStudentById(studentId) {
-  const { data, error } = await supabase
-    .from("students")
-    .select("student_id, user_id")
-    .eq("student_id", studentId)
-    .maybeSingle();
+const getStudentById = async (studentId) => {
+  const result = await db.query(
+    `SELECT
+        student_id
+     FROM students
+     WHERE student_id = $1`,
+    [studentId],
+  );
 
-  if (error) throw error;
-  return data;
-}
+  return result.rows[0] || null;
+};
 
-async function getStudentByUserId(userId) {
-  const { data, error } = await supabase
-    .from("students")
-    .select("student_id, user_id")
-    .eq("user_id", userId)
-    .maybeSingle();
+const getStudentByUserId = async (userId) => {
+  const result = await db.query(
+    `SELECT
+        student_id
+     FROM students
+     WHERE student_id = $1`,
+    [userId],
+  );
 
-  if (error) throw error;
-  return data;
-}
+  return result.rows[0] || null;
+};
 
-function buildInlineImageUrl(file) {
-  return `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
-}
+const buildInlineImageUrl = (file) =>
+  `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
 
-async function persistRegisteredFace(student, file) {
+const persistRegisteredFace = async (student, file) => {
   let embedding;
 
   try {
@@ -71,62 +76,79 @@ async function persistRegisteredFace(student, file) {
     }
 
     console.error("[faceController] extractEmbedding error:", err.message);
+
     const error = new Error(
       "Face recognition service unavailable. Is the Python service running on port 5001?",
     );
+
     error.statusCode = 503;
     throw error;
   }
 
   const imageUrl = buildInlineImageUrl(file);
 
-  const { error: upsertError } = await supabase
-    .from("student_face_data")
-    .upsert(
-      {
-        student_id: student.student_id,
-        image_url: imageUrl,
-        embedding,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "student_id" },
+  const client = await db.pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Save/update face data.
+    await client.query(
+      `INSERT INTO student_face_data (
+         student_id,
+         image_url,
+         embedding,
+         updated_at
+       )
+       VALUES ($1, $2, $3::jsonb, NOW())
+       ON CONFLICT (student_id)
+       DO UPDATE SET
+         image_url = EXCLUDED.image_url,
+         embedding = EXCLUDED.embedding,
+         updated_at = NOW()`,
+      [student.student_id, imageUrl, JSON.stringify(embedding)],
     );
 
-  if (upsertError) {
-    console.error("[faceController] upsert error:", upsertError);
+    // Update user's avatar.
+    await client.query(
+      `UPDATE users
+       SET avatar = $1
+       WHERE id = $2`,
+      [imageUrl, student.student_id],
+    );
+
+    // Mark face as registered.
+    await client.query(
+      `UPDATE students
+       SET face_registered = TRUE
+       WHERE student_id = $1`,
+      [student.student_id],
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      message: "Face registered successfully",
+      studentId: student.student_id,
+      avatar: imageUrl,
+      imageUrl,
+    };
+  } catch (err) {
+    await client.query("ROLLBACK");
+
+    console.error("[faceController] database error:", err.message);
+
     const error = new Error("Failed to save face data");
     error.statusCode = 500;
     throw error;
+  } finally {
+    client.release();
   }
+};
 
-  const { error: avatarError } = await supabase
-    .from("users")
-    .update({ avatar: imageUrl })
-    .eq("id", student.user_id);
-
-  if (avatarError) {
-    console.error("[faceController] avatar update error:", avatarError);
-    const error = new Error("Failed to save profile picture");
-    error.statusCode = 500;
-    throw error;
-  }
-
-  const { error: flagError } = await supabase
-    .from("students")
-    .update({ face_registered: true })
-    .eq("student_id", student.student_id);
-
-  if (flagError) {
-    console.error("[faceController] face_registered flag error:", flagError);
-  }
-
-  return {
-    message: "Face registered successfully",
-    studentId: student.student_id,
-    avatar: imageUrl,
-    imageUrl,
-  };
-}
+// ---------------------------------------------------------
+// TEACHER REGISTERS A STUDENT'S FACE
+// ---------------------------------------------------------
 
 exports.registerStudentFace = async (req, res) => {
   const { id: studentId } = req.params;
@@ -134,47 +156,66 @@ exports.registerStudentFace = async (req, res) => {
   const file = req.file;
 
   if (!file) {
-    return res.status(400).json({ error: "No image file provided" });
+    return res.status(400).json({
+      error: "No image file provided",
+    });
   }
 
   try {
     const student = await getStudentById(studentId);
+
     if (!student) {
-      return res.status(404).json({ error: "Student not found" });
+      return res.status(404).json({
+        error: "Student not found",
+      });
     }
 
     const hasAccess = await teacherOwnsStudent(studentId, teacherId);
+
     if (!hasAccess) {
-      return res.status(403).json({ error: "Access denied for this student" });
+      return res.status(403).json({
+        error: "Access denied for this student",
+      });
     }
 
     const payload = await persistRegisteredFace(student, file);
+
     return res.json(payload);
   } catch (err) {
-    return res
-      .status(err.statusCode || 500)
-      .json({ error: err.message || "Failed to register face" });
+    return res.status(err.statusCode || 500).json({
+      error: err.message || "Failed to register face",
+    });
   }
 };
+
+// ---------------------------------------------------------
+// STUDENT REGISTERS THEIR OWN FACE
+// ---------------------------------------------------------
 
 exports.registerMyFace = async (req, res) => {
   const file = req.file;
 
   if (!file) {
-    return res.status(400).json({ error: "No image file provided" });
+    return res.status(400).json({
+      error: "No image file provided",
+    });
   }
 
   try {
     const student = await getStudentByUserId(req.user.id);
+
     if (!student) {
-      return res.status(404).json({ error: "Student profile not found" });
+      return res.status(404).json({
+        error: "Student profile not found",
+      });
     }
 
     const payload = await persistRegisteredFace(student, file);
+
     return res.json(payload);
   } catch (err) {
-    return res
-      .status(err.statusCode || 500)
-      .json({ error: err.message || "Failed to register face" });
+    return res.status(err.statusCode || 500).json({
+      error: err.message || "Failed to register face",
+    });
   }
 };

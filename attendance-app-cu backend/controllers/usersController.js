@@ -1,30 +1,54 @@
-const supabase = require("../config/supabaseClient");
+const db = require("../config/db");
 
 const buildInlineImageUrl = (file) =>
   `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
 
-// GET current logged in user
+// ---------------------------------------------------------
+// GET CURRENT LOGGED-IN USER
+// ---------------------------------------------------------
+
 exports.getCurrentUser = async (req, res) => {
   try {
     const userId = req.user.id;
     const role = req.user.role;
 
-    // 1. Get user
-    const { data: user, error } = await supabase
-      .from("users")
-      .select("id, name, email, role, department, institution, avatar")
-      .eq("id", userId)
-      .single();
+    const userResult = await db.query(
+      `SELECT
+          id,
+          name,
+          email,
+          role,
+          department,
+          institution,
+          avatar
+       FROM users
+       WHERE id = $1`,
+      [userId],
+    );
 
-    if (error) throw error;
+    const user = userResult.rows[0];
 
-    // 2. If teacher → get preferences
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
+
+    // -----------------------------------------------------
+    // TEACHER PROFILE
+    // -----------------------------------------------------
+
     if (role === "teacher") {
-      const { data: teacher } = await supabase
-        .from("teachers")
-        .select("default_mode, default_threshold")
-        .eq("teacher_id", userId)
-        .single();
+      const teacherResult = await db.query(
+        `SELECT
+            default_mode,
+            default_threshold
+         FROM teachers
+         WHERE teacher_id = $1`,
+        [userId],
+      );
+
+      const teacher = teacherResult.rows[0];
 
       return res.json({
         ...user,
@@ -33,117 +57,193 @@ exports.getCurrentUser = async (req, res) => {
       });
     }
 
+    // -----------------------------------------------------
+    // STUDENT PROFILE
+    // -----------------------------------------------------
+
     if (role === "student") {
-      const { data: student } = await supabase
-        .from("students")
-        .select("student_id, alert_threshold, preferred_view, face_registered")
-        .eq("user_id", userId)
-        .single();
+      const studentResult = await db.query(
+        `SELECT
+            student_id,
+            roll_no,
+            face_registered,
+            attendance_percentage
+         FROM students
+         WHERE student_id = $1`,
+        [userId],
+      );
+
+      const student = studentResult.rows[0];
 
       return res.json({
         ...user,
         student_id: student?.student_id,
-        alert_threshold: student?.alert_threshold,
-        preferred_view: student?.preferred_view,
+        roll_no: student?.roll_no,
         face_registered: student?.face_registered,
+        attendance_percentage: student?.attendance_percentage ?? 0,
       });
     }
 
-    res.json(user);
+    return res.json(user);
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Failed to fetch user profile" });
+    console.error("GET CURRENT USER ERROR:", err);
+
+    return res.status(500).json({
+      error: "Failed to fetch user profile",
+    });
   }
 };
 
-// UPDATE profile
+// ---------------------------------------------------------
+// UPDATE PROFILE
+// ---------------------------------------------------------
+
 exports.updateProfile = async (req, res) => {
+  const userId = req.user.id;
+  const role = req.user.role;
+
+  const {
+    name,
+    department,
+    institution,
+    avatar,
+    defaultMode,
+    defaultThreshold,
+  } = req.body;
+
+  const client = await db.pool.connect();
+
   try {
-    const userId = req.user.id;
-    const role = req.user.role;
+    await client.query("BEGIN");
 
-    const {
-      name,
-      department,
-      institution,
-      avatar,
-      defaultMode,
-      defaultThreshold,
-    } = req.body;
+    // -----------------------------------------------------
+    // UPDATE USERS
+    // -----------------------------------------------------
 
-    const userUpdates = {
-      name,
-      department,
-      institution,
-    };
+    const userResult = await client.query(
+      `UPDATE users
+       SET
+         name = COALESCE($1, name),
+         department = COALESCE($2, department),
+         institution = COALESCE($3, institution),
+         avatar = CASE
+           WHEN $4::text IS NULL THEN avatar
+           ELSE $4
+         END
+       WHERE id = $5
+       RETURNING
+         id,
+         name,
+         email,
+         role,
+         department,
+         institution,
+         avatar`,
+      [
+        name ?? null,
+        department ?? null,
+        institution ?? null,
+        avatar !== undefined ? avatar : null,
+        userId,
+      ],
+    );
 
-    if (avatar !== undefined) {
-      userUpdates.avatar = avatar;
+    const userData = userResult.rows[0];
+
+    if (!userData) {
+      await client.query("ROLLBACK");
+
+      return res.status(404).json({
+        error: "User not found",
+      });
     }
 
-    // 1. Update users table
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .update(userUpdates)
-      .eq("id", userId)
-      .select()
-      .single();
+    // -----------------------------------------------------
+    // UPDATE TEACHER PREFERENCES
+    // -----------------------------------------------------
 
-    if (userError) throw userError;
-
-    // 2. If teacher → update teachers table
     if (role === "teacher") {
-      const { error: teacherError } = await supabase
-        .from("teachers")
-        .update({
-          default_mode: defaultMode,
-          default_threshold: defaultThreshold,
-        })
-        .eq("teacher_id", userId);
+      const teacherResult = await client.query(
+        `UPDATE teachers
+         SET
+           default_mode = COALESCE($1, default_mode),
+           default_threshold = COALESCE($2, default_threshold)
+         WHERE teacher_id = $3`,
+        [defaultMode ?? null, defaultThreshold ?? null, userId],
+      );
 
-      if (teacherError) throw teacherError;
+      if (teacherResult.rowCount === 0) {
+        await client.query("ROLLBACK");
+
+        return res.status(404).json({
+          error: "Teacher profile not found",
+        });
+      }
     }
 
-    if (role === "student") {
-      await supabase
-        .from("students")
-        .update({
-          alert_threshold: defaultThreshold,
-        })
-        .eq("user_id", userId);
-    }
+    await client.query("COMMIT");
 
-    res.json(userData);
+    return res.json(userData);
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Failed to update profile" });
+    await client.query("ROLLBACK");
+
+    console.error("UPDATE PROFILE ERROR:", err);
+
+    return res.status(500).json({
+      error: "Failed to update user profile",
+    });
+  } finally {
+    client.release();
   }
 };
+
+// ---------------------------------------------------------
+// UPDATE TEACHER AVATAR
+// ---------------------------------------------------------
 
 exports.updateTeacherAvatar = async (req, res) => {
   try {
     if (req.user.role !== "teacher") {
-      return res.status(403).json({ error: "Only teachers can update teacher profile photos" });
+      return res.status(403).json({
+        error: "Only teachers can update teacher profile photos",
+      });
     }
 
     if (!req.file) {
-      return res.status(400).json({ error: "No profile photo provided" });
+      return res.status(400).json({
+        error: "No profile photo provided",
+      });
     }
 
     const avatar = buildInlineImageUrl(req.file);
 
-    const { data: userData, error } = await supabase
-      .from("users")
-      .update({ avatar })
-      .eq("id", req.user.id)
-      .select("id, name, email, role, department, institution, avatar")
-      .single();
+    const result = await db.query(
+      `UPDATE users
+       SET avatar = $1
+       WHERE id = $2
+       RETURNING
+         id,
+         name,
+         email,
+         role,
+         department,
+         institution,
+         avatar`,
+      [avatar, req.user.id],
+    );
 
-    if (error) throw error;
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
 
-    res.json(userData);
+    return res.json(result.rows[0]);
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Failed to update teacher profile photo" });
+    console.error("UPDATE TEACHER AVATAR ERROR:", err);
+
+    return res.status(500).json({
+      error: "Failed to update teacher profile photo",
+    });
   }
 };

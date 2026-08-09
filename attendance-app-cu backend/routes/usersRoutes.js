@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 const { profileImageUpload } = require("../middleware/uploadMiddleware");
+
 const {
   getCurrentUser,
   updateProfile,

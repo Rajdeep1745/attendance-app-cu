@@ -7,7 +7,7 @@ const subjectRoutes = require("./routes/subjectRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const authRoutes = require("./routes/authRoutes");
-const userRoutes = require("./routes/users");
+const userRoutes = require("./routes/usersRoutes");
 const faceRoutes = require("./routes/faceRoutes");
 
 const app = express();
