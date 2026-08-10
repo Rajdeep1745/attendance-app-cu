@@ -177,7 +177,7 @@
 }
 
 /* ===== Button ===== */
-.addBatchButton {
+.addsubjectButton {
   min-height: 46px;
   background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
   color: #ffffff;
@@ -188,14 +188,14 @@
   transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.addBatchButton:hover {
+.addsubjectButton:hover {
   background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
   color: #ffffff;
   transform: translateY(-2px);
   box-shadow: 0 16px 36px rgba(124, 58, 237, 0.3);
 }
 
-.addBatchButton:focus {
+.addsubjectButton:focus {
   box-shadow: 0 0 0 0.2rem rgba(124, 58, 237, 0.22);
 }
 
@@ -208,15 +208,15 @@
   cursor: pointer;
 }
 
-/* ===== Batch item ===== */
-.batch-item {
+/* ===== subject item ===== */
+.subject-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
 }
 
-.batch-item small {
+.subject-item small {
   line-height: 1.35;
 }
 
@@ -328,7 +328,7 @@
   min-height: 60px;
 }
 
-.addBatchButton {
+.addsubjectButton {
   min-height: 52px;
 }
 

@@ -152,7 +152,7 @@ const Navbar = (props) => {
                   onClick={() => {
                     localStorage.removeItem("token");
                     setUser(null);
-                    window.location.href = "/login";
+                    window.location.href = "/landing";
                   }}
                 >
                   Logout

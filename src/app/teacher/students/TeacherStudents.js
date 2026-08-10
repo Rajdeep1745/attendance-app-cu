@@ -1,44 +1,36 @@
 import { useContext, useState, useMemo, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import BatchContext from "../../../context/subject/SubjectContext";
+
+import SubjectContext from "../../../context/subject/SubjectContext";
 import AlertContext from "../../../context/alert/AlertContext";
 
 import StudentModal from "../../../components/studentModal/StudentModal";
 import StudentDetailsModal from "../../../components/studentDetailsModal/StudentDetailsModal";
 import FaceRegisterModal from "../../../components/faceRegisterModal/FaceRegisterModal";
+
 import useDelayedLoading from "../../../hooks/useDelayedLoading";
 import { TeacherStudentsSkeleton } from "../../../components/skeletons/Skeletons";
+
 import "./TeacherStudents.css";
 
 const Students = () => {
-  const { activeBatch, fetchBatchById } = useContext(BatchContext);
+  const { activeSubject, fetchSubjectById } = useContext(SubjectContext);
+
   const { showAlert } = useContext(AlertContext);
-  const { batchId } = useParams();
 
-  /*
-   * The frontend route still calls this parameter "batchId"
-   * for compatibility with the existing router.
-   *
-   * Its actual value is now the backend subjectId.
-   *
-   * Example:
-   *
-   * /userId/bt1_phy/students
-   *
-   * batchId === "bt1_phy"
-   * subjectId === "bt1_phy"
-   */
-
-  const subjectId = batchId;
+  const { subjectId } = useParams();
 
   const [students, setStudents] = useState([]);
   const [studentsLoading, setStudentsLoading] = useState(true);
 
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
+
   const [selectedStudent, setSelectedStudent] = useState(null);
+
   const [openMenuId, setOpenMenuId] = useState(null);
 
   const [showDetails, setShowDetails] = useState(false);
+
   const [showFaceRegister, setShowFaceRegister] = useState(false);
 
   // ---------------------------------------------------------
@@ -73,38 +65,27 @@ const Students = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(
-          data?.error || "Failed to fetch students",
-        );
+        throw new Error(data?.error || "Failed to fetch students");
       }
 
       if (!Array.isArray(data)) {
-        throw new Error(
-          "Invalid student list received from server",
-        );
+        throw new Error("Invalid student list received from server");
       }
 
       setStudents(data);
     } catch (err) {
-      console.error(
-        "[TeacherStudents] Failed to fetch students:",
-        err,
-      );
+      console.error("[TeacherStudents] Failed to fetch students:", err);
 
       setStudents([]);
 
-      showAlert?.(
-        "Error",
-        err.message || "Failed to load students",
-        "danger",
-      );
+      showAlert?.("Error", err.message || "Failed to load students", "danger");
     } finally {
       setStudentsLoading(false);
     }
   }, [subjectId, showAlert]);
 
   // ---------------------------------------------------------
-  // ENSURE SELECTED SUBJECT IS LOADED
+  // LOAD SUBJECT + STUDENTS
   // ---------------------------------------------------------
 
   useEffect(() => {
@@ -114,40 +95,8 @@ const Students = () => {
       return;
     }
 
-    /*
-     * If BatchState has not loaded this subject yet,
-     * load it here.
-     *
-     * This makes the Students tab independent and prevents
-     * it from getting stuck on the skeleton.
-     */
-    const loadSubjectAndStudents = async () => {
-      try {
-        const currentSubjectId = activeBatch?.subject_id;
-
-        if (
-          String(currentSubjectId || "") !==
-          String(subjectId)
-        ) {
-          await fetchBatchById(subjectId);
-        }
-
-        await fetchStudents();
-      } catch (err) {
-        console.error(
-          "[TeacherStudents] Failed to load subject/student data:",
-          err,
-        );
-
-        setStudentsLoading(false);
-      }
-    };
-
-    loadSubjectAndStudents();
-
-    // We intentionally respond to subject changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subjectId]);
+    fetchStudents();
+  }, [subjectId, fetchStudents]);
 
   // ---------------------------------------------------------
   // ADD STUDENT
@@ -155,11 +104,7 @@ const Students = () => {
 
   const handleAddStudent = async (student) => {
     if (!subjectId) {
-      showAlert?.(
-        "Error",
-        "No subject selected",
-        "danger",
-      );
+      showAlert?.("Error", "No subject selected", "danger");
       return;
     }
 
@@ -167,9 +112,7 @@ const Students = () => {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        throw new Error(
-          "Authentication token not found",
-        );
+        throw new Error("Authentication token not found");
       }
 
       const res = await fetch(
@@ -182,12 +125,6 @@ const Students = () => {
             "Content-Type": "application/json",
           },
 
-          /*
-           * IMPORTANT:
-           *
-           * Backend expects subjectId.
-           * It does NOT expect batchId.
-           */
           body: JSON.stringify({
             name: student.name,
             email: student.email,
@@ -202,59 +139,34 @@ const Students = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(
-          data?.error || "Failed to add student",
-        );
+        throw new Error(data?.error || "Failed to add student");
       }
 
       /*
-       * The backend can return:
-       *
-       * 1. A newly enrolled student
-       *
-       * OR
-       *
-       * 2. { message: "Student already enrolled..." }
-       *
-       * Therefore we do NOT append `data` directly to the
-       * frontend state.
-       *
-       * Instead, reload the authoritative roster.
+       * Reload the authoritative roster.
        */
       await fetchStudents();
 
-      // Update total_students in activeBatch
-      await fetchBatchById(subjectId);
+      /*
+       * Refresh the subject so total_students is updated
+       * in SubjectContext.
+       */
+      await fetchSubjectById(subjectId);
 
       if (data?.message) {
-        showAlert?.(
-          "Information",
-          data.message,
-          "primary",
-        );
+        showAlert?.("Information", data.message, "primary");
       } else {
-        showAlert?.(
-          "Added",
-          "New student was added",
-          "success",
-        );
+        showAlert?.("Added", "New student was added", "success");
       }
     } catch (err) {
-      console.error(
-        "[TeacherStudents] Add student error:",
-        err,
-      );
+      console.error("[TeacherStudents] Add student error:", err);
 
-      showAlert?.(
-        "Error",
-        err.message || "Failed to add student",
-        "danger",
-      );
+      showAlert?.("Error", err.message || "Failed to add student", "danger");
     }
   };
 
   // ---------------------------------------------------------
-  // DELETE / REMOVE STUDENT FROM SUBJECT
+  // REMOVE STUDENT FROM SUBJECT
   // ---------------------------------------------------------
 
   const handleDeleteStudent = async (studentId) => {
@@ -266,9 +178,7 @@ const Students = () => {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        throw new Error(
-          "Authentication token not found",
-        );
+        throw new Error("Authentication token not found");
       }
 
       const res = await fetch(
@@ -285,38 +195,26 @@ const Students = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(
-          data?.error || "Failed to delete student",
-        );
+        throw new Error(data?.error || "Failed to remove student");
       }
 
       /*
-       * Reload the authoritative roster instead of only
-       * filtering local state.
+       * Reload authoritative roster.
        */
       await fetchStudents();
 
-      // Refresh total_students in activeBatch
-      await fetchBatchById(subjectId);
+      /*
+       * Refresh subject student count.
+       */
+      await fetchSubjectById(subjectId);
 
       setOpenMenuId(null);
 
-      showAlert?.(
-        "Deleted",
-        "Student was removed from this subject",
-        "danger",
-      );
+      showAlert?.("Deleted", "Student was removed from this subject", "danger");
     } catch (err) {
-      console.error(
-        "[TeacherStudents] Delete student error:",
-        err,
-      );
+      console.error("[TeacherStudents] Delete student error:", err);
 
-      showAlert?.(
-        "Error",
-        err.message || "Failed to delete student",
-        "danger",
-      );
+      showAlert?.("Error", err.message || "Failed to remove student", "danger");
     }
   };
 
@@ -327,11 +225,7 @@ const Students = () => {
   const handleRefresh = async () => {
     await fetchStudents();
 
-    showAlert?.(
-      "Refreshed",
-      "Student data refreshed",
-      "primary",
-    );
+    showAlert?.("Refreshed", "Student data refreshed", "primary");
   };
 
   // ---------------------------------------------------------
@@ -345,16 +239,10 @@ const Students = () => {
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside,
-    );
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside,
-      );
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -369,10 +257,7 @@ const Students = () => {
       (student) => student.faceRegistered,
     ).length;
 
-    const completion =
-      total === 0
-        ? 0
-        : Math.round((registered / total) * 100);
+    const completion = total === 0 ? 0 : Math.round((registered / total) * 100);
 
     return {
       total,
@@ -384,37 +269,19 @@ const Students = () => {
   const isEmpty = students.length === 0;
 
   // ---------------------------------------------------------
-  // SUBJECT MATCH
+  // PAGE LOADING
   // ---------------------------------------------------------
 
   /*
-   * OLD:
+   * Students are loaded directly from:
    *
-   * activeBatch.id
+   * GET /api/students/:subjectId
    *
-   * NEW:
-   *
-   * activeBatch.subject_id
-   *
-   * because subject_id is the backend identifier.
+   * We do not block the page based on SubjectContext.
    */
+  const pageLoading = studentsLoading;
 
-  const subjectMatchesRoute =
-    String(activeBatch?.subject_id || "") ===
-    String(subjectId || "");
-
-  /*
-   * We don't block the entire page forever just because the
-   * subject context is momentarily updating.
-   *
-   * fetchStudents is tied directly to subjectId.
-   */
-  const pageLoading =
-    studentsLoading ||
-    (!activeBatch && Boolean(subjectId));
-
-  const showPageSkeleton =
-    useDelayedLoading(pageLoading);
+  const showPageSkeleton = useDelayedLoading(pageLoading);
 
   if (showPageSkeleton) {
     return <TeacherStudentsSkeleton />;
@@ -432,10 +299,7 @@ const Students = () => {
         <div>
           <h1>Students</h1>
 
-          <p>
-            Manage roster, attendance health and face
-            registration.
-          </p>
+          <p>Manage roster, attendance health and face registration.</p>
         </div>
       </div>
 
@@ -443,9 +307,7 @@ const Students = () => {
 
       <div className="card students-card mb-4">
         <div className="card-body">
-          <h5 className="card-title">
-            Face Registration Status
-          </h5>
+          <h5 className="card-title">Face Registration Status</h5>
 
           {isEmpty ? (
             <div className="empty-card-state">
@@ -453,40 +315,31 @@ const Students = () => {
 
               <p>No students added yet</p>
 
-              <small>
-                Add students to enable face registration
-              </small>
+              <small>Add students to enable face registration</small>
             </div>
           ) : (
             <>
               <p className="text-muted mb-4">
-                An overview of face registration completion
-                for this subject.
+                An overview of face registration completion for this subject.
               </p>
 
               <div className="row text-center">
                 <div className="col">
                   <h3>{stats.total}</h3>
 
-                  <p className="text-muted">
-                    Total Students
-                  </p>
+                  <p className="text-muted">Total Students</p>
                 </div>
 
                 <div className="col">
                   <h3>{stats.registered}</h3>
 
-                  <p className="text-muted">
-                    Faces Registered
-                  </p>
+                  <p className="text-muted">Faces Registered</p>
                 </div>
 
                 <div className="col">
                   <h3>{stats.completion}%</h3>
 
-                  <p className="text-muted">
-                    Completion
-                  </p>
+                  <p className="text-muted">Completion</p>
                 </div>
               </div>
 
@@ -494,8 +347,7 @@ const Students = () => {
                 className="btn btn-outline-secondary mt-3"
                 onClick={handleRefresh}
               >
-                <i className="fa-solid fa-rotate"></i>{" "}
-                Refresh
+                <i className="fa-solid fa-rotate"></i> Refresh
               </button>
             </>
           )}
@@ -509,24 +361,19 @@ const Students = () => {
           <div className="d-flex justify-content-between align-items-center mb-3">
             <div>
               <h5 className="card-title mb-1">
-                Student Roster for{" "}
-                {activeBatch?.name || "Subject"}
+                Student Roster for {activeSubject?.name || "Subject"}
               </h5>
 
               <p className="students-subtitle mb-0">
-                Manage your class roster. Add, view,
-                or remove students.
+                Manage your class roster. Add, view, or remove students.
               </p>
             </div>
 
             <button
               className="btn btn-primary"
-              onClick={() =>
-                setIsStudentModalOpen(true)
-              }
+              onClick={() => setIsStudentModalOpen(true)}
             >
-              <i className="fa-solid fa-user-plus"></i>{" "}
-              Add Students
+              <i className="fa-solid fa-user-plus"></i> Add Students
             </button>
           </div>
 
@@ -537,9 +384,7 @@ const Students = () => {
               <p>No students in this subject</p>
 
               <small>
-                Click{" "}
-                <strong>Add Students</strong> to start
-                managing attendance
+                Click <strong>Add Students</strong> to start managing attendance
               </small>
             </div>
           ) : (
@@ -557,19 +402,12 @@ const Students = () => {
               {/* STUDENTS */}
 
               {students.map((student) => {
-                const attendance =
-                  Number(student.attendance || 0);
+                const attendance = Number(student.attendance || 0);
 
-                const faceRegistered =
-                  Boolean(
-                    student.faceRegistered,
-                  );
+                const faceRegistered = Boolean(student.faceRegistered);
 
                 return (
-                  <div
-                    key={student.id}
-                    className="students-table-row"
-                  >
+                  <div key={student.id} className="students-table-row">
                     {/* STUDENT */}
 
                     <div className="student-info">
@@ -581,30 +419,22 @@ const Students = () => {
                         alt={student.name}
                       />
 
-                      <span>
-                        {student.name}
-                      </span>
+                      <span>{student.name}</span>
                     </div>
 
                     {/* ROLL */}
 
-                    <span>
-                      {student.roll || "-"}
-                    </span>
+                    <span>{student.roll || "-"}</span>
 
                     {/* ATTENDANCE */}
 
-                    <span className="attendance-percent">
-                      {attendance}%
-                    </span>
+                    <span className="attendance-percent">{attendance}%</span>
 
                     {/* FACE STATUS */}
 
                     <span
                       className={`face-status ${
-                        faceRegistered
-                          ? "ok"
-                          : "missing"
+                        faceRegistered ? "ok" : "missing"
                       }`}
                     >
                       {faceRegistered ? (
@@ -622,74 +452,54 @@ const Students = () => {
 
                     <span
                       className="actions"
-                      onClick={(e) =>
-                        e.stopPropagation()
-                      }
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <i
                         className="fa-solid fa-ellipsis-vertical"
                         onClick={() =>
                           setOpenMenuId(
-                            openMenuId ===
-                              student.id
-                              ? null
-                              : student.id,
+                            openMenuId === student.id ? null : student.id,
                           )
                         }
                       ></i>
 
-                      {openMenuId ===
-                        student.id && (
+                      {openMenuId === student.id && (
                         <div className="student-dropdown">
                           {/* DETAILS */}
 
                           <button
                             onClick={() => {
-                              setSelectedStudent(
-                                student,
-                              );
+                              setSelectedStudent(student);
 
                               setShowDetails(true);
                               setOpenMenuId(null);
                             }}
                           >
-                            <i className="fa-solid fa-eye"></i>{" "}
-                            View Details
+                            <i className="fa-solid fa-eye"></i> View Details
                           </button>
 
                           {/* FACE */}
 
                           <button
                             onClick={() => {
-                              setSelectedStudent(
-                                student,
-                              );
+                              setSelectedStudent(student);
 
-                              setShowFaceRegister(
-                                true,
-                              );
+                              setShowFaceRegister(true);
 
                               setOpenMenuId(null);
                             }}
                           >
                             <i className="fa-solid fa-camera"></i>{" "}
-                            {faceRegistered
-                              ? "Update Face"
-                              : "Register Face"}
+                            {faceRegistered ? "Update Face" : "Register Face"}
                           </button>
 
                           {/* DELETE */}
 
                           <button
                             className="danger"
-                            onClick={() =>
-                              handleDeleteStudent(
-                                student.id,
-                              )
-                            }
+                            onClick={() => handleDeleteStudent(student.id)}
                           >
-                            <i className="fa-solid fa-trash"></i>{" "}
-                            Remove
+                            <i className="fa-solid fa-trash"></i> Remove
                           </button>
                         </div>
                       )}
@@ -706,9 +516,7 @@ const Students = () => {
 
       <StudentModal
         isOpen={isStudentModalOpen}
-        onClose={() =>
-          setIsStudentModalOpen(false)
-        }
+        onClose={() => setIsStudentModalOpen(false)}
         onSubmit={handleAddStudent}
       />
 
@@ -717,9 +525,7 @@ const Students = () => {
       <StudentDetailsModal
         isOpen={showDetails}
         student={selectedStudent}
-        onClose={() =>
-          setShowDetails(false)
-        }
+        onClose={() => setShowDetails(false)}
       />
 
       {/* FACE REGISTRATION */}
@@ -727,68 +533,37 @@ const Students = () => {
       <FaceRegisterModal
         isOpen={showFaceRegister}
         student={selectedStudent}
-        onClose={() =>
-          setShowFaceRegister(false)
-        }
+        onClose={() => setShowFaceRegister(false)}
         onSuccess={async (payload) => {
-          /*
-           * Backend returns:
-           *
-           * {
-           *   message,
-           *   studentId,
-           *   avatar,
-           *   imageUrl
-           * }
-           */
-
           if (!payload?.studentId) {
             return;
           }
 
-          /*
-           * Update immediately for responsive UI.
-           */
           setStudents((prev) =>
             prev.map((student) =>
-              String(student.id) ===
-              String(payload.studentId)
+              String(student.id) === String(payload.studentId)
                 ? {
                     ...student,
                     faceRegistered: true,
-                    avatar:
-                      payload.avatar ||
-                      student.avatar,
+                    avatar: payload.avatar || student.avatar,
                   }
                 : student,
             ),
           );
 
           setSelectedStudent((prev) =>
-            prev &&
-            String(prev.id) ===
-              String(payload.studentId)
+            prev && String(prev.id) === String(payload.studentId)
               ? {
                   ...prev,
                   faceRegistered: true,
-                  avatar:
-                    payload.avatar ||
-                    prev.avatar,
+                  avatar: payload.avatar || prev.avatar,
                 }
               : prev,
           );
 
-          /*
-           * Then reload from backend so the UI is guaranteed
-           * to match PostgreSQL.
-           */
           await fetchStudents();
 
-          showAlert?.(
-            "Success",
-            "Face registered successfully!",
-            "success",
-          );
+          showAlert?.("Success", "Face registered successfully!", "success");
         }}
       />
     </div>

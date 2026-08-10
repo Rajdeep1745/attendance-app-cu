@@ -262,7 +262,10 @@ const Attendance = () => {
                 <div key={student.id} className="attendance-row">
                   <div className="student-info">
                     <img
-                      src={student.avatar || "https://i.pravatar.cc/150"}
+                      src={
+                        student.avatar ||
+                        `https://i.pravatar.cc/40?u=${student.id}`
+                      }
                       alt={student.name}
                       className="student-avatar"
                     />

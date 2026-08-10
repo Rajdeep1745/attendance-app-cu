@@ -1,12 +1,12 @@
 import { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import BatchContext from "../../context/subject/SubjectContext";
+import SubjectContext from "../../context/subject/SubjectContext";
 import AlertContext from "../../context/alert/AlertContext";
 import AuthContext from "../../context/auth/AuthContext";
 import FaceRegisterModal from "../../components/faceRegisterModal/FaceRegisterModal";
 import "./Profile.css";
 
-const LAST_ACTIVE_BATCH_ID_KEY = "lastActiveBatchId";
+const LAST_ACTIVE_SUBJECT_ID_KEY = "lastActiveSubjectId";
 
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
@@ -19,7 +19,7 @@ const readFileAsDataUrl = (file) =>
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { activeBatch } = useContext(BatchContext);
+  const { activeSubject } = useContext(SubjectContext);
   const { showAlert } = useContext(AlertContext);
   const { user: storedUser, setUser } = useContext(AuthContext);
   const isTeacher = storedUser?.role === "teacher";
@@ -150,11 +150,12 @@ const Profile = () => {
   };
 
   const handleBackToDashboard = () => {
-    const activeBatchId =
-      activeBatch?.id || localStorage.getItem(LAST_ACTIVE_BATCH_ID_KEY);
+    const activeSubjectId =
+      activeSubject?.subject_id ||
+      localStorage.getItem(LAST_ACTIVE_SUBJECT_ID_KEY);
 
-    if (activeBatchId && storedUser?.id) {
-      navigate(`/${storedUser.id}/${activeBatchId}/dashboard`);
+    if (activeSubjectId && storedUser?.id) {
+      navigate(`/${storedUser.id}/${activeSubjectId}/dashboard`);
     } else {
       navigate(storedUser?.id ? `/${storedUser.id}` : "/");
     }
@@ -389,8 +390,8 @@ const Profile = () => {
 
               <div className="activity-card">
                 <p>
-                  <strong>Last Active Batch:</strong>{" "}
-                  {activeBatch ? activeBatch.name : "None"}
+                  <strong>Last Active Subject:</strong>{" "}
+                  {activeSubject ? activeSubject.name : "None"}
                 </p>
                 <p>
                   <strong>Account Type:</strong> {profile.role}

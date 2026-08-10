@@ -20,7 +20,6 @@ const Dashboard = () => {
 
   const [avgAttendance, setAvgAttendance] = useState(0);
   const [statsLoading, setStatsLoading] = useState(false);
-  const [subjectLoading, setSubjectLoading] = useState(false);
 
   const code = "------";
 
@@ -45,6 +44,7 @@ const Dashboard = () => {
   // ---------------------------------------------------------
 
   const [mode, setMode] = useState("manual");
+  const [modeSaving, setModeSaving] = useState(false);
 
   // ---------------------------------------------------------
   // COPY CODE
@@ -186,6 +186,138 @@ const Dashboard = () => {
   };
 
   // ---------------------------------------------------------
+  // CHANGE ATTENDANCE MODE
+  // ---------------------------------------------------------
+
+  const handleModeChange = async (nextMode) => {
+    if (!["manual", "auto"].includes(nextMode)) {
+      return;
+    }
+
+    const previousMode = mode;
+
+    setMode(nextMode);
+    setModeSaving(true);
+
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/users/me`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            defaultMode: nextMode,
+          }),
+        },
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to save attendance mode");
+      }
+
+      /*
+       * Keep the authenticated user in sync so the preference
+       * is also available elsewhere in the frontend.
+       */
+      const currentUser = JSON.parse(localStorage.getItem("user") || "null");
+
+      const updatedUser = {
+        ...(currentUser || {}),
+        ...data,
+        default_mode: data?.default_mode || nextMode,
+      };
+
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      showAlert(
+        "Saved",
+        `Attendance mode set to ${
+          nextMode === "auto" ? "Automatic" : "Manual"
+        }`,
+        "success",
+      );
+    } catch (err) {
+      console.error("[TeacherDashboard] Failed to save attendance mode:", err);
+
+      /*
+       * Roll back the UI if the backend rejected the change.
+       */
+      setMode(previousMode);
+
+      showAlert(
+        "Error",
+        err.message || "Failed to save attendance mode",
+        "danger",
+      );
+    } finally {
+      setModeSaving(false);
+    }
+  };
+
+  // ---------------------------------------------------------
+  // LOAD DEFAULT ATTENDANCE MODE
+  // ---------------------------------------------------------
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadDefaultMode = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          return;
+        }
+
+        const res = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}api/users/me`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data?.error || "Failed to load attendance mode");
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        const savedMode = data?.default_mode === "auto" ? "auto" : "manual";
+
+        setMode(savedMode);
+      } catch (err) {
+        console.error(
+          "[TeacherDashboard] Failed to load default attendance mode:",
+          err,
+        );
+      }
+    };
+
+    loadDefaultMode();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ---------------------------------------------------------
   // LOAD SELECTED SUBJECT
   // ---------------------------------------------------------
 
@@ -194,16 +326,10 @@ const Dashboard = () => {
       return;
     }
 
-    setSubjectLoading(true);
-
-    fetchSubjectById(subjectId).finally(() => {
-      setSubjectLoading(false);
-    });
-
     fetchAverageAttendance(subjectId);
-
     fetchStudentList(subjectId);
 
+    // Subject loading is handled centrally by Layout.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subjectId]);
 
@@ -244,8 +370,7 @@ const Dashboard = () => {
   const subjectMatchesRoute =
     String(activeSubject?.subject_id || "") === String(subjectId || "");
 
-  const pageLoading =
-    !subjectMatchesRoute || subjectLoading || statsLoading || studentsLoading;
+  const pageLoading = !subjectMatchesRoute || statsLoading || studentsLoading;
 
   const showPageSkeleton = useDelayedLoading(pageLoading);
 
@@ -416,7 +541,8 @@ const Dashboard = () => {
                     name="mode"
                     id="attendance-mode-manual"
                     checked={mode === "manual"}
-                    onChange={() => setMode("manual")}
+                    onChange={() => handleModeChange("manual")}
+                    disabled={modeSaving}
                   />
 
                   <label
@@ -440,7 +566,8 @@ const Dashboard = () => {
                     name="mode"
                     id="attendance-mode-auto"
                     checked={mode === "auto"}
-                    onChange={() => setMode("auto")}
+                    onChange={() => handleModeChange("auto")}
+                    disabled={modeSaving}
                   />
 
                   <label

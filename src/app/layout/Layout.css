@@ -37,7 +37,7 @@ body {
   margin: 0 auto;
 }
 
-/* Empty state when no batch is selected */
+/* Empty state when no subject is selected */
 .empty-state {
   height: calc(100vh - 64px); /* minus navbar height */
   display: flex;

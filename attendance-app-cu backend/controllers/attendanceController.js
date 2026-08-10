@@ -415,7 +415,7 @@ exports.getStudentAttendanceByDate = async (req, res) => {
 //   const { data: records, error } = await supabase
 //     .from("student_attendances")
 //     .select("student_id, present")
-//     .eq("batch_id", subjectId);
+//     .eq("subject_id", subjectId);
 
 //   if (error || !records || records.length === 0) return;
 
