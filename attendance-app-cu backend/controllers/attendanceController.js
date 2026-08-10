@@ -286,7 +286,7 @@ exports.getDailyAttendance = async (req, res) => {
       name: row.name,
       avatar: row.avatar,
       roll: row.roll_no,
-      percentage: Number(row.attendance_percentage || 0),
+      percentage: Number(row.percentage || 0),
       present: row.present === null ? null : Boolean(row.present),
     }));
 
