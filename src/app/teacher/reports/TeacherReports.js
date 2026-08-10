@@ -1,6 +1,6 @@
 import { useContext, useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import BatchContext from "../../../context/batch/BatchContext";
+import BatchContext from "../../../context/subject/SubjectContext";
 import useDelayedLoading from "../../../hooks/useDelayedLoading";
 import { TeacherReportsSkeleton } from "../../../components/skeletons/Skeletons";
 import "./TeacherReports.css";

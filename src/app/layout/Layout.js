@@ -4,32 +4,32 @@ import Navbar from "./navbar/Navbar";
 import Footer from "./footer/Footer";
 import TeacherSidebar from "./sidebar/TeacherSidebar";
 import StudentSidebar from "./sidebar/StudentSidebar";
-import BatchContext from "../../context/batch/BatchContext";
+import SubjectContext from "../../context/subject/SubjectContext";
 import "./Layout.css";
 
-const LAST_ACTIVE_BATCH_ID_KEY = "lastActiveBatchId";
+const LAST_ACTIVE_BATCH_ID_KEY = "lastActiveSubjectId";
 
 const Layout = () => {
-  const { userId, batchId } = useParams();
+  const { userId, subjectId } = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { fetchBatchById } = useContext(BatchContext);
+  const { fetchSubjectById } = useContext(SubjectContext);
   const storedUser = JSON.parse(localStorage.getItem("user") || "null");
   const role = storedUser?.role;
 
   useEffect(() => {
-    if (!batchId) {
-      fetchBatchById(null);
+    if (!subjectId) {
+      fetchSubjectById(null);
       return;
     }
 
-    fetchBatchById(batchId);
-  }, [batchId, role, fetchBatchById]);
+    fetchSubjectById(subjectId);
+  }, [subjectId, role, fetchSubjectById]);
 
   useEffect(() => {
-    if (batchId) {
-      localStorage.setItem(LAST_ACTIVE_BATCH_ID_KEY, batchId);
+    if (subjectId) {
+      localStorage.setItem(LAST_ACTIVE_BATCH_ID_KEY, subjectId);
     }
-  }, [batchId]);
+  }, [subjectId]);
 
   if (!storedUser) {
     return <Navigate to="/login" replace />;
@@ -66,15 +66,15 @@ const Layout = () => {
               sidebarOpen ? "sidebar-visible" : ""
             }`}
           >
-            {!batchId ? (
+            {!subjectId ? (
               <div className="empty-state">
                 <h2>
-                  {role === "teacher" ? "Select a subject" : "Choose a batch"}
+                  {role === "teacher" ? "Select a subject" : "Choose a subject"}
                 </h2>
                 <p>
                   {role === "teacher"
                     ? "Please choose a subject from the sidebar to continue."
-                    : "Join a batch using a valid batch code, or choose one of your real joined batches from the sidebar."}
+                    : "Join a subject using a valid subject code, or choose one of your real joined subjectes from the sidebar."}
                 </p>
               </div>
             ) : (

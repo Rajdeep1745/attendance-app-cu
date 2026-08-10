@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import BatchContext from "./BatchContext";
+import SubjectContext from "./SubjectContext";
 import { PROGRAMMES } from "../../data/programmes";
 
 const findSubjectDetails = (subjectId) => {
@@ -29,12 +29,12 @@ const findSubjectDetails = (subjectId) => {
   return null;
 };
 
-const BatchState = ({ children }) => {
-  const [activeBatch, setActiveBatch] = useState(null);
+const SubjectState = ({ children }) => {
+  const [activeSubject, setActiveSubject] = useState(null);
 
-  const fetchBatchById = useCallback(async (subjectId) => {
+  const fetchSubjectById = useCallback(async (subjectId) => {
     if (!subjectId) {
-      setActiveBatch(null);
+      setActiveSubject(null);
       return null;
     }
 
@@ -71,19 +71,19 @@ const BatchState = ({ children }) => {
       );
 
       /*
-       * Build ONE normalized activeBatch object.
+       * Build ONE normalized activeSubject object.
        *
        * Everything else in the frontend can now simply use:
        *
-       * activeBatch.subject_id
-       * activeBatch.name
-       * activeBatch.threshold
-       * activeBatch.total_students
-       * activeBatch.programme
-       * activeBatch.semester
-       * activeBatch.subject
+       * activeSubject.subject_id
+       * activeSubject.name
+       * activeSubject.threshold
+       * activeSubject.total_students
+       * activeSubject.programme
+       * activeSubject.semester
+       * activeSubject.subject
        */
-      const enrichedBatch = {
+      const enrichedSubject = {
         ...data,
 
         // Backend identifier
@@ -103,36 +103,36 @@ const BatchState = ({ children }) => {
 
         subject: curriculumSubject?.subject || null,
 
-        // Temporary value because batch_code no longer exists
-        batch_code: "------",
+        // Temporary value because subject_code no longer exists
+        subject_code: "------",
       };
 
-      setActiveBatch(enrichedBatch);
+      setActiveSubject(enrichedSubject);
 
-      return enrichedBatch;
+      return enrichedSubject;
     } catch (err) {
       console.error(
-        "[BatchState] Error fetching subject:",
+        "[SubjectState] Error fetching subject:",
         err,
       );
 
-      setActiveBatch(null);
+      setActiveSubject(null);
 
       return null;
     }
   }, []);
 
   return (
-    <BatchContext.Provider
+    <SubjectContext.Provider
       value={{
-        activeBatch,
-        setActiveBatch,
-        fetchBatchById,
+        activeSubject,
+        setActiveSubject,
+        fetchSubjectById,
       }}
     >
       {children}
-    </BatchContext.Provider>
+    </SubjectContext.Provider>
   );
 };
 
-export default BatchState;
+export default SubjectState;

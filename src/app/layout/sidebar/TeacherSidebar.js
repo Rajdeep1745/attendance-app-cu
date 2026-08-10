@@ -1,15 +1,15 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
-import BatchContext from "../../../context/batch/BatchContext";
+import SubjectContext from "../../../context/subject/SubjectContext";
 
 import "./Sidebar.css";
 import { PROGRAMMES } from "../../../data/programmes";
 
 const TeacherSidebar = ({ isOpen }) => {
-  const { userId, batchId } = useParams();
+  const { userId, subjectId } = useParams();
   const navigate = useNavigate();
 
-  const { setActiveBatch } = useContext(BatchContext);
+  const { setActiveSubject } = useContext(SubjectContext);
 
   // Subjects actually owned by the logged-in teacher
   const [teacherSubjects, setTeacherSubjects] = useState([]);
@@ -57,9 +57,7 @@ const TeacherSidebar = ({ isOpen }) => {
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(
-            data?.error || "Failed to fetch teacher subjects",
-          );
+          throw new Error(data?.error || "Failed to fetch teacher subjects");
         }
 
         if (!Array.isArray(data)) {
@@ -68,10 +66,7 @@ const TeacherSidebar = ({ isOpen }) => {
 
         setTeacherSubjects(data);
       } catch (err) {
-        console.error(
-          "[TeacherSidebar] Failed to fetch subjects:",
-          err,
-        );
+        console.error("[TeacherSidebar] Failed to fetch subjects:", err);
 
         setTeacherSubjects([]);
       } finally {
@@ -87,13 +82,13 @@ const TeacherSidebar = ({ isOpen }) => {
   // ---------------------------------------------------------
 
   useEffect(() => {
-    if (!batchId) {
+    if (!subjectId) {
       setSelectedSubject(null);
       return;
     }
 
     const subject = teacherSubjects.find(
-      (item) => String(item.subject_id) === String(batchId),
+      (item) => String(item.subject_id) === String(subjectId),
     );
 
     if (!subject) {
@@ -132,7 +127,7 @@ const TeacherSidebar = ({ isOpen }) => {
       programme: curriculumProgramme,
       semester: curriculumSemester,
     });
-  }, [batchId, teacherSubjects]);
+  }, [subjectId, teacherSubjects]);
 
   // ---------------------------------------------------------
   // SUBJECT CLICK
@@ -151,17 +146,13 @@ const TeacherSidebar = ({ isOpen }) => {
     const subjectId = curriculumSubject.id;
 
     if (!subjectId) {
-      console.error(
-        "[TeacherSidebar] Subject has no ID:",
-        curriculumSubject,
-      );
+      console.error("[TeacherSidebar] Subject has no ID:", curriculumSubject);
       return;
     }
 
     // Make sure this subject actually belongs to this teacher.
     const backendSubject = teacherSubjects.find(
-      (subject) =>
-        String(subject.subject_id) === String(subjectId),
+      (subject) => String(subject.subject_id) === String(subjectId),
     );
 
     if (!backendSubject) {
@@ -180,18 +171,15 @@ const TeacherSidebar = ({ isOpen }) => {
     };
 
     // Save selected subject for UI persistence
-    localStorage.setItem(
-      "selectedSubject",
-      JSON.stringify(selected),
-    );
+    localStorage.setItem("selectedSubject", JSON.stringify(selected));
 
     setSelectedSubject(selected);
 
     // Clear old subject data immediately
-    setActiveBatch(null);
+    setActiveSubject(null);
 
     /*
-     * The frontend route still calls this parameter "batchId",
+     * The frontend route still calls this parameter "subjectId",
      * but the VALUE is now the backend subject_id.
      *
      * Example:
@@ -205,9 +193,7 @@ const TeacherSidebar = ({ isOpen }) => {
   // ---------------------------------------------------------
 
   const teacherSubjectIds = new Set(
-    teacherSubjects.map((subject) =>
-      String(subject.subject_id),
-    ),
+    teacherSubjects.map((subject) => String(subject.subject_id)),
   );
 
   // ---------------------------------------------------------
@@ -219,168 +205,122 @@ const TeacherSidebar = ({ isOpen }) => {
       <div className="sidebar-content">
         <h6 className="fw-bold mb-1">Subjects</h6>
 
-        <small className="text-muted">
-          Select a subject to manage
-        </small>
+        <small className="text-muted">Select a subject to manage</small>
 
         {subjectsLoading ? (
-          <div className="text-muted small mt-4 px-2">
-            Loading subjects...
-          </div>
+          <div className="text-muted small mt-4 px-2">Loading subjects...</div>
         ) : teacherSubjects.length === 0 ? (
-          <div className="text-muted small mt-4 px-2">
-            No subjects found.
-          </div>
+          <div className="text-muted small mt-4 px-2">No subjects found.</div>
         ) : (
           <div className="list-group list-group-flush mt-3">
-            {Object.entries(PROGRAMMES).map(
-              ([programme, data]) => {
-                /*
-                 * Only keep curriculum subjects that exist
-                 * in the teacher's backend subject list.
-                 */
-                const programmeHasSubjects = Object.values(
-                  data.semesters,
-                ).some((subjects) =>
+            {Object.entries(PROGRAMMES).map(([programme, data]) => {
+              /*
+               * Only keep curriculum subjects that exist
+               * in the teacher's backend subject list.
+               */
+              const programmeHasSubjects = Object.values(data.semesters).some(
+                (subjects) =>
                   subjects.some((subject) =>
                     teacherSubjectIds.has(String(subject.id)),
                   ),
-                );
+              );
 
-                if (!programmeHasSubjects) {
-                  return null;
-                }
+              if (!programmeHasSubjects) {
+                return null;
+              }
 
-                return (
+              return (
+                <div key={programme} className="tree-programme">
+                  {/* PROGRAMME */}
                   <div
-                    key={programme}
-                    className="tree-programme"
+                    className="tree-programme-header"
+                    onClick={() =>
+                      setExpandedProgrammes((prev) => ({
+                        ...prev,
+                        [programme]: !prev[programme],
+                      }))
+                    }
                   >
-                    {/* PROGRAMME */}
-                    <div
-                      className="tree-programme-header"
-                      onClick={() =>
-                        setExpandedProgrammes((prev) => ({
-                          ...prev,
-                          [programme]:
-                            !prev[programme],
-                        }))
-                      }
-                    >
-                      <span>
-                        {expandedProgrammes[programme]
-                          ? "▼"
-                          : "▶"}
-                      </span>
+                    <span>{expandedProgrammes[programme] ? "▼" : "▶"}</span>
 
-                      <span>{programme}</span>
-                    </div>
-
-                    {/* SEMESTERS */}
-                    {expandedProgrammes[programme] && (
-                      <div className="tree-semester">
-                        {Object.entries(data.semesters).map(
-                          ([semester, subjects]) => {
-                            const availableSubjects =
-                              subjects.filter((subject) =>
-                                teacherSubjectIds.has(
-                                  String(subject.id),
-                                ),
-                              );
-
-                            if (
-                              availableSubjects.length === 0
-                            ) {
-                              return null;
-                            }
-
-                            return (
-                              <div key={semester}>
-                                {/* SEMESTER */}
-                                <div
-                                  className="tree-semester-header"
-                                  onClick={() =>
-                                    setExpandedSemesters(
-                                      (prev) => ({
-                                        ...prev,
-                                        [programme + semester]:
-                                          !prev[
-                                            programme +
-                                              semester
-                                          ],
-                                      }),
-                                    )
-                                  }
-                                >
-                                  <span>
-                                    {expandedSemesters[
-                                      programme + semester
-                                    ]
-                                      ? "▼"
-                                      : "▶"}
-                                  </span>
-
-                                  <span>
-                                    Semester {semester}
-                                  </span>
-                                </div>
-
-                                {/* SUBJECTS */}
-                                {expandedSemesters[
-                                  programme + semester
-                                ] && (
-                                  <div className="tree-subject-list">
-                                    {availableSubjects.map(
-                                      (subject) => {
-                                        const isActive =
-                                          String(
-                                            selectedSubject?.subjectId,
-                                          ) ===
-                                            String(
-                                              subject.id,
-                                            ) ||
-                                          String(batchId) ===
-                                            String(
-                                              subject.id,
-                                            );
-
-                                        return (
-                                          <div
-                                            key={subject.id}
-                                            className={`tree-subject ${
-                                              isActive
-                                                ? "active"
-                                                : ""
-                                            }`}
-                                            onClick={() =>
-                                              handleSubjectClick(
-                                                programme,
-                                                semester,
-                                                subject,
-                                              )
-                                            }
-                                          >
-                                            <span>•</span>
-
-                                            <span>
-                                              {subject.name}
-                                            </span>
-                                          </div>
-                                        );
-                                      },
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          },
-                        )}
-                      </div>
-                    )}
+                    <span>{programme}</span>
                   </div>
-                );
-              },
-            )}
+
+                  {/* SEMESTERS */}
+                  {expandedProgrammes[programme] && (
+                    <div className="tree-semester">
+                      {Object.entries(data.semesters).map(
+                        ([semester, subjects]) => {
+                          const availableSubjects = subjects.filter((subject) =>
+                            teacherSubjectIds.has(String(subject.id)),
+                          );
+
+                          if (availableSubjects.length === 0) {
+                            return null;
+                          }
+
+                          return (
+                            <div key={semester}>
+                              {/* SEMESTER */}
+                              <div
+                                className="tree-semester-header"
+                                onClick={() =>
+                                  setExpandedSemesters((prev) => ({
+                                    ...prev,
+                                    [programme + semester]:
+                                      !prev[programme + semester],
+                                  }))
+                                }
+                              >
+                                <span>
+                                  {expandedSemesters[programme + semester]
+                                    ? "▼"
+                                    : "▶"}
+                                </span>
+
+                                <span>Semester {semester}</span>
+                              </div>
+
+                              {/* SUBJECTS */}
+                              {expandedSemesters[programme + semester] && (
+                                <div className="tree-subject-list">
+                                  {availableSubjects.map((subject) => {
+                                    const isActive =
+                                      String(selectedSubject?.subjectId) ===
+                                        String(subject.id) ||
+                                      String(subjectId) === String(subject.id);
+
+                                    return (
+                                      <div
+                                        key={subject.id}
+                                        className={`tree-subject ${
+                                          isActive ? "active" : ""
+                                        }`}
+                                        onClick={() =>
+                                          handleSubjectClick(
+                                            programme,
+                                            semester,
+                                            subject,
+                                          )
+                                        }
+                                      >
+                                        <span>•</span>
+
+                                        <span>{subject.name}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        },
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

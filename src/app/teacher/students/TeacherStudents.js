@@ -1,6 +1,6 @@
 import { useContext, useState, useMemo, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import BatchContext from "../../../context/batch/BatchContext";
+import BatchContext from "../../../context/subject/SubjectContext";
 import AlertContext from "../../../context/alert/AlertContext";
 
 import StudentModal from "../../../components/studentModal/StudentModal";

@@ -48,14 +48,14 @@ function App() {
             element={
               <div>
                 {user?.role === "teacher"
-                  ? "Select a batch"
-                  : "Choose a joined batch"}
+                  ? "Select a subject"
+                  : "Choose a joined subject"}
               </div>
             }
           />
 
           <Route
-            path=":batchId/dashboard"
+            path=":subjectId/dashboard"
             element={
               user?.role === "teacher" ? (
                 <TeacherDashboard />
@@ -64,8 +64,9 @@ function App() {
               )
             }
           />
+
           <Route
-            path=":batchId/attendance"
+            path=":subjectId/attendance"
             element={
               user?.role === "teacher" ? (
                 <TeacherAttendance />
@@ -74,8 +75,9 @@ function App() {
               )
             }
           />
+
           <Route
-            path=":batchId/students"
+            path=":subjectId/students"
             element={
               user?.role === "teacher" ? (
                 <TeacherStudents />
@@ -84,8 +86,9 @@ function App() {
               )
             }
           />
+
           <Route
-            path=":batchId/reports"
+            path=":subjectId/reports"
             element={
               user?.role === "teacher" ? <TeacherReports /> : <StudentReports />
             }

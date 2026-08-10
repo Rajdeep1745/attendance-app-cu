@@ -14,19 +14,6 @@ const ensureSubjectExists = async (subjectId) => {
   return result.rows.length > 0;
 };
 
-const ensureStudentExists = async (studentId) => {
-  const { rows } = await db.query(
-    `SELECT EXISTS (
-        SELECT 1
-        FROM students
-        WHERE student_id = $1
-    ) AS exists`,
-    [studentId],
-  );
-
-  return rows[0].exists;
-};
-
 const ensureStudentSubjectAccess = async (subjectId, studentId) => {
   const result = await db.query(
     `SELECT 1

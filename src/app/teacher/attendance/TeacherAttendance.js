@@ -1,9 +1,8 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 
-import BatchContext from "../../../context/batch/BatchContext";
 import useDelayedLoading from "../../../hooks/useDelayedLoading";
 import { TeacherAttendanceSkeleton } from "../../../components/skeletons/Skeletons";
 import "./TeacherAttendance.css";
@@ -12,25 +11,26 @@ const formatLocalDate = (date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
+
   return `${year}-${month}-${day}`;
 };
 
 const Attendance = () => {
-  const { batchId } = useParams();
-  const { activeBatch } = useContext(BatchContext);
+  const { subjectId } = useParams();
+
   const today = new Date();
 
-  // Attendance threshold
+  // Subject attendance threshold
   const [threshold, setThreshold] = useState(0);
 
-  // Selected batch from calender
+  // Selected calendar date
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // Record of students
+  // Student attendance records
   const [records, setRecords] = useState([]);
   const [attendanceLoading, setAttendanceLoading] = useState(true);
 
-  // Attendance stats
+  // Attendance statistics
   const [attendanceStats, setAttendanceStats] = useState({
     totalClasses: 0,
     avgAttendance: 0,
@@ -38,10 +38,38 @@ const Attendance = () => {
     worstAttendance: {},
   });
 
-  // Fetch Average Attendance
+  // Fetch selected subject
+  const fetchSubjectDetails = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/subject/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to fetch subject");
+      }
+
+      setThreshold(Number(data?.threshold || 0));
+    } catch (err) {
+      console.error("Failed to fetch subject details:", err);
+      setThreshold(0);
+    }
+  };
+
+  // Fetch attendance statistics
   const fetchAttendanceDetails = async (id) => {
     try {
       const token = localStorage.getItem("token");
+
       const res = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}api/attendance/${id}/stats`,
         {
@@ -50,29 +78,32 @@ const Attendance = () => {
           },
         },
       );
+
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data?.error?.message || "Failed to fetch stats");
+        throw new Error(data?.error || "Failed to fetch stats");
       }
 
       setAttendanceStats(data);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch attendance stats:", err);
     }
   };
 
+  // Fetch daily attendance for the selected subject/date
   useEffect(() => {
-    if (!batchId || !selectedDate) return;
+    if (!subjectId || !selectedDate) return;
 
     const fetchDailyAttendance = async () => {
       setAttendanceLoading(true);
+
       try {
         const token = localStorage.getItem("token");
         const formattedDate = formatLocalDate(selectedDate);
 
         const res = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}api/attendance/${batchId}/daily?date=${formattedDate}`,
+          `${process.env.REACT_APP_BACKEND_URL}api/attendance/${subjectId}/daily?date=${formattedDate}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -86,39 +117,38 @@ const Attendance = () => {
           throw new Error(data?.error || "Failed to fetch attendance");
         }
 
-        // Convert backend format to UI format
-        const formatted = data.map((s) => ({
-          id: s.id,
-          name: s.name,
-          roll: s.roll,
-          present: s.present,
-          percentage: s.percentage,
-          avatar: s.avatar || null,
+        // Backend sends studentId, not id.
+        const formatted = data.map((student) => ({
+          id: student.studentId,
+          name: student.name,
+          roll: student.roll,
+          present: student.present,
+          percentage: Number(student.percentage || 0),
+          avatar: student.avatar || null,
         }));
 
         setRecords(formatted);
-        console.log(data[0]);
-        setThreshold(activeBatch?.threshold || 0);
 
-        await fetchAttendanceDetails(batchId);
+        await Promise.all([
+          fetchSubjectDetails(subjectId),
+          fetchAttendanceDetails(subjectId),
+        ]);
       } catch (err) {
-        console.error(err);
+        console.error("Failed to fetch daily attendance:", err);
+        setRecords([]);
       } finally {
         setAttendanceLoading(false);
       }
     };
 
     fetchDailyAttendance();
-  }, [activeBatch, batchId, selectedDate]);
+  }, [subjectId, selectedDate]);
 
-  const batchMatchesRoute =
-    String(activeBatch?.id || "") === String(batchId || "");
-  const showPageSkeleton = useDelayedLoading(
-    !batchMatchesRoute || attendanceLoading,
-  );
+  const showPageSkeleton = useDelayedLoading(attendanceLoading);
 
-  if (showPageSkeleton || !batchMatchesRoute)
+  if (showPageSkeleton) {
     return <TeacherAttendanceSkeleton />;
+  }
 
   return (
     <div className="container-fluid attendance-page page-enter">
@@ -162,10 +192,10 @@ const Attendance = () => {
           </div>
         </div>
 
-        {/* BATCH SUMMARY */}
+        {/* SUBJECT SUMMARY */}
         <div className="col-md-6">
-          <div className="card attendance-card h-100 batch-summary">
-            <div className="card-body batch-summary-body">
+          <div className="card attendance-card h-100 subject-summary">
+            <div className="card-body subject-summary-body">
               {/* LEFT MAIN AVG */}
               <div className="mx-5 summary-left">
                 <p className="stats-title mb-1">Average Attendance</p>
@@ -192,17 +222,21 @@ const Attendance = () => {
               <div className="summary-right-details">
                 <div className="stat-box best">
                   <p>Best</p>
-                  <h4>{attendanceStats.bestAttendance.percentage || 0}%</h4>
+
+                  <h4>{attendanceStats.bestAttendance?.percentage || 0}%</h4>
+
                   <small>
-                    {attendanceStats.bestAttendance.date || "yyyy-mm-dd"}
+                    {attendanceStats.bestAttendance?.date || "yyyy-mm-dd"}
                   </small>
                 </div>
 
                 <div className="stat-box worst">
                   <p>Worst</p>
-                  <h4>{attendanceStats.worstAttendance.percentage || 0}%</h4>
+
+                  <h4>{attendanceStats.worstAttendance?.percentage || 0}%</h4>
+
                   <small>
-                    {attendanceStats.worstAttendance.date || "yyyy-mm-dd"}
+                    {attendanceStats.worstAttendance?.date || "yyyy-mm-dd"}
                   </small>
                 </div>
               </div>
@@ -221,50 +255,54 @@ const Attendance = () => {
           </div>
 
           {records.length === 0 ? (
-            <p className="text-muted">No students in this batch</p>
+            <p className="text-muted">No students enrolled in this subject</p>
           ) : (
             <div className="attendance-list">
-              {records.map((s) => (
-                <div key={s.id} className="attendance-row">
+              {records.map((student) => (
+                <div key={student.id} className="attendance-row">
                   <div className="student-info">
                     <img
-                      src={s.avatar || "https://i.pravatar.cc/150"}
-                      alt={s.name}
+                      src={student.avatar || "https://i.pravatar.cc/150"}
+                      alt={student.name}
                       className="student-avatar"
                     />
 
                     <div>
-                      <p className="student-name">{s.name}</p>
+                      <p className="student-name">{student.name}</p>
 
-                      <small className="text-muted">Roll No: {s.roll}</small>
+                      <small className="text-muted">
+                        Roll No: {student.roll}
+                      </small>
                     </div>
                   </div>
 
                   <div className="student-metrics">
-                    {/* ⚠️ Low attendance marker */}
-                    {s.percentage < threshold && (
+                    {/* Low attendance marker */}
+                    {student.percentage < threshold && (
                       <span
                         className="low-attendance-badge"
-                        title="Attendance below 75%"
+                        title={`Attendance below ${threshold}%`}
                       >
                         ⚠️
                       </span>
                     )}
 
-                    <span className="student-percent">{s.percentage}%</span>
+                    <span className="student-percent">
+                      {student.percentage}%
+                    </span>
 
                     <span
                       className={`status-pill ${
-                        s.present === null
+                        student.present === null
                           ? "no-class"
-                          : s.present
+                          : student.present
                             ? "present"
                             : "absent"
                       }`}
                     >
-                      {s.present === null
+                      {student.present === null
                         ? "No Class"
-                        : s.present
+                        : student.present
                           ? "Present"
                           : "Absent"}
                     </span>
