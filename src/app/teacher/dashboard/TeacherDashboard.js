@@ -21,8 +21,6 @@ const Dashboard = () => {
   const [avgAttendance, setAvgAttendance] = useState(0);
   const [statsLoading, setStatsLoading] = useState(false);
 
-  const code = "------";
-
   const studentCount = activeSubject?.total_students ?? 0;
 
   // ---------------------------------------------------------
@@ -45,18 +43,6 @@ const Dashboard = () => {
 
   const [mode, setMode] = useState("manual");
   const [modeSaving, setModeSaving] = useState(false);
-
-  // ---------------------------------------------------------
-  // COPY CODE
-  // ---------------------------------------------------------
-
-  const copyCode = () => {
-    if (!code) return;
-
-    navigator.clipboard.writeText(code);
-
-    showAlert("Copied", "Copied successfully", "success");
-  };
 
   // ---------------------------------------------------------
   // SUBJECT NAME
@@ -401,12 +387,12 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* STATS ROW */}
+      {/* DASHBOARD STATS */}
 
       <div className="row g-4 mb-4">
         {/* STUDENTS */}
 
-        <div className="col">
+        <div className="col-md-4">
           <div className="card dashboard-card h-100">
             <div className="card-body stats-card-body">
               <p className="stats-title">Students in Subject</p>
@@ -420,7 +406,7 @@ const Dashboard = () => {
 
         {/* AVERAGE ATTENDANCE */}
 
-        <div className="col">
+        <div className="col-md-4">
           <div className="card dashboard-card h-100">
             <div className="card-body stats-card-body">
               <p className="stats-title">Average Attendance</p>
@@ -431,52 +417,16 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* TOP ROW */}
+        {/* ATTENDANCE THRESHOLD */}
 
-      <div className="row g-4">
-        {/* TEMPORARY CODE CARD */}
-
-        <div className="col-md-6">
-          <div className="card dashboard-card d-flex flex-column h-100">
-            <div className="card-body d-flex flex-column">
-              <h5 className="card-title">Subject Join Code</h5>
-
-              <p className="dashboard-subtitle small">
-                Generate a unique code for students
-              </p>
-
-              <input
-                type="text"
-                className="form-control mb-3 text-center fw-bold join-code-display"
-                value={code}
-                readOnly
-              />
-
-              <div className="d-flex gap-2 card-actions">
-                <button
-                  className="btn btn-primary"
-                  disabled={!code}
-                  onClick={copyCode}
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* THRESHOLD */}
-
-        <div className="col-md-6">
+        <div className="col-md-4">
           <div className="card dashboard-card h-100">
             <div className="card-body">
-              <h5 className="card-title">Attendance Warning Threshold</h5>
+              <h5 className="card-title">Attendance Threshold</h5>
 
               <p className="dashboard-subtitle small mb-4">
-                Set the minimum required attendance percentage. Students below
-                this threshold will be flagged.
+                Minimum attendance required before students are flagged.
               </p>
 
               <div className="d-flex align-items-center gap-3 mb-4">

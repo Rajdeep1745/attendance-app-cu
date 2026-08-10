@@ -28,6 +28,37 @@ const getStudentRecordByStudentId = async (studentId) => {
   return result.rows[0] || null;
 };
 
+// Recalculate and store a student's overall attendance across ALL subjects.
+async function recalcStudentOverallAttendance(studentId) {
+  const { rows } = await db.query(
+    `SELECT
+        COUNT(*)::int AS total_classes,
+        COUNT(*) FILTER (
+          WHERE present = true
+        )::int AS attended_classes
+     FROM student_attendances
+     WHERE student_id = $1`,
+    [studentId],
+  );
+
+  const totalClasses = rows[0]?.total_classes || 0;
+  const attendedClasses = rows[0]?.attended_classes || 0;
+
+  const percentage =
+    totalClasses === 0
+      ? 0
+      : Number(((attendedClasses / totalClasses) * 100).toFixed(1));
+
+  await db.query(
+    `UPDATE students
+     SET attendance_percentage = $1
+     WHERE student_id = $2`,
+    [percentage, studentId],
+  );
+
+  return percentage;
+}
+
 function normalizeFaceEmbedding(rawEmbedding) {
   let embedding = rawEmbedding;
 
@@ -245,26 +276,7 @@ exports.getDailyAttendance = async (req, res) => {
           u.name,
           u.avatar,
           sa.present,
-          COALESCE(
-            ROUND(
-              100.0 * (
-                SELECT COUNT(*)
-                FROM student_attendances spa
-                WHERE spa.student_id = s.student_id
-                  AND spa.subject_id = $1
-                  AND spa.present = true
-              ) / NULLIF(
-                (
-                  SELECT COUNT(*)
-                  FROM student_attendances spa
-                  WHERE spa.student_id = s.student_id
-                    AND spa.subject_id = $1
-                ),
-                0
-              )
-            ),
-            0
-          )::int AS percentage
+          COALESCE(s.attendance_percentage, 0)::numeric AS percentage
       FROM enrollments e
       JOIN students s
         ON s.student_id = e.student_id
@@ -581,6 +593,11 @@ exports.markAttendanceByFace = async (req, res) => {
     //    summary for this date.
     await recalcSubjectDate(subjectId, date);
 
+    // Recalculate overall attendance for every affected student.
+    for (const studentId of allStudentIds) {
+      await recalcStudentOverallAttendance(studentId);
+    }
+
     const unregisteredCount = allStudentIds.length - studentsWithFaces.length;
 
     // 10. Return the result to the frontend.
@@ -680,6 +697,11 @@ exports.overrideAttendance = async (req, res) => {
     //    for this date.
     await recalcSubjectDate(subjectId, date);
 
+    // Recalculate overall attendance for every affected student.
+    for (const override of overrides) {
+      await recalcStudentOverallAttendance(override.student_id);
+    }
+
     return res.json({
       message: "Overrides saved",
     });
@@ -776,6 +798,11 @@ exports.markManualAttendance = async (req, res) => {
 
     // 6. Recalculate subject-level attendance.
     await recalcSubjectDate(subjectId, date);
+
+    // Recalculate overall attendance for every affected student.
+    for (const record of attendance) {
+      await recalcStudentOverallAttendance(record.student_id);
+    }
 
     // 7. Calculate the percentage from the submitted
     //    attendance records.

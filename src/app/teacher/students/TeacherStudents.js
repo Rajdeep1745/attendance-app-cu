@@ -219,16 +219,6 @@ const Students = () => {
   };
 
   // ---------------------------------------------------------
-  // REFRESH
-  // ---------------------------------------------------------
-
-  const handleRefresh = async () => {
-    await fetchStudents();
-
-    showAlert?.("Refreshed", "Student data refreshed", "primary");
-  };
-
-  // ---------------------------------------------------------
   // CLOSE DROPDOWN WHEN CLICKING OUTSIDE
   // ---------------------------------------------------------
 
@@ -342,13 +332,6 @@ const Students = () => {
                   <p className="text-muted">Completion</p>
                 </div>
               </div>
-
-              <button
-                className="btn btn-outline-secondary mt-3"
-                onClick={handleRefresh}
-              >
-                <i className="fa-solid fa-rotate"></i> Refresh
-              </button>
             </>
           )}
         </div>
