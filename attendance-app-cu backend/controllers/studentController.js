@@ -88,13 +88,20 @@ exports.getStudentsBySubject = async (req, res) => {
 
   try {
     if (!(await ensureSubjectExists(subjectId))) {
-      return res.status(404).json({ error: "Subject not found" });
+      return res.status(404).json({
+        error: "Subject not found",
+      });
     }
 
-    const hasAccess = await ensureSubjectAccess(subjectId, req.user);
+    const hasAccess = await ensureSubjectAccess(
+      subjectId,
+      req.user,
+    );
 
     if (!hasAccess) {
-      return res.status(403).json({ error: "Access denied" });
+      return res.status(403).json({
+        error: "Access denied",
+      });
     }
 
     const { rows } = await db.query(
@@ -102,25 +109,59 @@ exports.getStudentsBySubject = async (req, res) => {
         s.student_id,
         s.roll_no,
         s.face_registered,
-        s.attendance_percentage,
         su.name,
         su.email,
         su.department,
         su.institution,
         su.avatar,
-        tu.name AS teacher_name
+        tu.name AS teacher_name,
+
+        COALESCE(
+          ROUND(
+            100.0 * COUNT(sa.student_id)
+            FILTER (WHERE sa.present = true)
+            / NULLIF(COUNT(sa.student_id), 0),
+            1
+          ),
+          0
+        ) AS subject_attendance
+
       FROM enrollments e
+
       JOIN students s
         ON e.student_id = s.student_id
+
       JOIN users su
         ON s.student_id = su.id
+
       JOIN subjects sub
         ON e.subject_id = sub.subject_id
+
       JOIN teachers t
         ON sub.teacher_id = t.teacher_id
+
       JOIN users tu
         ON t.teacher_id = tu.id
-      WHERE e.subject_id = $1`,
+
+      LEFT JOIN student_attendances sa
+        ON sa.student_id = s.student_id
+        AND sa.subject_id = e.subject_id
+
+      WHERE e.subject_id = $1
+
+      GROUP BY
+        s.student_id,
+        s.roll_no,
+        s.face_registered,
+        su.name,
+        su.email,
+        su.department,
+        su.institution,
+        su.avatar,
+        tu.name
+
+      ORDER BY
+        s.roll_no ASC`,
       [subjectId],
     );
 
@@ -135,13 +176,22 @@ exports.getStudentsBySubject = async (req, res) => {
       subjectId,
       teacher: student.teacher_name,
       faceRegistered: student.face_registered,
-      attendance: student.attendance_percentage || 0,
+
+      // Attendance is now calculated specifically
+      // for this subject from student_attendances.
+      attendance: Number(student.subject_attendance || 0),
     }));
 
     res.json(formatted);
   } catch (err) {
-    console.error("GET STUDENTS ERROR:", err);
-    res.status(500).json({ error: "Server error" });
+    console.error(
+      "GET STUDENTS ERROR:",
+      err,
+    );
+
+    res.status(500).json({
+      error: "Server error",
+    });
   }
 };
 
