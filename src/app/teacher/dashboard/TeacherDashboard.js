@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect } from "react";
 import AlertContext from "../../../context/alert/AlertContext";
-import BatchContext from "../../../context/batch/BatchContext";
+import SubjectContext from "../../../context/subject/SubjectContext";
 import { useParams } from "react-router-dom";
 import AutoAttendancePanel from "../../../components/autoAttendance/AutoAttendancePanel";
 import ManualAttendancePanel from "../../../components/manualAttendance/ManualAttendancePanel";
@@ -11,24 +11,8 @@ import "./TeacherDashboard.css";
 
 const Dashboard = () => {
   const { showAlert } = useContext(AlertContext);
-  const { activeBatch, fetchBatchById } = useContext(BatchContext);
-  const { batchId } = useParams();
-
-  /*
-   * IMPORTANT:
-   *
-   * The frontend still calls this route parameter "batchId"
-   * for compatibility with the existing React routes.
-   *
-   * Its actual value is now the backend subject_id.
-   *
-   * Example:
-   *
-   * batchId = "bt1_phy"
-   *
-   * Backend:
-   * GET /api/subject/bt1_phy
-   */
+  const { activeSubject, fetchSubjectById } = useContext(SubjectContext);
+  const { subjectId } = useParams();
 
   // ---------------------------------------------------------
   // AVERAGE ATTENDANCE
@@ -36,21 +20,11 @@ const Dashboard = () => {
 
   const [avgAttendance, setAvgAttendance] = useState(0);
   const [statsLoading, setStatsLoading] = useState(false);
-  const [batchLoading, setBatchLoading] = useState(false);
-
-  // ---------------------------------------------------------
-  // TEMPORARY BATCH CODE
-  // ---------------------------------------------------------
-  //
-  // batch_code no longer exists in the current backend.
-  //
-  // User requested a temporary default value until this
-  // frontend section is removed later.
-  //
+  const [subjectLoading, setSubjectLoading] = useState(false);
 
   const code = "------";
 
-  const studentCount = activeBatch?.total_students ?? 0;
+  const studentCount = activeSubject?.total_students ?? 0;
 
   // ---------------------------------------------------------
   // STUDENT LIST
@@ -88,20 +62,20 @@ const Dashboard = () => {
   // SUBJECT NAME
   // ---------------------------------------------------------
 
-  const batchName = activeBatch?.name || "Loading...";
+  const subjectName = activeSubject?.name || "Loading...";
 
   // ---------------------------------------------------------
   // SAVE THRESHOLD
   // ---------------------------------------------------------
 
   const saveThreshold = async () => {
-    if (!batchId) return;
+    if (!subjectId) return;
 
     try {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}api/subject/${batchId}/threshold`,
+        `${process.env.REACT_APP_BACKEND_URL}api/subject/${subjectId}/threshold`,
         {
           method: "PATCH",
           headers: {
@@ -117,32 +91,19 @@ const Dashboard = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(
-          data?.error || "Failed to update threshold",
-        );
+        throw new Error(data?.error || "Failed to update threshold");
       }
 
       setSavedThreshold(threshold);
 
       // Refresh the selected subject
-      await fetchBatchById(batchId);
+      await fetchSubjectById(subjectId);
 
-      showAlert(
-        "Saved",
-        "Threshold updated",
-        "success",
-      );
+      showAlert("Saved", "Threshold updated", "success");
     } catch (err) {
-      console.error(
-        "[TeacherDashboard] saveThreshold error:",
-        err,
-      );
+      console.error("[TeacherDashboard] saveThreshold error:", err);
 
-      showAlert(
-        "Error",
-        err.message || "Failed to update threshold",
-        "danger",
-      );
+      showAlert("Error", err.message || "Failed to update threshold", "danger");
     }
   };
 
@@ -170,19 +131,12 @@ const Dashboard = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(
-          data?.error || "Failed to fetch attendance stats",
-        );
+        throw new Error(data?.error || "Failed to fetch attendance stats");
       }
 
-      setAvgAttendance(
-        Number(data?.avgAttendance ?? 0),
-      );
+      setAvgAttendance(Number(data?.avgAttendance ?? 0));
     } catch (err) {
-      console.error(
-        "[TeacherDashboard] fetchAverageAttendance error:",
-        err,
-      );
+      console.error("[TeacherDashboard] fetchAverageAttendance error:", err);
 
       setAvgAttendance(0);
     } finally {
@@ -214,23 +168,16 @@ const Dashboard = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(
-          data?.error || "Failed to fetch students",
-        );
+        throw new Error(data?.error || "Failed to fetch students");
       }
 
       if (!Array.isArray(data)) {
-        throw new Error(
-          "Invalid student list received from server",
-        );
+        throw new Error("Invalid student list received from server");
       }
 
       setStudentList(data);
     } catch (err) {
-      console.error(
-        "[TeacherDashboard] fetchStudentList error:",
-        err,
-      );
+      console.error("[TeacherDashboard] fetchStudentList error:", err);
 
       setStudentList([]);
     } finally {
@@ -243,42 +190,39 @@ const Dashboard = () => {
   // ---------------------------------------------------------
 
   useEffect(() => {
-    if (!batchId) {
+    if (!subjectId) {
       return;
     }
 
-    setBatchLoading(true);
+    setSubjectLoading(true);
 
-    fetchBatchById(batchId).finally(() => {
-      setBatchLoading(false);
+    fetchSubjectById(subjectId).finally(() => {
+      setSubjectLoading(false);
     });
 
-    fetchAverageAttendance(batchId);
+    fetchAverageAttendance(subjectId);
 
-    fetchStudentList(batchId);
+    fetchStudentList(subjectId);
 
-    // batchId is actually subjectId
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batchId]);
+  }, [subjectId]);
 
   // ---------------------------------------------------------
   // LOAD THRESHOLD FROM SUBJECT
   // ---------------------------------------------------------
 
   useEffect(() => {
-    if (!activeBatch) {
+    if (!activeSubject) {
       return;
     }
 
-    if (activeBatch.threshold !== undefined) {
-      const currentThreshold = Number(
-        activeBatch.threshold || 0,
-      );
+    if (activeSubject.threshold !== undefined) {
+      const currentThreshold = Number(activeSubject.threshold || 0);
 
       setThreshold(currentThreshold);
       setSavedThreshold(currentThreshold);
     }
-  }, [activeBatch]);
+  }, [activeSubject]);
 
   // ---------------------------------------------------------
   // VERIFY THAT LOADED SUBJECT MATCHES URL
@@ -287,28 +231,23 @@ const Dashboard = () => {
   /*
    * OLD:
    *
-   * activeBatch.id
+   * activeSubject.id
    *
    * NEW:
    *
-   * activeBatch.subject_id
+   * activeSubject.subject_id
    *
    * because PostgreSQL subjects use subject_id as the
    * application-level subject identifier.
    */
 
   const subjectMatchesRoute =
-    String(activeBatch?.subject_id || "") ===
-    String(batchId || "");
+    String(activeSubject?.subject_id || "") === String(subjectId || "");
 
   const pageLoading =
-    !subjectMatchesRoute ||
-    batchLoading ||
-    statsLoading ||
-    studentsLoading;
+    !subjectMatchesRoute || subjectLoading || statsLoading || studentsLoading;
 
-  const showPageSkeleton =
-    useDelayedLoading(pageLoading);
+  const showPageSkeleton = useDelayedLoading(pageLoading);
 
   // ---------------------------------------------------------
   // PAGE SKELETON
@@ -328,11 +267,11 @@ const Dashboard = () => {
 
       <div className="dashboard-hero">
         <div>
-          <h1>{batchName}</h1>
+          <h1>{subjectName}</h1>
 
           <p>
-            Manage attendance, thresholds and recognition
-            settings for this subject.
+            Manage attendance, thresholds and recognition settings for this
+            subject.
           </p>
         </div>
       </div>
@@ -345,13 +284,9 @@ const Dashboard = () => {
         <div className="col">
           <div className="card dashboard-card h-100">
             <div className="card-body stats-card-body">
-              <p className="stats-title">
-                Students in Batch
-              </p>
+              <p className="stats-title">Students in Subject</p>
 
-              <h2 className="stats-value">
-                {studentCount}
-              </h2>
+              <h2 className="stats-value">{studentCount}</h2>
 
               <i className="fa-solid fa-users stats-icon"></i>
             </div>
@@ -363,13 +298,9 @@ const Dashboard = () => {
         <div className="col">
           <div className="card dashboard-card h-100">
             <div className="card-body stats-card-body">
-              <p className="stats-title">
-                Average Attendance
-              </p>
+              <p className="stats-title">Average Attendance</p>
 
-              <h2 className="stats-value">
-                {avgAttendance}%
-              </h2>
+              <h2 className="stats-value">{avgAttendance}%</h2>
 
               <i className="fa-solid fa-percent stats-icon"></i>
             </div>
@@ -385,9 +316,7 @@ const Dashboard = () => {
         <div className="col-md-6">
           <div className="card dashboard-card d-flex flex-column h-100">
             <div className="card-body d-flex flex-column">
-              <h5 className="card-title">
-                Batch Join Code
-              </h5>
+              <h5 className="card-title">Subject Join Code</h5>
 
               <p className="dashboard-subtitle small">
                 Generate a unique code for students
@@ -418,14 +347,11 @@ const Dashboard = () => {
         <div className="col-md-6">
           <div className="card dashboard-card h-100">
             <div className="card-body">
-              <h5 className="card-title">
-                Attendance Warning Threshold
-              </h5>
+              <h5 className="card-title">Attendance Warning Threshold</h5>
 
               <p className="dashboard-subtitle small mb-4">
-                Set the minimum required attendance
-                percentage. Students below this threshold
-                will be flagged.
+                Set the minimum required attendance percentage. Students below
+                this threshold will be flagged.
               </p>
 
               <div className="d-flex align-items-center gap-3 mb-4">
@@ -435,11 +361,7 @@ const Dashboard = () => {
                   min="0"
                   max="100"
                   value={threshold}
-                  onChange={(e) =>
-                    setThreshold(
-                      Number(e.target.value),
-                    )
-                  }
+                  onChange={(e) => setThreshold(Number(e.target.value))}
                 />
 
                 <div className="threshold-input-wrapper">
@@ -449,25 +371,17 @@ const Dashboard = () => {
                     min="0"
                     max="100"
                     value={threshold}
-                    onChange={(e) =>
-                      setThreshold(
-                        Number(e.target.value),
-                      )
-                    }
+                    onChange={(e) => setThreshold(Number(e.target.value))}
                   />
 
-                  <span className="percent-sign">
-                    %
-                  </span>
+                  <span className="percent-sign">%</span>
                 </div>
               </div>
 
               <div className="d-flex gap-2 card-actions">
                 <button
                   className="btn btn-primary"
-                  disabled={
-                    threshold === savedThreshold
-                  }
+                  disabled={threshold === savedThreshold}
                   onClick={saveThreshold}
                 >
                   Save
@@ -502,22 +416,17 @@ const Dashboard = () => {
                     name="mode"
                     id="attendance-mode-manual"
                     checked={mode === "manual"}
-                    onChange={() =>
-                      setMode("manual")
-                    }
+                    onChange={() => setMode("manual")}
                   />
 
                   <label
                     className="form-check-label attendance-mode-label"
                     htmlFor="attendance-mode-manual"
                   >
-                    <span className="attendance-mode-label-title">
-                      Manual
-                    </span>
+                    <span className="attendance-mode-label-title">Manual</span>
 
                     <span className="attendance-mode-label-copy">
-                      Mark students one by one with quick
-                      toggles
+                      Mark students one by one with quick toggles
                     </span>
                   </label>
                 </div>
@@ -531,9 +440,7 @@ const Dashboard = () => {
                     name="mode"
                     id="attendance-mode-auto"
                     checked={mode === "auto"}
-                    onChange={() =>
-                      setMode("auto")
-                    }
+                    onChange={() => setMode("auto")}
                   />
 
                   <label
@@ -545,8 +452,7 @@ const Dashboard = () => {
                     </span>
 
                     <span className="attendance-mode-label-copy">
-                      Use a class photo or video for
-                      recognition
+                      Use a class photo or video for recognition
                     </span>
                   </label>
                 </div>
@@ -562,27 +468,22 @@ const Dashboard = () => {
                     {studentsLoading ? (
                       <div className="text-muted small py-2 attendance-mode-state">
                         <span className="spinner-border spinner-border-sm me-2"></span>
-
                         Loading student list...
                       </div>
                     ) : studentList.length === 0 ? (
                       <div className="alert alert-warning py-2 small mb-0 attendance-mode-state">
                         <i className="fa fa-exclamation-triangle me-1"></i>
-
-                        No students found in this batch.
-                        Add students first before taking
-                        attendance.
+                        No students found in this subject. Add students first
+                        before taking attendance.
                       </div>
                     ) : (
                       <ManualAttendancePanel
-                        batchId={batchId}
+                        subjectId={subjectId}
                         students={studentList}
                         onSaved={() => {
-                          fetchAverageAttendance(
-                            batchId,
-                          );
+                          fetchAverageAttendance(subjectId);
 
-                          fetchStudentList(batchId);
+                          fetchStudentList(subjectId);
                         }}
                         showAlert={showAlert}
                       />
@@ -597,27 +498,22 @@ const Dashboard = () => {
                     {studentsLoading ? (
                       <div className="text-muted small py-2 attendance-mode-state">
                         <span className="spinner-border spinner-border-sm me-2"></span>
-
                         Loading student list...
                       </div>
                     ) : studentList.length === 0 ? (
                       <div className="alert alert-warning py-2 small mb-0 attendance-mode-state">
                         <i className="fa fa-exclamation-triangle me-1"></i>
-
-                        No students found in this batch.
-                        Add students first before taking
-                        attendance.
+                        No students found in this subject. Add students first
+                        before taking attendance.
                       </div>
                     ) : (
                       <AutoAttendancePanel
-                        batchId={batchId}
+                        subjectId={subjectId}
                         students={studentList}
                         onSaved={() => {
-                          fetchAverageAttendance(
-                            batchId,
-                          );
+                          fetchAverageAttendance(subjectId);
 
-                          fetchStudentList(batchId);
+                          fetchStudentList(subjectId);
                         }}
                         showAlert={showAlert}
                       />

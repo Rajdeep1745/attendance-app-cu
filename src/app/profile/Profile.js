@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import BatchContext from "../../context/batch/BatchContext";
+import BatchContext from "../../context/subject/SubjectContext";
 import AlertContext from "../../context/alert/AlertContext";
 import AuthContext from "../../context/auth/AuthContext";
 import FaceRegisterModal from "../../components/faceRegisterModal/FaceRegisterModal";
@@ -12,7 +12,8 @@ const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Failed to read the selected image"));
+    reader.onerror = () =>
+      reject(new Error("Failed to read the selected image"));
     reader.readAsDataURL(file);
   });
 
@@ -85,7 +86,11 @@ const Profile = () => {
           ...prev,
           avatar: storedUser?.avatar || "https://i.pravatar.cc/150",
         }));
-        showAlert("Failed", err.message || "Failed to update profile photo", "danger");
+        showAlert(
+          "Failed",
+          err.message || "Failed to update profile photo",
+          "danger",
+        );
       } finally {
         URL.revokeObjectURL(previewUrl);
         setAvatarUploading(false);
@@ -109,21 +114,24 @@ const Profile = () => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}api/users/me`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/users/me`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: profile.name,
+            department: profile.department,
+            institution: profile.institution,
+            avatar: isTeacher ? undefined : profile.avatar,
+            defaultMode: preferences.defaultMode,
+            defaultThreshold: preferences.threshold,
+          }),
         },
-        body: JSON.stringify({
-          name: profile.name,
-          department: profile.department,
-          institution: profile.institution,
-          avatar: isTeacher ? undefined : profile.avatar,
-          defaultMode: preferences.defaultMode,
-          defaultThreshold: preferences.threshold,
-        }),
-      });
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -157,11 +165,14 @@ const Profile = () => {
       try {
         const token = localStorage.getItem("token");
 
-        const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}api/users/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
+        const res = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}api/users/me`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        });
+        );
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
@@ -247,11 +258,13 @@ const Profile = () => {
                       onClick={() => setShowFaceRegister(true)}
                     >
                       <i className="fa-solid fa-camera me-2"></i>
-                      {studentFaceRegistered ? "Update Registered Face" : "Register Face"}
+                      {studentFaceRegistered
+                        ? "Update Registered Face"
+                        : "Register Face"}
                     </button>
                     <p className="text-muted small mt-2 mb-0">
-                      Your registered face photo is also used as your profile picture
-                      across roster and attendance views.
+                      Your registered face photo is also used as your profile
+                      picture across roster and attendance views.
                     </p>
                   </>
                 )}
@@ -411,7 +424,9 @@ const Profile = () => {
             name: profile.name || "Student",
           }}
           endpoint={`${process.env.REACT_APP_BACKEND_URL}api/students/me/register-face`}
-          title={studentFaceRegistered ? "Update Registered Face" : "Register Face"}
+          title={
+            studentFaceRegistered ? "Update Registered Face" : "Register Face"
+          }
           onSuccess={(payload) => {
             setProfile((prev) => ({ ...prev, avatar: payload.avatar }));
             setStudentFaceRegistered(true);
@@ -419,7 +434,11 @@ const Profile = () => {
               ...(storedUser || {}),
               avatar: payload.avatar,
             });
-            showAlert("Updated", "Face registered and profile photo updated", "success");
+            showAlert(
+              "Updated",
+              "Face registered and profile photo updated",
+              "success",
+            );
           }}
         />
       )}

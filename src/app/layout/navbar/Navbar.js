@@ -8,7 +8,7 @@ import "./Navbar.css";
 const Navbar = (props) => {
   const { toggleSidebar, isSidebarOpen } = props;
   const dropdownRef = useRef(null);
-  const { userId, batchId } = useParams();
+  const { userId, subjectId } = useParams();
   const { user: storedUser, setUser } = useContext(AuthContext);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [devModalOpen, setDevModalOpen] = useState(false);
@@ -18,8 +18,8 @@ const Navbar = (props) => {
 
   let basePath = "";
 
-  if (userId && batchId) {
-    basePath = `/${userId}/${batchId}`;
+  if (userId && subjectId) {
+    basePath = `/${userId}/${subjectId}`;
   } else if (userId) {
     basePath = `/${userId}`;
   }
@@ -51,7 +51,7 @@ const Navbar = (props) => {
           <button
             className="sidebar-toggle"
             onClick={toggleSidebar}
-            disabled={!batchId}
+            disabled={!subjectId}
             aria-label="Toggle Sidebar"
           >
             {isSidebarOpen ? (
@@ -75,7 +75,7 @@ const Navbar = (props) => {
               to={basePath ? `${basePath}/dashboard` : "#"}
               className={({ isActive }) =>
                 `nav-item ${isActive ? "active" : ""} ${
-                  !batchId ? "disabled" : ""
+                  !subjectId ? "disabled" : ""
                 }`
               }
             >
@@ -89,7 +89,7 @@ const Navbar = (props) => {
               to={basePath ? `${basePath}/attendance` : "#"}
               className={({ isActive }) =>
                 `nav-item ${isActive ? "active" : ""} ${
-                  !batchId ? "disabled" : ""
+                  !subjectId ? "disabled" : ""
                 }`
               }
             >
@@ -103,7 +103,7 @@ const Navbar = (props) => {
               to={basePath ? `${basePath}/students` : "#"}
               className={({ isActive }) =>
                 `nav-item ${isActive ? "active" : ""} ${
-                  !batchId ? "disabled" : ""
+                  !subjectId ? "disabled" : ""
                 }`
               }
             >
@@ -117,7 +117,7 @@ const Navbar = (props) => {
               to={basePath ? `${basePath}/reports` : "#"}
               className={({ isActive }) =>
                 `nav-item ${isActive ? "active" : ""} ${
-                  !batchId ? "disabled" : ""
+                  !subjectId ? "disabled" : ""
                 }`
               }
             >

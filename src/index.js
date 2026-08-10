@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import { AuthProvider } from "./context/auth/AuthContext";
-import BatchProvider from "./context/batch/BatchState";
+import SubjectProvider from "./context/subject/SubjectState";
 import AlertProvider from "./context/alert/AlertState";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
@@ -11,9 +11,9 @@ root.render(
   <React.StrictMode>
     <AuthProvider>
       <AlertProvider>
-        <BatchProvider>
+        <SubjectProvider>
           <App />
-        </BatchProvider>
+        </SubjectProvider>
       </AlertProvider>
     </AuthProvider>
   </React.StrictMode>
