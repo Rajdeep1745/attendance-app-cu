@@ -11,7 +11,7 @@ const formatLocalDate = (date = new Date()) => {
 };
 
 const ManualAttendancePanel = ({
-  batchId,
+  subjectId,
   students = [],
   onSaved,
   showAlert,
@@ -19,14 +19,13 @@ const ManualAttendancePanel = ({
   /*
    * IMPORTANT:
    *
-   * batchId is kept as the existing frontend prop name.
+   * subjectId is kept as the existing frontend prop name.
    * Its actual value is now the backend subjectId.
    *
    * Example:
-   * batchId = "bt1_phy"
+   * subjectId = "bt1_phy"
    */
 
-  const subjectId = batchId;
 
   const today = formatLocalDate();
 
