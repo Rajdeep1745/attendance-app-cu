@@ -17,6 +17,41 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
+.auto-att-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(180px, 1fr)
+  );
+  gap: 14px;
+}
+
+.auto-att-preview-item {
+  min-width: 0;
+}
+
+.auto-att-preview {
+  width: 100%;
+  height: 180px;
+  max-width: 100%;
+  border-radius: 18px;
+  border: 1px solid rgba(203, 213, 225, 0.85);
+  box-shadow:
+    0 20px 42px rgba(15, 23, 42, 0.08),
+    0 8px 18px rgba(124, 58, 237, 0.08);
+  object-fit: cover;
+}
+
+@media (max-width: 576px) {
+  .auto-att-preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .auto-att-preview {
+    height: 220px;
+  }
+}
+
 .auto-file-input {
   padding: 6px;
   overflow: hidden;

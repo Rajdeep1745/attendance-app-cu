@@ -1,262 +1,1018 @@
-/* ── Backdrop ─────────────────────────────────────────────────────────────── */
+/* ============================================================
+   FACE REGISTER MODAL
+   Premium, responsive 1–2 image registration UI
+   ============================================================ */
+
+
+/* ============================================================
+   BACKDROP
+   ============================================================ */
+
 .frm-backdrop {
   position: fixed;
-  inset: 0;                        /* top/right/bottom/left: 0 */
-  background: rgba(0, 0, 0, 0.55);
-  z-index: 9998;                   /* above sidebar, navbar, everything */
+  inset: 0;
+
+  background: rgba(15, 17, 28, 0.62);
+
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+
+  z-index: 9998;
+
+  animation: frm-fade-in 0.18s ease-out;
 }
 
-/* ── Modal box ────────────────────────────────────────────────────────────── */
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+
 .frm-modal {
   position: fixed;
+
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 9999;                   /* one above backdrop */
 
-  width: 100%;
-  max-width: 460px;
-  max-height: 90vh;
-  overflow-y: auto;
+  transform: translate(-50%, -50%);
+
+  z-index: 9999;
+
+  width: min(680px, calc(100vw - 32px));
+
+  max-height: min(88vh, 760px);
 
   background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+
+  border-radius: 20px;
+
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.22),
+    0 8px 30px rgba(0, 0, 0, 0.08);
 
   display: flex;
   flex-direction: column;
 
-  /* Smooth entrance */
-  animation: frm-pop 0.18s ease-out;
+  overflow: hidden;
+
+  animation: frm-pop 0.2s ease-out;
 }
+
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes frm-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 
 @keyframes frm-pop {
   from {
     opacity: 0;
-    transform: translate(-50%, -48%) scale(0.96);
+    transform:
+      translate(-50%, -48%)
+      scale(0.97);
   }
+
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform:
+      translate(-50%, -50%)
+      scale(1);
   }
 }
 
-/* ── Header ───────────────────────────────────────────────────────────────── */
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
 .frm-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 22px 14px;
-  border-bottom: 1px solid #f0f0f0;
+
+  gap: 16px;
+
+  padding: 18px 22px;
+
+  border-bottom: 1px solid #eeeeF5;
+
+  background: #ffffff;
+
   flex-shrink: 0;
 }
+
 
 .frm-header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+
+  gap: 9px;
+
   min-width: 0;
-}
 
-.frm-header-icon {
-  color: #6c63ff;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.frm-title {
-  font-weight: 600;
-  font-size: 15px;
-  color: #1a1a2e;
-  white-space: nowrap;
-}
-
-.frm-student-name {
-  font-weight: 500;
-  font-size: 15px;
-  color: #6c63ff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.frm-close-btn {
-  background: none;
-  border: none;
-  color: #9ca3af;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 6px;
-  line-height: 1;
-  flex-shrink: 0;
-  transition: color 0.15s, background 0.15s;
-}
-
-.frm-close-btn:hover {
-  color: #374151;
-  background: #f3f4f6;
-}
-
-/* ── Body ─────────────────────────────────────────────────────────────────── */
-.frm-body {
-  padding: 20px 22px;
   flex: 1;
 }
 
-.frm-hint {
-  font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 16px;
-  line-height: 1.5;
+
+.frm-header-icon {
+  width: 34px;
+  height: 12px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 10px;
+
+  background: none;
+
+  color: #6c63ff;
+
+  font-size: 15px;
+  line-height: 1;
+
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  font-style: normal;
 }
 
-/* Preview image */
-.frm-preview-wrap {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 16px;
+
+.frm-title {
+  color: #17172a;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  line-height: 1.3;
+
+  white-space: nowrap;
 }
+
+
+.frm-student-name {
+  color: #6c63ff;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  line-height: 1.3;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+
+  min-width: 0;
+}
+
+
+.frm-close-btn {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 10px;
+
+  background: transparent;
+
+  color: #9ca3af;
+
+  font-size: 16px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+
+.frm-close-btn:hover:not(:disabled) {
+  background: #f3f4f8;
+
+  color: #374151;
+
+  transform: rotate(3deg);
+}
+
+
+.frm-close-btn:disabled {
+  opacity: 0.45;
+
+  cursor: not-allowed;
+}
+
+
+/* ============================================================
+   BODY
+   ============================================================ */
+
+.frm-body {
+  padding: 20px 22px 22px;
+
+  flex: 1;
+
+  min-height: 0;
+
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    #d5d5e3
+    transparent;
+}
+
+
+.frm-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+
+.frm-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+.frm-body::-webkit-scrollbar-thumb {
+  background: #d5d5e3;
+
+  border-radius: 999px;
+}
+
+
+.frm-body::-webkit-scrollbar-thumb:hover {
+  background: #b9b9ca;
+}
+
+
+/* ============================================================
+   DESCRIPTION
+   ============================================================ */
+
+.frm-hint {
+  margin: 0 0 18px;
+
+  color: #6b7280;
+
+  font-size: 13px;
+
+  line-height: 1.55;
+}
+
+
+/* ============================================================
+   PHOTO GRID
+   ============================================================ */
+
+.frm-photo-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 14px;
+
+  width: 100%;
+
+  margin-bottom: 14px;
+}
+
+
+/* ============================================================
+   PHOTO CARD
+   ============================================================ */
+
+.frm-photo-card {
+  position: relative;
+
+  min-width: 0;
+
+  padding: 10px;
+
+  border: 1px solid #e7e7f0;
+
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff 0%,
+      #fafaff 100%
+    );
+
+  box-shadow:
+    0 3px 12px rgba(32, 32, 65, 0.06);
+
+  animation: frm-card-in 0.2s ease-out;
+}
+
+
+@keyframes frm-card-in {
+  from {
+    opacity: 0;
+
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0);
+  }
+}
+
+
+/* ============================================================
+   PHOTO LABEL
+   ============================================================ */
+
+.frm-photo-label {
+  display: flex;
+  align-items: center;
+
+  margin: 0 0 8px 2px;
+
+  color: #37374d;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.02em;
+}
+
+
+/* ============================================================
+   PREVIEW
+   ============================================================ */
+
+.frm-preview-wrap {
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+
+  aspect-ratio: 4 / 3;
+
+  margin: 0;
+
+  overflow: hidden;
+
+  border-radius: 10px;
+
+  background: #f1f1f6;
+}
+
 
 .frm-preview-img {
-  width: 160px;
-  height: 160px;
-  object-fit: cover;
-  border-radius: 10px;
-  border: 2px solid #e5e7eb;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-/* File input */
-.frm-file-input {
   display: block;
+
   width: 100%;
-  padding: 8px 10px;
-  font-size: 13px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #f9fafb;
-  color: #374151;
-  cursor: pointer;
-  margin-bottom: 6px;
+  height: 100%;
+
+  object-fit: cover;
+
+  border: none;
+
+  border-radius: 10px;
+
+  box-shadow: none;
 }
 
-.frm-file-input:focus {
-  outline: 2px solid #6c63ff;
-  outline-offset: 1px;
+
+/* ============================================================
+   REMOVE PHOTO BUTTON
+   ============================================================ */
+
+.frm-photo-remove {
+  position: absolute;
+
+  top: 8px;
+  right: 8px;
+
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 1px solid rgba(255, 255, 255, 0.55);
+
+  border-radius: 50%;
+
+  background: rgba(20, 20, 30, 0.72);
+
+  color: #ffffff;
+
+  font-size: 13px;
+
+  cursor: pointer;
+
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+
+  transition:
+    background 0.16s ease,
+    transform 0.16s ease;
 }
+
+
+.frm-photo-remove:hover {
+  background: rgba(220, 38, 38, 0.92);
+
+  transform: scale(1.07);
+}
+
+
+/* ============================================================
+   ADD PHOTO CARD
+   ============================================================ */
+
+.frm-add-photo {
+  min-height: 190px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  padding: 20px;
+
+  border: 1.5px dashed #c9c7ee;
+
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #fafaff 0%,
+      #f7f6ff 100%
+    );
+
+  color: #6c63ff;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+
+.frm-add-photo i {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: rgba(108, 99, 255, 0.11);
+
+  font-size: 17px;
+
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+
+.frm-add-photo:hover:not(:disabled) {
+  border-color: #6c63ff;
+
+  background: #f5f3ff;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 6px 18px rgba(108, 99, 255, 0.10);
+}
+
+
+.frm-add-photo:hover:not(:disabled) i {
+  background: rgba(108, 99, 255, 0.16);
+
+  transform: scale(1.05);
+}
+
+
+.frm-add-photo:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}
+
+
+/* ============================================================
+   HIDDEN REAL FILE INPUT
+   ============================================================ */
+
+.frm-file-input {
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+
+  padding: 0;
+  margin: -1px;
+
+  overflow: hidden;
+
+  clip: rect(0, 0, 0, 0);
+
+  white-space: nowrap;
+
+  border: 0;
+}
+
+
+/* ============================================================
+   FILE HINT
+   ============================================================ */
 
 .frm-file-hint {
-  font-size: 11px;
+  margin: 0 0 16px;
+
   color: #9ca3af;
-  margin: 0;
+
+  font-size: 11px;
+
+  line-height: 1.45;
+
+  text-align: center;
 }
 
-/* Error */
-.frm-error {
-  margin-top: 14px;
-  padding: 10px 12px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #dc2626;
+
+/* ============================================================
+   GUIDANCE CARD
+   ============================================================ */
+
+.frm-guidance {
+  padding: 14px 15px;
+
+  border: 1px solid #e6e3ff;
+
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #faf9ff 0%,
+      #f7f5ff 100%
+    );
+
+  color: #55556b;
+}
+
+
+.frm-guidance-title {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  margin-bottom: 8px;
+
+  color: #34334b;
+
   font-size: 13px;
-  line-height: 1.4;
+
+  font-weight: 700;
 }
 
-/* ── Footer ───────────────────────────────────────────────────────────────── */
+
+.frm-guidance-title i {
+  color: #f59e0b;
+
+  font-size: 14px;
+}
+
+
+.frm-guidance ul {
+  margin: 0;
+
+  padding-left: 20px;
+}
+
+
+.frm-guidance li {
+  margin: 4px 0;
+
+  color: #66667a;
+
+  font-size: 12px;
+
+  line-height: 1.45;
+}
+
+
+/* ============================================================
+   ERROR
+   ============================================================ */
+
+.frm-error {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 7px;
+
+  margin-top: 14px;
+
+  padding: 11px 13px;
+
+  border: 1px solid #fecaca;
+
+  border-radius: 10px;
+
+  background: #fff5f5;
+
+  color: #dc2626;
+
+  font-size: 12.5px;
+
+  line-height: 1.45;
+
+  animation: frm-error-in 0.18s ease-out;
+}
+
+
+.frm-error i {
+  flex-shrink: 0;
+
+  margin-top: 2px;
+
+  font-size: 13px;
+}
+
+
+@keyframes frm-error-in {
+  from {
+    opacity: 0;
+
+    transform: translateY(-3px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0);
+  }
+}
+
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
 .frm-footer {
   display: flex;
+
+  align-items: center;
   justify-content: flex-end;
+
   gap: 10px;
+
   padding: 14px 22px 18px;
-  border-top: 1px solid #f0f0f0;
+
+  border-top: 1px solid #eeeeF5;
+
+  background: #ffffff;
+
   flex-shrink: 0;
 }
 
+
+/* ============================================================
+   CANCEL BUTTON
+   ============================================================ */
+
 .frm-btn-cancel {
-  padding: 8px 18px;
-  font-size: 13px;
-  font-weight: 500;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  min-height: 40px;
+
+  padding: 0 18px;
+
+  border: 1px solid #dedee8;
+
+  border-radius: 9px;
+
   background: #ffffff;
-  color: #374151;
+
+  color: #4b5563;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease;
 }
 
+
 .frm-btn-cancel:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
+  background: #f8f8fb;
+
+  border-color: #c8c8d5;
+
+  transform: translateY(-1px);
 }
+
 
 .frm-btn-cancel:disabled {
   opacity: 0.5;
+
   cursor: not-allowed;
 }
 
+
+/* ============================================================
+   SUBMIT BUTTON
+   ============================================================ */
+
 .frm-btn-submit {
+  min-height: 40px;
+
   display: flex;
   align-items: center;
-  padding: 8px 20px;
-  font-size: 13px;
-  font-weight: 600;
+  justify-content: center;
+
+  padding: 0 20px;
+
   border: none;
-  border-radius: 8px;
+
+  border-radius: 9px;
+
   background: #6c63ff;
+
   color: #ffffff;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
   cursor: pointer;
-  transition: background 0.15s, opacity 0.15s;
+
+  box-shadow:
+    0 4px 12px rgba(108, 99, 255, 0.22);
+
+  transition:
+    background 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease,
+    opacity 0.16s ease;
 }
+
 
 .frm-btn-submit:hover:not(:disabled) {
   background: #5a52d5;
+
+  box-shadow:
+    0 6px 16px rgba(108, 99, 255, 0.28);
+
+  transform: translateY(-1px);
 }
+
+
+.frm-btn-submit:active:not(:disabled) {
+  transform: translateY(0);
+
+  box-shadow:
+    0 3px 8px rgba(108, 99, 255, 0.20);
+}
+
 
 .frm-btn-submit:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
+
   cursor: not-allowed;
+
+  box-shadow: none;
 }
 
-/* ── Mobile responsiveness ────────────────────────────────────────────────── */
-@media (max-width: 500px) {
+
+/* ============================================================
+   FOCUS ACCESSIBILITY
+   ============================================================ */
+
+.frm-close-btn:focus-visible,
+.frm-add-photo:focus-visible,
+.frm-btn-cancel:focus-visible,
+.frm-btn-submit:focus-visible,
+.frm-photo-remove:focus-visible {
+  outline: 2px solid #6c63ff;
+
+  outline-offset: 2px;
+}
+
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media (max-width: 700px) {
+
   .frm-modal {
-    max-width: calc(100vw - 32px);
+    width: min(
+      620px,
+      calc(100vw - 24px)
+    );
+
+    max-height: 90vh;
+
+    border-radius: 17px;
   }
 
-  .frm-header,
-  .frm-footer {
-    padding-left: 16px;
-    padding-right: 16px;
+
+  .frm-header {
+    padding: 16px 18px;
   }
+
 
   .frm-body {
-    padding: 18px 16px;
+    padding: 18px;
   }
 
-  .frm-header-left {
-    flex-wrap: wrap;
+
+  .frm-footer {
+    padding: 13px 18px 16px;
   }
+
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 520px) {
+
+  .frm-modal {
+    width: calc(100vw - 20px);
+
+    max-height: 92vh;
+
+    border-radius: 16px;
+  }
+
+
+  .frm-header {
+    padding: 14px 15px;
+  }
+
+
+  .frm-header-icon {
+    width: 32px;
+    height: 32px;
+  }
+
 
   .frm-title,
   .frm-student-name {
-    white-space: normal;
+    font-size: 14px;
   }
 
-  .frm-preview-img {
-    width: 132px;
-    height: 132px;
+
+  .frm-header-left {
+    gap: 7px;
   }
+
+
+  .frm-body {
+    padding: 16px 15px 18px;
+  }
+
+
+  .frm-hint {
+    margin-bottom: 15px;
+
+    font-size: 12.5px;
+  }
+
+
+  .frm-photo-grid {
+    grid-template-columns: 1fr;
+
+    gap: 12px;
+  }
+
+
+  .frm-photo-card {
+    padding: 9px;
+  }
+
+
+  .frm-preview-wrap {
+    aspect-ratio: 16 / 10;
+  }
+
+
+  .frm-add-photo {
+    min-height: 130px;
+  }
+
+
+  .frm-guidance {
+    padding: 12px 13px;
+  }
+
 
   .frm-footer {
     flex-direction: column-reverse;
+
+    gap: 8px;
+
+    padding: 12px 15px 15px;
   }
+
 
   .frm-btn-cancel,
   .frm-btn-submit {
     width: 100%;
-    justify-content: center;
-    min-height: 42px;
+
+    min-height: 43px;
   }
+
+}
+
+
+/* ============================================================
+   VERY SMALL SCREENS
+   ============================================================ */
+
+@media (max-width: 360px) {
+
+  .frm-modal {
+    width: calc(100vw - 12px);
+
+    max-height: 94vh;
+  }
+
+
+  .frm-header {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+
+  .frm-body {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+
+  .frm-footer {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+
+  .frm-student-name {
+    max-width: 130px;
+  }
+
 }
