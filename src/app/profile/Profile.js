@@ -424,7 +424,7 @@ const Profile = () => {
             id: storedUser?.student_id || "me",
             name: profile.name || "Student",
           }}
-          endpoint={`${process.env.REACT_APP_BACKEND_URL}api/students/me/register-face`}
+          endpoint={`${process.env.REACT_APP_BACKEND_URL}api/face/students/me/register-face`}
           title={
             studentFaceRegistered ? "Update Registered Face" : "Register Face"
           }

@@ -32,3 +32,6 @@ yarn-error.log*
 # guide file
 /ATTENDANCE_APP_GUIDE.md
 /PROJECT_AI_GUIDE.md
+
+# test images
+/face_service/test_img

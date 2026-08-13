@@ -20,7 +20,7 @@ app.use("/api/students", studentRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api", faceRoutes); // exposes POST /api/students/:id/register-face
+app.use("/api/face", faceRoutes);
 
 app.use("/api", (req, res) => {
   res.status(404).json({ error: "API route not found" });

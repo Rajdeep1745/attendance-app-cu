@@ -1,48 +1,205 @@
-const axios = require('axios');
+const axios = require("axios");
 
-const FACE_SERVICE_URL = process.env.FACE_SERVICE_URL || 'http://127.0.0.1:5001';
+const FACE_SERVICE_URL =
+  process.env.FACE_SERVICE_URL ||
+  "http://127.0.0.1:5001";
 
-/**
- * Send an image buffer to Python service and get back a 128-dim embedding.
- * Use this during face registration (one student, one clear photo).
- *
- * @param {Buffer} imageBuffer - raw image bytes from multer's memoryStorage
- * @returns {number[]} 128-element array
- * @throws if no face found, multiple faces, or service unavailable
- */
-async function extractEmbedding(imageBuffer) {
-  const response = await axios.post(
-    `${FACE_SERVICE_URL}/extract-embedding`,
-    { image_b64: imageBuffer.toString('base64') },
-    { timeout: 30_000 }
-  );
-  return response.data.embedding;
-}
+const FACE_SERVICE_TIMEOUT =
+  Number(process.env.FACE_SERVICE_TIMEOUT) || 120000;
+
 
 /**
- * Send a class photo or video to Python service.
- * Returns which students were recognized.
+ * Extract one or two ArcFace registration embeddings.
  *
- * @param {Buffer} fileBuffer     - raw bytes from multer
- * @param {string} mimeType       - file.mimetype (e.g. 'image/jpeg' or 'video/mp4')
- * @param {Array}  students       - [{ id, embedding }] for all enrolled students with faces
- * @param {number} [threshold]    - 0.0–1.0, lower = stricter. Default 0.5
- * @returns {{ recognized: [{id, confidence}], frames_processed, faces_found }}
+ * The Python service expects:
+ *
+ * {
+ *   images: [
+ *     "<base64 image 1>",
+ *     "<base64 image 2>"
+ *   ]
+ * }
+ *
+ * Maximum: 2 images.
+ *
+ * Returns:
+ *
+ * {
+ *   embeddings: [
+ *     [512 numbers],
+ *     [512 numbers]
+ *   ],
+ *   dimension: 512,
+ *   image_count: 2,
+ *   pair_similarity: 0.73,
+ *   pair_threshold: 0.60
+ * }
+ *
+ * @param {Buffer[]} imageBuffers
+ * @returns {Promise<object>}
  */
-async function recognizeFaces(fileBuffer, mimeType, students, threshold = 0.5) {
-  const isVideo = mimeType.startsWith('video/');
-  const payload = {
-    students,
-    threshold,
-    [isVideo ? 'video_b64' : 'image_b64']: fileBuffer.toString('base64')
-  };
+async function extractEmbeddings(imageBuffers) {
+  if (!Array.isArray(imageBuffers)) {
+    throw new Error(
+      "imageBuffers must be an array",
+    );
+  }
+
+  if (
+    imageBuffers.length < 1 ||
+    imageBuffers.length > 2
+  ) {
+    throw new Error(
+      "A maximum of 2 face registration images is allowed",
+    );
+  }
+
+  const images = imageBuffers.map((buffer) => {
+    if (!Buffer.isBuffer(buffer)) {
+      throw new Error(
+        "Invalid face image buffer",
+      );
+    }
+
+    return buffer.toString("base64");
+  });
 
   const response = await axios.post(
-    `${FACE_SERVICE_URL}/recognize`,
-    payload,
-    { timeout: 120_000 }  // 2 min — videos can be large
+    `${FACE_SERVICE_URL}/extract-embeddings`,
+    {
+      images,
+    },
+    {
+      timeout: FACE_SERVICE_TIMEOUT,
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+    },
   );
+
   return response.data;
 }
 
-module.exports = { extractEmbedding, recognizeFaces };
+
+/**
+ * Backward-compatible single-image helper.
+ *
+ * This is useful while the rest of the application is being
+ * migrated from the old one-image registration flow.
+ *
+ * It deliberately calls the new Python endpoint rather than
+ * the old face-recognition implementation.
+ *
+ * @param {Buffer} imageBuffer
+ * @returns {Promise<number[]>}
+ */
+async function extractEmbedding(imageBuffer) {
+  const result = await extractEmbeddings([
+    imageBuffer,
+  ]);
+
+  if (
+    !Array.isArray(result.embeddings) ||
+    result.embeddings.length !== 1
+  ) {
+    throw new Error(
+      "Face service returned an invalid embedding response",
+    );
+  }
+
+  return result.embeddings[0];
+}
+
+
+/**
+ * Send a classroom image/video to the Python service.
+ *
+ * IMPORTANT:
+ *
+ * The current Phase 3 Python service supports image recognition.
+ * Multi-image classroom/video aggregation is Phase 4.
+ *
+ * The function keeps the existing interface so the attendance
+ * controller does not need to be rewritten in this phase.
+ *
+ * @param {Buffer} fileBuffer
+ * @param {string} mimeType
+ * @param {Array} students
+ * @param {number} threshold
+ * @returns {Promise<object>}
+ */
+
+
+async function recognizeFaces(
+  imageBuffers,
+  mimeTypes,
+  students,
+  threshold = 0.5,
+) {
+  if (!Array.isArray(students)) {
+    throw new Error(
+      "students must be an array",
+    );
+  }
+
+  const buffers = Array.isArray(imageBuffers)
+    ? imageBuffers
+    : [imageBuffers];
+
+  const types = Array.isArray(mimeTypes)
+    ? mimeTypes
+    : [mimeTypes];
+
+  if (
+    buffers.length < 1 ||
+    buffers.length > 8
+  ) {
+    throw new Error(
+      "Between 1 and 8 classroom images are required",
+    );
+  }
+
+  const images = buffers.map(
+    (buffer, index) => {
+      if (!Buffer.isBuffer(buffer)) {
+        throw new Error(
+          "Invalid classroom image buffer",
+        );
+      }
+
+      const mimeType = types[index];
+
+      if (
+        typeof mimeType !== "string" ||
+        !mimeType.startsWith("image/")
+      ) {
+        throw new Error(
+          "Only classroom images are supported",
+        );
+      }
+
+      return buffer.toString("base64");
+    },
+  );
+
+  const response = await axios.post(
+    `${FACE_SERVICE_URL}/recognize`,
+    {
+      images,
+      students,
+      threshold,
+    },
+    {
+      timeout: FACE_SERVICE_TIMEOUT,
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+    },
+  );
+
+  return response.data;
+}
+
+module.exports = {
+  extractEmbeddings,
+  extractEmbedding,
+  recognizeFaces,
+};

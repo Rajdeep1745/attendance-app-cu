@@ -34,13 +34,12 @@ const readApiResponse = async (response) => {
  *   onSaved       - called after attendance is saved, so parent can refresh
  *   showAlert     - from AlertContext
  */
-const AutoAttendancePanel = ({ batchId, students = [], onSaved, showAlert }) => {
+const AutoAttendancePanel = ({ subjectId, students = [], onSaved, showAlert }) => {
   const today = formatLocalDate();
 
   const [date, setDate]           = useState(today);
-  const [file, setFile]           = useState(null);
-  const [filePreview, setPreview] = useState(null);
-  const [isVideo, setIsVideo]     = useState(false);
+  const [files, setFiles] = useState([]);
+  const [filePreviews, setFilePreviews] = useState([]);
   const [processing, setProcessing] = useState(false);
   const [saving, setSaving]       = useState(false);
   const [error, setError]         = useState('');
@@ -52,64 +51,176 @@ const AutoAttendancePanel = ({ batchId, students = [], onSaved, showAlert }) => 
 
   // ── File selection ────────────────────────────────────────────────
   const handleFileChange = (e) => {
-    const f = e.target.files[0];
-    if (!f) return;
-    setFile(f);
-    setError('');
-    setAttendanceMap(null);
-    const isVid = f.type.startsWith('video/');
-    setIsVideo(isVid);
-    if (filePreview) URL.revokeObjectURL(filePreview);
-    setPreview(isVid ? null : URL.createObjectURL(f));
-  };
+  const selectedFiles = Array.from(
+    e.target.files || [],
+  );
+
+  setError("");
+  setAttendanceMap(null);
+
+  if (selectedFiles.length === 0) {
+    setFiles([]);
+    setFilePreviews([]);
+    return;
+  }
+
+  if (selectedFiles.length > 8) {
+    setError(
+      "You can upload a maximum of 8 classroom images.",
+    );
+    e.target.value = "";
+    return;
+  }
+
+  const invalidFile = selectedFiles.find(
+    (file) =>
+      ![
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+      ].includes(file.type),
+  );
+
+  if (invalidFile) {
+    setError(
+      "Only JPEG, PNG, or WebP classroom images are allowed.",
+    );
+    e.target.value = "";
+    return;
+  }
+
+  const oversizedFile =
+    selectedFiles.find(
+      (file) =>
+        file.size >
+        10 * 1024 * 1024,
+    );
+
+  if (oversizedFile) {
+    setError(
+      `"${oversizedFile.name}" is larger than 10 MB.`,
+    );
+    e.target.value = "";
+    return;
+  }
+
+  filePreviews.forEach((url) =>
+    URL.revokeObjectURL(url),
+  );
+
+  const previews =
+    selectedFiles.map((file) =>
+      URL.createObjectURL(file),
+    );
+
+  setFiles(selectedFiles);
+  setFilePreviews(previews);
+};
 
   // ── Submit to backend ─────────────────────────────────────────────
   const handleProcess = async () => {
-    if (!file) { setError('Please select an image or video first.'); return; }
-    if (!date) { setError('Please select a date.'); return; }
+  if (!files.length) {
+    setError(
+      "Please select at least one classroom image.",
+    );
+    return;
+  }
 
-    setProcessing(true);
-    setError('');
-    setAttendanceMap(null);
+  if (!date) {
+    setError(
+      "Please select a date.",
+    );
+    return;
+  }
 
-    try {
-      const formData = new FormData();
-      formData.append('faceMedia', file);
-      formData.append('date', date);
+  setProcessing(true);
+  setError("");
+  setAttendanceMap(null);
 
-      const res = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}api/attendance/${batchId}/face`,
+  try {
+    const formData =
+      new FormData();
+
+    files.forEach((file) => {
+      formData.append(
+        "faceImages",
+        file,
+      );
+    });
+
+    formData.append(
+      "date",
+      date,
+    );
+
+    const res =
+      await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/attendance/${subjectId}/face`,
         {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          body: formData
-        }
+          method: "POST",
+
+          headers: {
+            Authorization:
+              `Bearer ${localStorage.getItem("token")}`,
+          },
+
+          body: formData,
+        },
       );
 
-      const data = await readApiResponse(res);
-      if (!res.ok) throw new Error(data.error || 'Processing failed');
+    const data =
+      await readApiResponse(res);
 
-      // Build a map for the override UI
-      const map = {};
-      for (const row of data.attendance) {
-        map[row.student_id] = {
-          present: row.present,
-          auto_recognized: row.auto_recognized,
-          has_face: row.has_face
-        };
-      }
-      setAttendanceMap(map);
-
-      showAlert && showAlert(true,
-        `Recognized ${data.present_count} of ${data.total_count} students.`,
-        'success'
+    if (!res.ok) {
+      throw new Error(
+        data.error ||
+          "Processing failed",
       );
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setProcessing(false);
     }
-  };
+
+    const map = {};
+
+    for (
+      const row of data.attendance
+    ) {
+      map[row.student_id] = {
+        present:
+          row.present,
+
+        auto_recognized:
+          row.auto_recognized,
+
+        has_face:
+          row.has_face,
+
+        similarity:
+          row.similarity,
+
+        observations:
+          row.observations,
+
+        image_indices:
+          row.image_indices || [],
+      };
+    }
+
+    setAttendanceMap(map);
+
+    showAlert &&
+      showAlert(
+        true,
+        `Recognized ${data.present_count} of ${data.total_count} students across ${data.images_processed} classroom images.`,
+        "success",
+      );
+
+  } catch (err) {
+    setError(
+      err.message,
+    );
+  } finally {
+    setProcessing(false);
+  }
+};
 
   // ── Toggle a single student ───────────────────────────────────────
   const toggleStudent = (studentId) => {
@@ -135,7 +246,7 @@ const AutoAttendancePanel = ({ batchId, students = [], onSaved, showAlert }) => 
 
     try {
       const res = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}api/attendance/${batchId}/override`,
+        `${process.env.REACT_APP_BACKEND_URL}api/attendance/${subjectId}/override`,
         {
           method: 'PATCH',
           headers: {
@@ -189,34 +300,47 @@ const AutoAttendancePanel = ({ batchId, students = [], onSaved, showAlert }) => 
         </div>
         <div className="col-sm-7">
           <label className="form-label small fw-semibold mb-1">
-            Upload Class Photo or Video
-          </label>
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
-            className="form-control form-control-sm auto-file-input"
-            onChange={handleFileChange}
-          />
+  Upload Classroom Images
+</label>
+
+<input
+  type="file"
+  accept="image/jpeg,image/png,image/webp"
+  multiple
+  className="form-control form-control-sm auto-file-input"
+  onChange={handleFileChange}
+/>
+
+<div className="form-text">
+  Upload up to 8 classroom photos. A student found in
+  any one photo will be marked present.
+</div>
         </div>
       </div>
 
       {/* ── Image preview ── */}
-      {filePreview && !isVideo && (
-        <div className="text-center mb-3">
+      {filePreviews.length > 0 && (
+  <div className="auto-att-preview-grid mb-3">
+    {filePreviews.map(
+      (preview, index) => (
+        <div
+          key={preview}
+          className="auto-att-preview-item"
+        >
           <img
-            src={filePreview}
-            alt="Upload preview"
+            src={preview}
+            alt={`Classroom ${index + 1}`}
             className="auto-att-preview"
           />
+
+          <div className="small text-muted mt-1">
+            Classroom photo {index + 1}
+          </div>
         </div>
-      )}
-      {isVideo && file && (
-        <div className="alert alert-info py-2 small mb-3">
-          <i className="fa fa-film me-1"></i>
-          Video selected: <strong>{file.name}</strong> ({(file.size / 1024 / 1024).toFixed(1)} MB).
-          Frames will be sampled every 2 seconds.
-        </div>
-      )}
+      ),
+    )}
+  </div>
+)}
 
       {error && (
         <div className="alert alert-danger py-2 small mb-3">
@@ -227,12 +351,26 @@ const AutoAttendancePanel = ({ batchId, students = [], onSaved, showAlert }) => 
       <button
         className="btn btn-primary btn-sm w-100 mb-3"
         onClick={handleProcess}
-        disabled={processing || !file}
+        disabled={
+  processing ||
+  files.length === 0
+}
       >
         {processing
-          ? <><span className="spinner-border spinner-border-sm me-2"></span>Processing…</>
-          : <><i className="fa fa-magic me-2"></i>Run Face Recognition</>
-        }
+  ? (
+    <>
+      <span className="spinner-border spinner-border-sm me-2"></span>
+      Analyzing {files.length} image
+      {files.length !== 1 ? "s" : ""}…
+    </>
+  )
+  : (
+    <>
+      <i className="fa fa-magic me-2"></i>
+      Run Classroom Recognition
+    </>
+  )
+}
       </button>
 
       {/* ── Override list — shown after recognition ── */}
@@ -300,6 +438,16 @@ const AutoAttendancePanel = ({ batchId, students = [], onSaved, showAlert }) => 
                           Auto-recognized
                         </span>
                       )}
+                      {info.auto_recognized &&
+                        info.observations > 0 && (
+                          <span
+                            className="badge bg-success ms-2"
+                            style={{ fontSize: 9 }}
+                          >
+                            Seen in {info.observations} photo
+                            {info.observations !== 1 ? "s" : ""}
+                          </span>
+                        )}
                     </div>
                   </div>
                   <div className="override-toggle">

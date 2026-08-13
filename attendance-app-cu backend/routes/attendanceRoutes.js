@@ -3,7 +3,7 @@ const router = express.Router();
 
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
-const { faceMediaUpload } = require("../middleware/uploadMiddleware");
+const { classroomImageUpload } = require("../middleware/uploadMiddleware");
 
 const {
   getAttendanceStats,
@@ -61,7 +61,7 @@ router.post(
   "/:subjectId/face",
   authMiddleware,
   roleMiddleware("teacher"),
-  faceMediaUpload.single("faceMedia"),
+  classroomImageUpload.array("faceImages", 8),
   markAttendanceByFace,
 );
 
