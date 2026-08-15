@@ -35,3 +35,6 @@ yarn-error.log*
 
 # test images
 /face_service/test_img
+
+__pycache__/
+*.pyc
