@@ -201,7 +201,7 @@ const TeacherSidebar = ({ isOpen }) => {
   // ---------------------------------------------------------
 
   return (
-    <aside className={`sidebar ${isOpen ? "open" : "closed"}`}>
+    <aside className={`sidebar teacher-sidebar ${isOpen ? "open" : "closed"}`}>
       <div className="sidebar-content">
         <h6 className="fw-bold mb-1">Subjects</h6>
 

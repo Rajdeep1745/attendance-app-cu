@@ -851,6 +851,678 @@ small {
   transform: translateY(0);
 }
 
+/* =========================================================
+   PREMIUM TEACHER SIDEBAR
+   ---------------------------------------------------------
+   Scoped ONLY to .teacher-sidebar.
+   Student sidebar remains untouched.
+========================================================= */
+
+
+/* =========================================================
+   SIDEBAR SURFACE
+========================================================= */
+
+.teacher-sidebar {
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #fbfaff 48%,
+      #f8f7fc 100%
+    );
+
+  border-right:
+    1px solid rgba(124, 58, 237, 0.08);
+
+  box-shadow:
+    8px 0 30px rgba(30, 41, 59, 0.035);
+
+  overflow: hidden;
+}
+
+
+/* ---------------------------------------------------------
+   Scrollable content
+--------------------------------------------------------- */
+
+.teacher-sidebar .sidebar-content {
+  padding: 22px 13px 16px;
+
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    rgba(124, 58, 237, 0.22)
+    transparent;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.teacher-sidebar .sidebar-content > h6 {
+  position: relative;
+
+  margin: 0;
+
+  padding:
+    2px 10px 0 18px;
+
+  color: #17203a;
+
+  font-size: 14px;
+
+  font-weight: 800;
+
+  line-height: 1.2;
+
+  letter-spacing: 0.105em;
+
+  text-transform: uppercase;
+}
+
+
+/*
+ * Purple vertical marker.
+ */
+
+.teacher-sidebar .sidebar-content > h6::before {
+  content: "";
+
+  position: absolute;
+
+  left: 8px;
+  top: 2px;
+
+  width: 3px;
+  height: 15px;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #8b5cf6,
+      #6d28d9
+    );
+}
+
+
+.teacher-sidebar .sidebar-content > small {
+  display: block;
+
+  margin:
+    7px 10px 0 18px;
+
+  color: #7b87a0 !important;
+
+  font-size: 11.5px;
+
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   TREE CONTAINER
+========================================================= */
+
+.teacher-sidebar .list-group {
+  margin-top: 18px !important;
+
+  padding:
+    0 3px 10px;
+
+  border: none !important;
+}
+
+
+/* =========================================================
+   PROGRAMME
+========================================================= */
+
+.teacher-sidebar .tree-programme {
+  margin-bottom: 7px;
+
+  border-radius: 14px;
+}
+
+
+/*
+ * Programme header is the main navigation level.
+ */
+
+.teacher-sidebar .tree-programme-header {
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  min-height: 46px;
+
+  padding:
+    10px 12px;
+
+  border:
+    1px solid transparent;
+
+  border-radius: 13px;
+
+  color: #293247;
+
+  background: transparent;
+
+  cursor: pointer;
+
+  font-size: 18px;
+
+  font-weight: 700;
+
+  letter-spacing: -0.01em;
+
+  transition:
+    background 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+
+/* Programme hover */
+
+.teacher-sidebar .tree-programme-header:hover {
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff,
+      #faf8ff
+    );
+
+  border-color:
+    rgba(124, 58, 237, 0.10);
+
+  color: #5b21b6;
+
+  box-shadow:
+    0 5px 16px rgba(76, 29, 149, 0.045);
+}
+
+
+/* =========================================================
+   CHEVRON
+========================================================= */
+
+.teacher-sidebar .tree-programme-header > span:first-child,
+.teacher-sidebar .tree-semester-header > span:first-child {
+  width: 22px;
+  height: 22px;
+
+  flex: 0 0 22px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 7px;
+
+  color: #7c3aed;
+
+  background:
+    rgba(124, 58, 237, 0.07);
+
+  font-size: 9px;
+
+  line-height: 1;
+
+  transition:
+    transform 0.22s ease,
+    background 0.22s ease,
+    color 0.22s ease;
+}
+
+
+/*
+ * Slightly stronger chevron for programmes.
+ */
+
+.teacher-sidebar
+.tree-programme-header:hover
+> span:first-child {
+  color: #6d28d9;
+
+  background:
+    rgba(124, 58, 237, 0.12);
+}
+
+
+/* =========================================================
+   SEMESTER CONTAINER
+========================================================= */
+
+.teacher-sidebar .tree-semester {
+  position: relative;
+
+  margin:
+    4px 0 6px 14px;
+
+  padding:
+    3px 0 3px 14px;
+
+  border-left:
+    1px solid rgba(124, 58, 237, 0.11);
+}
+
+
+/* =========================================================
+   SEMESTER HEADER
+========================================================= */
+
+.teacher-sidebar .tree-semester-header {
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  min-height: 38px;
+
+  padding:
+    7px 10px;
+
+  border-radius: 10px;
+
+  color: #536078;
+
+  cursor: pointer;
+
+  font-size: 16px;
+
+  font-weight: 650;
+
+  transition:
+    background 0.20s ease,
+    color 0.20s ease;
+}
+
+
+.teacher-sidebar .tree-semester-header:hover {
+  color: #5b21b6;
+
+  background:
+    rgba(124, 58, 237, 0.055);
+}
+
+
+.teacher-sidebar
+.tree-semester-header:hover
+> span:first-child {
+  color: #6d28d9;
+
+  background:
+    rgba(124, 58, 237, 0.11);
+}
+
+
+/* =========================================================
+   SUBJECT LIST
+========================================================= */
+
+.teacher-sidebar .tree-subject-list {
+  position: relative;
+
+  margin:
+    3px 0 6px 17px;
+
+  padding:
+    2px 0 4px 13px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 4px;
+
+  border-left:
+    1px solid rgba(124, 58, 237, 0.075);
+}
+
+
+/* =========================================================
+   SUBJECT
+========================================================= */
+
+.teacher-sidebar .tree-subject {
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  min-height: 38px;
+
+  padding:
+    8px 10px;
+
+  border:
+    1px solid transparent;
+
+  border-radius: 10px;
+
+  color: #59667e;
+
+  background: transparent;
+
+  cursor: pointer;
+
+  font-size: 16px;
+
+  font-weight: 550;
+
+  line-height: 1.25;
+
+  transition:
+    background 0.20s ease,
+    border-color 0.20s ease,
+    color 0.20s ease,
+    box-shadow 0.20s ease,
+    transform 0.20s ease;
+}
+
+
+/*
+ * Replace the plain bullet with a refined dot.
+ */
+
+.teacher-sidebar .tree-subject > span:first-child {
+  width: 7px;
+  height: 7px;
+
+  flex: 0 0 7px;
+
+  border-radius: 50%;
+
+  background:
+    #c4b5fd;
+
+  color: transparent;
+
+  box-shadow:
+    0 0 0 3px rgba(124, 58, 237, 0.055);
+
+  transition:
+    background 0.20s ease,
+    box-shadow 0.20s ease;
+}
+
+
+/* Subject hover */
+
+.teacher-sidebar .tree-subject:hover {
+  color: #4c1d95;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(124, 58, 237, 0.055),
+      rgba(139, 92, 246, 0.025)
+    );
+
+  border-color:
+    rgba(124, 58, 237, 0.10);
+
+  box-shadow:
+    0 4px 12px rgba(76, 29, 149, 0.045);
+
+  transform: translateX(1px);
+}
+
+
+.teacher-sidebar
+.tree-subject:hover
+> span:first-child {
+  background:
+    #8b5cf6;
+
+  box-shadow:
+    0 0 0 3px rgba(124, 58, 237, 0.10);
+}
+
+
+/* =========================================================
+   ACTIVE SUBJECT
+========================================================= */
+
+.teacher-sidebar .tree-subject.active {
+  position: relative;
+
+  color: #ffffff !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #7c3aed 0%,
+      #6d28d9 100%
+    ) !important;
+
+  border:
+    1px solid rgba(109, 40, 217, 0.45);
+
+  box-shadow:
+    0 8px 20px rgba(109, 40, 217, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+
+  font-weight: 700;
+
+  transform: none;
+}
+
+
+/*
+ * Active subject dot.
+ */
+
+.teacher-sidebar
+.tree-subject.active
+> span:first-child {
+  background:
+    #ffffff;
+
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.14);
+}
+
+
+/*
+ * Permanent subtle glow on the active item.
+ */
+
+.teacher-sidebar
+.tree-subject.active::after {
+  content: "";
+
+  position: absolute;
+
+  right: 7px;
+  top: 50%;
+
+  width: 5px;
+  height: 5px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 255, 255, 0.85);
+
+  box-shadow:
+    0 0 10px rgba(255, 255, 255, 0.65);
+
+  transform:
+    translateY(-50%);
+}
+
+
+/* =========================================================
+   PROGRAMME / SEMESTER OPEN STATE
+========================================================= */
+
+/*
+ * The open levels receive a very subtle tint through their
+ * children rather than a heavy filled background.
+ */
+
+.teacher-sidebar .tree-programme:has(
+  .tree-semester
+) .tree-programme-header {
+  color: #3f2a72;
+}
+
+
+/* =========================================================
+   LOADING / EMPTY STATE
+========================================================= */
+
+.teacher-sidebar .sidebar-content
+> .text-muted.small {
+  margin:
+    20px 8px;
+
+  padding:
+    14px;
+
+  border:
+    1px solid rgba(226, 232, 240, 0.8);
+
+  border-radius: 13px;
+
+  background:
+    rgba(255, 255, 255, 0.70);
+
+  color: #7c879c !important;
+
+  text-align: center;
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.teacher-sidebar .sidebar-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+
+.teacher-sidebar .sidebar-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+.teacher-sidebar .sidebar-content::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(139, 92, 246, 0.20),
+      rgba(109, 40, 217, 0.30)
+    );
+}
+
+
+.teacher-sidebar .sidebar-content::-webkit-scrollbar-thumb:hover {
+  background:
+    rgba(109, 40, 217, 0.42);
+}
+
+
+/* =========================================================
+   SIDEBAR FOOTER
+========================================================= */
+
+.teacher-sidebar .sidebar-footer {
+  padding:
+    12px 14px 16px;
+
+  border-top:
+    1px solid rgba(226, 232, 240, 0.70);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.40),
+      rgba(250, 249, 255, 0.95)
+    );
+}
+
+
+/* =========================================================
+   RESPONSIVE — TABLET
+   Visual refinement only.
+========================================================= */
+
+@media (max-width: 991px) {
+
+  .teacher-sidebar .sidebar-content {
+    padding:
+      20px 12px 14px;
+  }
+
+  .teacher-sidebar .tree-programme-header {
+    min-height: 44px;
+  }
+
+  .teacher-sidebar .tree-subject {
+    min-height: 40px;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — PHONE
+========================================================= */
+
+@media (max-width: 575px) {
+
+  .teacher-sidebar .sidebar-content {
+    padding:
+      18px 10px 12px;
+  }
+
+  .teacher-sidebar .tree-semester {
+    margin-left: 11px;
+    padding-left: 11px;
+  }
+
+  .teacher-sidebar .tree-subject-list {
+    margin-left: 12px;
+    padding-left: 10px;
+  }
+
+  .teacher-sidebar .tree-programme-header {
+    min-height: 45px;
+  }
+
+  .teacher-sidebar .tree-semester-header {
+    min-height: 40px;
+  }
+
+  .teacher-sidebar .tree-subject {
+    min-height: 40px;
+  }
+}
+
 
 /* =========================================================
    TABLET
