@@ -139,29 +139,123 @@
   background-color: #7c3aed;
 }
 
-/* ===============================
-   Threshold input
-================================ */
+/* =========================================================
+   RESPONSIVE THRESHOLD INPUT
+   ========================================================= */
+
 .threshold-input-wrapper {
   position: relative;
-  width: 90px;
+
+  /*
+   * Large enough for 100 + %
+   * but still compact.
+   */
+  flex: 0 0 92px;
+
+  width: 92px;
+  min-width: 92px;
+
+  box-sizing: border-box;
 }
+
 
 .threshold-input-wrapper input {
-  padding-right: 28px;
-  border-radius: 10px;
+  width: 100%;
+  min-width: 0;
+
+  height: 48px;
+
+  /*
+   * Reserve enough room for the % suffix.
+   */
+  padding-left: 8px;
+  padding-right: 30px;
+
+  border-radius: 12px;
+
+  box-sizing: border-box;
+
+  text-align: center;
+
+  font-variant-numeric: tabular-nums;
 }
 
-.percent-sign {
+
+/*
+ * Percentage symbol
+ */
+
+.threshold-input-wrapper .percent-sign {
   position: absolute;
-  right: 10px;
+
+  right: 9px;
   top: 50%;
+
   transform: translateY(-50%);
-  font-weight: 500;
+
   color: #6b7280;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  line-height: 1;
+
   pointer-events: none;
+
+  z-index: 2;
 }
 
+
+/* =========================================================
+   NARROW TABLETS / SMALL SCREENS
+========================================================= */
+
+@media (max-width: 767px) {
+
+  .threshold-input-wrapper {
+    flex: 0 0 88px;
+
+    width: 88px;
+    min-width: 88px;
+  }
+
+  .threshold-input-wrapper input {
+    padding-left: 6px;
+    padding-right: 27px;
+  }
+
+  .threshold-input-wrapper .percent-sign {
+    right: 8px;
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 575px) {
+
+  .threshold-input-wrapper {
+    flex: 0 0 84px;
+
+    width: 84px;
+    min-width: 84px;
+  }
+
+  .threshold-input-wrapper input {
+    height: 46px;
+
+    padding-left: 5px;
+    padding-right: 25px;
+  }
+
+  .threshold-input-wrapper .percent-sign {
+    right: 7px;
+
+    font-size: 14px;
+  }
+}
 /* ===============================
    Stats cards
 ================================ */
@@ -410,6 +504,86 @@
   font-size: 16px;
   max-width: 700px;
   margin-bottom: 0;
+}
+
+/* =========================================================
+   PREMIUM ATTENDANCE THRESHOLD SLIDER
+========================================================= */
+
+.threshold-slider {
+  accent-color: #4c3a91;
+}
+
+
+/* Chrome / Edge / Safari */
+
+.threshold-slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+
+  width: 20px;
+  height: 20px;
+
+  margin-top: -6px;
+
+  border-radius: 50%;
+
+  background: #654dc7;
+
+  border: 2px solid #ffffff;
+
+  box-shadow:
+    0 3px 10px rgba(76, 58, 145, 0.30);
+
+  cursor: pointer;
+}
+
+
+.threshold-slider::-webkit-slider-runnable-track {
+  height: 7px;
+
+  border-radius: 999px;
+
+  background: #e5e7eb;
+}
+
+
+/* Firefox */
+
+.threshold-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+
+  border-radius: 50%;
+
+  background: #4c3a91;
+
+  border: 3px solid #ffffff;
+
+  box-shadow:
+    0 3px 10px rgba(76, 58, 145, 0.30);
+
+  cursor: pointer;
+}
+
+
+.threshold-slider::-moz-range-track {
+  height: 7px;
+
+  border-radius: 999px;
+
+  background: #e5e7eb;
+}
+
+
+/* Filled portion in Firefox */
+
+.threshold-slider::-moz-range-progress {
+  height: 7px;
+
+  border-radius: 999px;
+
+  background: #4c3a91;
 }
 
 @media (max-width: 767px) {

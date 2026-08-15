@@ -432,7 +432,7 @@ const Dashboard = () => {
               <div className="d-flex align-items-center gap-3 mb-4">
                 <input
                   type="range"
-                  className="form-range flex-grow-1"
+                  className="form-range threshold-slider flex-grow-1"
                   min="0"
                   max="100"
                   value={threshold}

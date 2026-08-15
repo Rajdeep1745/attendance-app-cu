@@ -5,43 +5,81 @@ import "react-day-picker/dist/style.css";
 
 import useDelayedLoading from "../../../hooks/useDelayedLoading";
 import { TeacherAttendanceSkeleton } from "../../../components/skeletons/Skeletons";
+
 import "./TeacherAttendance.css";
+
+
+// ============================================================
+// DATE HELPERS
+// ============================================================
 
 const formatLocalDate = (date) => {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+
+  const month = String(
+    date.getMonth() + 1,
+  ).padStart(2, "0");
+
+  const day = String(
+    date.getDate(),
+  ).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };
+
+
+// ============================================================
+// ATTENDANCE PAGE
+// ============================================================
 
 const Attendance = () => {
   const { subjectId } = useParams();
 
   const today = new Date();
 
-  // Subject attendance threshold
+  // ----------------------------------------------------------
+  // Threshold
+  // ----------------------------------------------------------
+
   const [threshold, setThreshold] = useState(0);
 
-  // Selected calendar date
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  // ----------------------------------------------------------
+  // Selected date
+  // ----------------------------------------------------------
 
-  // Student attendance records
+  const [selectedDate, setSelectedDate] =
+    useState(new Date());
+
+  // ----------------------------------------------------------
+  // Students
+  // ----------------------------------------------------------
+
   const [records, setRecords] = useState([]);
-  const [attendanceLoading, setAttendanceLoading] = useState(true);
 
-  // Attendance statistics
-  const [attendanceStats, setAttendanceStats] = useState({
-    totalClasses: 0,
-    avgAttendance: 0,
-    bestAttendance: {},
-    worstAttendance: {},
-  });
+  const [attendanceLoading, setAttendanceLoading] =
+    useState(true);
 
-  // Fetch selected subject
+  // ----------------------------------------------------------
+  // Subject attendance statistics
+  // ----------------------------------------------------------
+
+  const [attendanceStats, setAttendanceStats] =
+    useState({
+      totalClasses: 0,
+      avgAttendance: 0,
+      bestAttendance: {},
+      worstAttendance: {},
+    });
+
+
+  // ==========================================================
+  // FETCH SUBJECT DETAILS
+  // ==========================================================
+
   const fetchSubjectDetails = async (id) => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token");
 
       const res = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}api/subject/${id}`,
@@ -55,20 +93,34 @@ const Attendance = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data?.error || "Failed to fetch subject");
+        throw new Error(
+          data?.error ||
+            "Failed to fetch subject",
+        );
       }
 
-      setThreshold(Number(data?.threshold || 0));
+      setThreshold(
+        Number(data?.threshold || 0),
+      );
     } catch (err) {
-      console.error("Failed to fetch subject details:", err);
+      console.error(
+        "Failed to fetch subject details:",
+        err,
+      );
+
       setThreshold(0);
     }
   };
 
-  // Fetch attendance statistics
+
+  // ==========================================================
+  // FETCH ATTENDANCE STATISTICS
+  // ==========================================================
+
   const fetchAttendanceDetails = async (id) => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token");
 
       const res = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}api/attendance/${id}/stats`,
@@ -82,25 +134,42 @@ const Attendance = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data?.error || "Failed to fetch stats");
+        throw new Error(
+          data?.error ||
+            "Failed to fetch stats",
+        );
       }
 
       setAttendanceStats(data);
     } catch (err) {
-      console.error("Failed to fetch attendance stats:", err);
+      console.error(
+        "Failed to fetch attendance stats:",
+        err,
+      );
     }
   };
 
-  // Fetch daily attendance for the selected subject/date
+
+  // ==========================================================
+  // FETCH DAILY ATTENDANCE
+  // ==========================================================
+
   useEffect(() => {
-    if (!subjectId || !selectedDate) return;
+    if (!subjectId || !selectedDate) {
+      return;
+    }
 
     const fetchDailyAttendance = async () => {
       setAttendanceLoading(true);
 
       try {
-        const token = localStorage.getItem("token");
-        const formattedDate = formatLocalDate(selectedDate);
+        const token =
+          localStorage.getItem("token");
+
+        const formattedDate =
+          formatLocalDate(
+            selectedDate,
+          );
 
         const res = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}api/attendance/${subjectId}/daily?date=${formattedDate}`,
@@ -114,27 +183,66 @@ const Attendance = () => {
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data?.error || "Failed to fetch attendance");
+          throw new Error(
+            data?.error ||
+              "Failed to fetch attendance",
+          );
         }
 
-        // Backend sends studentId, not id.
-        const formatted = data.map((student) => ({
-          id: student.studentId,
-          name: student.name,
-          roll: student.roll,
-          present: student.present,
-          percentage: Number(student.percentage || 0),
-          avatar: student.avatar || null,
-        }));
+        // ----------------------------------------------------
+        // Backend now provides:
+        //
+        // subjectPercentage
+        // overallPercentage
+        // present
+        // ----------------------------------------------------
+
+        const formatted = data.map(
+          (student) => ({
+            id: student.studentId,
+
+            name: student.name,
+
+            roll: student.roll,
+
+            present:
+              student.present,
+
+            subjectPercentage:
+              Number(
+                student.subjectPercentage ||
+                  0,
+              ),
+
+            overallPercentage:
+              Number(
+                student.overallPercentage ||
+                  0,
+              ),
+
+            avatar:
+              student.avatar ||
+              null,
+          }),
+        );
 
         setRecords(formatted);
 
         await Promise.all([
-          fetchSubjectDetails(subjectId),
-          fetchAttendanceDetails(subjectId),
+          fetchSubjectDetails(
+            subjectId,
+          ),
+
+          fetchAttendanceDetails(
+            subjectId,
+          ),
         ]);
       } catch (err) {
-        console.error("Failed to fetch daily attendance:", err);
+        console.error(
+          "Failed to fetch daily attendance:",
+          err,
+        );
+
         setRecords([]);
       } finally {
         setAttendanceLoading(false);
@@ -142,182 +250,550 @@ const Attendance = () => {
     };
 
     fetchDailyAttendance();
-  }, [subjectId, selectedDate]);
+  }, [
+    subjectId,
+    selectedDate,
+  ]);
 
-  const showPageSkeleton = useDelayedLoading(attendanceLoading);
+
+  // ==========================================================
+  // LOADING
+  // ==========================================================
+
+  const showPageSkeleton =
+    useDelayedLoading(
+      attendanceLoading,
+    );
+
 
   if (showPageSkeleton) {
-    return <TeacherAttendanceSkeleton />;
+    return (
+      <TeacherAttendanceSkeleton />
+    );
   }
+
+
+  // ==========================================================
+  // RENDER
+  // ==========================================================
 
   return (
     <div className="container-fluid attendance-page page-enter">
-      {/* HEADER */}
-      <div className="attendance-hero">
-        <div>
-          <h1>Attendance Records</h1>
 
-          <p>View daily attendance history and class performance.</p>
+      {/* ====================================================
+          HEADER
+      ==================================================== */}
+
+      <div className="attendance-hero">
+
+        <div>
+          <h1>
+            Attendance Records
+          </h1>
+
+          <p>
+            View daily attendance history
+            and class performance.
+          </p>
         </div>
+
       </div>
 
-      {/* DATE + SUMMARY ROW */}
+
+      {/* ====================================================
+          DATE + SUMMARY
+      ==================================================== */}
+
       <div className="row g-4 mb-4">
-        {/* CALENDAR */}
+
+        {/* --------------------------------------------------
+            CALENDAR
+        -------------------------------------------------- */}
+
         <div className="col-md-6">
+
           <div className="card attendance-card calendar-card h-100">
+
             <div className="card-body attendance-calendar-card-body">
+
               <div className="attendance-page-calendar-shell">
+
                 <div className="premium-date-picker-calendar attendance-page-calendar">
+
                   <DayPicker
                     mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => date && setSelectedDate(date)}
+                    selected={
+                      selectedDate
+                    }
+                    onSelect={(date) =>
+                      date &&
+                      setSelectedDate(
+                        date,
+                      )
+                    }
                     showOutsideDays
-                    disabled={{ after: today }}
+                    disabled={{
+                      after: today,
+                    }}
                   />
+
                 </div>
 
+
                 <div className="premium-date-picker-footer attendance-page-calendar-footer">
+
                   <button
                     type="button"
                     className="premium-date-picker-footer-btn primary"
-                    onClick={() => setSelectedDate(new Date())}
+                    onClick={() =>
+                      setSelectedDate(
+                        new Date(),
+                      )
+                    }
                   >
                     Today
                   </button>
+
                 </div>
+
               </div>
+
             </div>
+
           </div>
+
         </div>
 
-        {/* SUBJECT SUMMARY */}
+
+        {/* --------------------------------------------------
+            SUBJECT SUMMARY
+        -------------------------------------------------- */}
+
         <div className="col-md-6">
+
           <div className="card attendance-card h-100 subject-summary">
+
             <div className="card-body subject-summary-body">
-              {/* LEFT MAIN AVG */}
+
               <div className="mx-5 summary-left">
-                <p className="stats-title mb-1">Average Attendance</p>
+
+                <p className="stats-title mb-1">
+                  Average Attendance
+                </p>
 
                 <h1 className="stats-value-main">
-                  {attendanceStats.avgAttendance || 0}%
+                  {
+                    attendanceStats.avgAttendance ||
+                    0
+                  }
+                  %
                 </h1>
 
                 <small className="text-muted">
-                  Based on last {attendanceStats.totalClasses || 0} classes
+                  Based on last{" "}
+                  {
+                    attendanceStats.totalClasses ||
+                    0
+                  }{" "}
+                  classes
                 </small>
 
                 <div className="analytics-progress">
+
                   <div
                     className="analytics-progress-bar"
                     style={{
-                      width: `${attendanceStats.avgAttendance || 0}%`,
+                      width: `${Math.min(
+                        Number(
+                          attendanceStats.avgAttendance ||
+                            0,
+                        ),
+                        100,
+                      )}%`,
                     }}
                   />
+
                 </div>
+
               </div>
 
-              {/* RIGHT SIDE STATS */}
+
               <div className="summary-right-details">
+
                 <div className="stat-box best">
+
                   <p>Best</p>
 
-                  <h4>{attendanceStats.bestAttendance?.percentage || 0}%</h4>
+                  <h4>
+                    {
+                      attendanceStats
+                        .bestAttendance
+                        ?.percentage ||
+                      0
+                    }
+                    %
+                  </h4>
 
                   <small>
-                    {attendanceStats.bestAttendance?.date || "yyyy-mm-dd"}
+                    {
+                      attendanceStats
+                        .bestAttendance
+                        ?.date ||
+                      "No data"
+                    }
                   </small>
+
                 </div>
+
 
                 <div className="stat-box worst">
+
                   <p>Worst</p>
 
-                  <h4>{attendanceStats.worstAttendance?.percentage || 0}%</h4>
+                  <h4>
+                    {
+                      attendanceStats
+                        .worstAttendance
+                        ?.percentage ||
+                      0
+                    }
+                    %
+                  </h4>
 
                   <small>
-                    {attendanceStats.worstAttendance?.date || "yyyy-mm-dd"}
+                    {
+                      attendanceStats
+                        .worstAttendance
+                        ?.date ||
+                      "No data"
+                    }
                   </small>
+
                 </div>
+
               </div>
+
             </div>
+
           </div>
+
         </div>
+
       </div>
 
-      {/* STUDENT LIST */}
-      <div className="card attendance-card">
-        <div className="card-body">
-          <div className="students-header">
-            <h5 className="students-title">Students</h5>
 
-            <span className="students-count">{records.length} Students</span>
+     {/* ====================================================
+    STUDENT LIST
+==================================================== */}
+
+<div className="card attendance-card attendance-students-card">
+
+  <div className="card-body">
+
+    {/* ------------------------------------------------
+        HEADER
+    ------------------------------------------------ */}
+
+    <div className="students-header">
+
+      <div>
+
+        <h5 className="students-title">
+          Students
+        </h5>
+
+        <p className="students-subtitle">
+          Individual attendance performance
+        </p>
+
+      </div>
+
+      <span className="students-count">
+        {records.length} Students
+      </span>
+
+    </div>
+
+
+    {/* ------------------------------------------------
+        EMPTY STATE
+    ------------------------------------------------ */}
+
+    {records.length === 0 ? (
+
+      <div className="attendance-empty-state">
+
+        <div className="attendance-empty-icon">
+          ✓
+        </div>
+
+        <h6>
+          No students enrolled
+        </h6>
+
+        <p>
+          There are no students enrolled in this subject.
+        </p>
+
+      </div>
+
+    ) : (
+
+      <div className="premium-attendance-table">
+
+        {/* ==============================================
+            TABLE HEADER
+        ============================================== */}
+
+        <div className="attendance-table-header">
+
+          <div className="table-col-student">
+            Student
           </div>
 
-          {records.length === 0 ? (
-            <p className="text-muted">No students enrolled in this subject</p>
-          ) : (
-            <div className="attendance-list">
-              {records.map((student) => (
-                <div key={student.id} className="attendance-row">
-                  <div className="student-info">
-                    <img
-                      src={
-                        student.avatar ||
-                        `https://i.pravatar.cc/40?u=${student.id}`
-                      }
-                      alt={student.name}
-                      className="student-avatar"
-                    />
+          <div className="table-col-overall">
+            Overall Attendance
+          </div>
 
-                    <div>
-                      <p className="student-name">{student.name}</p>
+          <div className="table-col-subject">
+            This Subject
+          </div>
 
-                      <small className="text-muted">
-                        Roll No: {student.roll}
-                      </small>
+          <div className="table-col-warning">
+            Attendance Status
+          </div>
+
+          <div className="table-col-date">
+            Selected Date
+          </div>
+
+        </div>
+
+
+        {/* ==============================================
+            TABLE ROWS
+        ============================================== */}
+
+        <div className="attendance-table-body">
+
+          {records.map((student) => {
+
+            const overall =
+              Number(
+                student.overallPercentage || 0,
+              );
+
+            const subject =
+              Number(
+                student.subjectPercentage || 0,
+              );
+
+            const isBelowThreshold =
+              overall < threshold;
+
+
+            return (
+
+              <div
+                key={student.id}
+                className={`attendance-table-row ${
+                  isBelowThreshold
+                    ? "attendance-table-row-warning"
+                    : ""
+                }`}
+              >
+
+                {/* ======================================
+                    STUDENT
+                ====================================== */}
+
+                <div className="table-col-student">
+
+                  <div className="table-student">
+
+                    <div className="table-avatar-wrap">
+
+                      <img
+                        src={
+                          student.avatar ||
+                          `https://i.pravatar.cc/150?u=${student.id}`
+                        }
+                        alt={student.name}
+                        className="table-student-avatar"
+                      />
+
+                      {isBelowThreshold && (
+
+                        <span
+                          className="table-warning-dot"
+                          title={`Overall attendance is below the ${threshold}% threshold`}
+                        >
+                          !
+                        </span>
+
+                      )}
+
                     </div>
+
+
+                    <div className="table-student-details">
+
+                      <div className="table-student-name">
+                        {student.name}
+                      </div>
+
+                      <div className="table-student-roll">
+                        {student.roll}
+                      </div>
+
+                    </div>
+
                   </div>
 
-                  <div className="student-metrics">
-                    {/* Low attendance marker */}
-                    {student.percentage < threshold && (
-                      <span
-                        className="low-attendance-badge"
-                        title={`Attendance below ${threshold}%`}
-                      >
-                        ⚠️
-                      </span>
-                    )}
-
-                    <span className="student-percent">
-                      {student.percentage}%
-                    </span>
-
-                    <span
-                      className={`status-pill ${
-                        student.present === null
-                          ? "no-class"
-                          : student.present
-                            ? "present"
-                            : "absent"
-                      }`}
-                    >
-                      {student.present === null
-                        ? "No Class"
-                        : student.present
-                          ? "Present"
-                          : "Absent"}
-                    </span>
-                  </div>
                 </div>
-              ))}
-            </div>
-          )}
+
+
+                {/* ======================================
+                    OVERALL ATTENDANCE
+                ====================================== */}
+
+                <div className="table-col-overall">
+
+                  <div
+                    className={`table-percentage ${
+                      isBelowThreshold
+                        ? "table-percentage-warning"
+                        : "table-percentage-good"
+                    }`}
+                  >
+                    {overall}%
+                  </div>
+
+                </div>
+
+
+                {/* ======================================
+                    SUBJECT ATTENDANCE
+                ====================================== */}
+
+                <div className="table-col-subject">
+
+                  <div className="table-subject-percentage">
+                    {subject}%
+                  </div>
+
+                </div>
+
+
+                {/* ======================================
+                    THRESHOLD STATUS
+                ====================================== */}
+
+                <div className="table-col-warning">
+
+                  {isBelowThreshold ? (
+
+                    <div
+                      className="table-warning-status"
+                      title={`Overall attendance is below the ${threshold}% threshold`}
+                    >
+
+                      <span className="table-warning-icon">
+                        ⚠
+                      </span>
+
+                      <div className="table-warning-text">
+
+                        <strong>
+                          Below threshold
+                        </strong>
+
+                        <small>
+                          Required {threshold}%
+                        </small>
+
+                      </div>
+
+                    </div>
+
+                  ) : (
+
+                    <div className="table-safe-status">
+
+                      <span className="table-safe-icon">
+                        ✓
+                      </span>
+
+                      <div className="table-safe-text">
+
+                        <strong>
+                          Above threshold
+                        </strong>
+
+                        <small>
+                          Required {threshold}%
+                        </small>
+
+                      </div>
+
+                    </div>
+
+                  )}
+
+                </div>
+
+
+                {/* ======================================
+                    SELECTED DATE
+                ====================================== */}
+
+                <div className="table-col-date">
+
+                  <div
+                    className={`table-date-status ${
+                      student.present === null
+                        ? "table-date-no-class"
+                        : student.present
+                          ? "table-date-present"
+                          : "table-date-absent"
+                    }`}
+                  >
+
+                    <span className="table-date-dot" />
+
+                    <span>
+                      {
+                        student.present === null
+                          ? "No Class"
+                          : student.present
+                            ? "Present"
+                            : "Absent"
+                      }
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            );
+
+          })}
+
         </div>
+
       </div>
+
+    )}
+
+  </div>
+
+</div>
+
     </div>
   );
 };
+
 
 export default Attendance;

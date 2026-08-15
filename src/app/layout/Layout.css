@@ -382,3 +382,110 @@ body {
     padding-top: 64px;
   }
 }
+
+/* =========================================================
+   PREMIUM STEEL GREY PAGE BACKGROUND
+   ---------------------------------------------------------
+   Applies only to the authenticated page content.
+   Sidebar remains visually independent.
+========================================================= */
+
+.app-main {
+  position: relative;
+
+  background:
+    radial-gradient(
+      circle at 85% 8%,
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(255, 255, 255, 0.35) 28%,
+      transparent 52%
+    ),
+    linear-gradient(
+      135deg,
+      #cbd0d6 0%,
+      #e1e4e8 24%,
+      #f0f2f4 52%,
+      #fafbfc 76%,
+      #ffffff 100%
+    );
+
+  background-attachment: fixed;
+
+  min-height: calc(100vh - 72px);
+
+  color: #172033;
+}
+
+
+/* =========================================================
+   VERY SUBTLE METALLIC DEPTH
+========================================================= */
+
+.app-main::before {
+  content: "";
+
+  position: fixed;
+
+  top: 72px;
+  right: 0;
+  bottom: 0;
+  left: 300px;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      115deg,
+      rgba(255, 255, 255, 0.18),
+      transparent 32%,
+      rgba(148, 163, 184, 0.035) 62%,
+      rgba(255, 255, 255, 0.22)
+    );
+
+  z-index: 0;
+}
+
+
+/* Keep actual page content above the background layer */
+
+.app-main > * {
+  position: relative;
+  z-index: 1;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 991px) {
+
+  .app-main::before {
+    left: 0;
+  }
+}
+
+
+/* =========================================================
+   PHONE
+========================================================= */
+
+@media (max-width: 575px) {
+
+  .app-main {
+    background:
+      linear-gradient(
+        145deg,
+        #d9dde2 0%,
+        #eceff2 38%,
+        #f8f9fa 72%,
+        #ffffff 100%
+      );
+
+    background-attachment: scroll;
+  }
+
+  .app-main::before {
+    left: 0;
+  }
+}

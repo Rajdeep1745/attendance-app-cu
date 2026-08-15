@@ -245,7 +245,11 @@ exports.getAttendanceGraph = async (req, res) => {
   }
 };
 
+
+// ============================================================
 // GET DAILY ATTENDANCE FOR A SUBJECT ON A SPECIFIC DATE
+// ============================================================
+
 exports.getDailyAttendance = async (req, res) => {
   const { subjectId } = req.params;
   const { date } = req.query;
@@ -258,8 +262,14 @@ exports.getDailyAttendance = async (req, res) => {
   }
 
   try {
-    // 1. Verify that the logged-in teacher owns this subject
-    const hasAccess = await ensureTeacherSubjectAccess(subjectId, teacherId);
+    // --------------------------------------------------------
+    // 1. Verify teacher owns this subject
+    // --------------------------------------------------------
+
+    const hasAccess = await ensureTeacherSubjectAccess(
+      subjectId,
+      teacherId,
+    );
 
     if (!hasAccess) {
       return res.status(403).json({
@@ -267,44 +277,143 @@ exports.getDailyAttendance = async (req, res) => {
       });
     }
 
-    // 2. Get all students enrolled in this subject
-    //    and their attendance status for the requested date.
+    // --------------------------------------------------------
+    // 2. Get enrolled students
+    //
+    // subject_percentage:
+    //     Attendance specifically for the selected subject.
+    //
+    // overall_percentage:
+    //     Attendance across ALL subjects for that student.
+    // --------------------------------------------------------
+
     const { rows } = await db.query(
-      `SELECT
-          s.student_id,
-          s.roll_no,
-          u.name,
-          u.avatar,
-          sa.present,
-          COALESCE(s.attendance_percentage, 0)::numeric AS percentage
+      `
+      SELECT
+        s.student_id,
+        s.roll_no,
+        u.name,
+        u.avatar,
+
+        /* -----------------------------------------------
+         * SELECTED SUBJECT ATTENDANCE
+         * --------------------------------------------- */
+
+        COALESCE(
+          ROUND(
+            100.0 *
+            (
+              SELECT COUNT(*)
+              FROM student_attendances spa
+              WHERE spa.student_id = s.student_id
+                AND spa.subject_id = $1
+                AND spa.present = TRUE
+            )
+            /
+            NULLIF(
+              (
+                SELECT COUNT(*)
+                FROM student_attendances spa
+                WHERE spa.student_id = s.student_id
+                  AND spa.subject_id = $1
+              ),
+              0
+            )
+          ),
+          0
+        )::numeric AS subject_percentage,
+
+        /* -----------------------------------------------
+         * OVERALL ATTENDANCE
+         *
+         * Calculated across every subject the student
+         * has attendance records for.
+         * --------------------------------------------- */
+
+        COALESCE(
+          ROUND(
+            100.0 *
+            (
+              SELECT COUNT(*)
+              FROM student_attendances soa
+              WHERE soa.student_id = s.student_id
+                AND soa.present = TRUE
+            )
+            /
+            NULLIF(
+              (
+                SELECT COUNT(*)
+                FROM student_attendances soa
+                WHERE soa.student_id = s.student_id
+              ),
+              0
+            )
+          ),
+          0
+        )::numeric AS overall_percentage,
+
+        /* -----------------------------------------------
+         * ATTENDANCE FOR SELECTED DATE
+         * --------------------------------------------- */
+
+        sa.present
+
       FROM enrollments e
+
       JOIN students s
         ON s.student_id = e.student_id
+
       JOIN users u
         ON u.id = s.student_id
+
       LEFT JOIN student_attendances sa
         ON sa.student_id = s.student_id
         AND sa.subject_id = e.subject_id
         AND sa.date = $2
+
       WHERE e.subject_id = $1
-      ORDER BY s.roll_no ASC`,
+
+      ORDER BY s.roll_no ASC
+      `,
       [subjectId, date],
     );
 
-    // 3. Convert database rows into the response
-    //    expected by the frontend.
+    // --------------------------------------------------------
+    // 3. Format response for frontend
+    // --------------------------------------------------------
+
     const formatted = rows.map((row) => ({
       studentId: row.student_id,
+
       name: row.name,
+
       avatar: row.avatar,
+
       roll: row.roll_no,
-      percentage: Number(row.percentage || 0),
-      present: row.present === null ? null : Boolean(row.present),
+
+      // Selected subject attendance
+      subjectPercentage: Number(
+        row.subject_percentage || 0,
+      ),
+
+      // Overall attendance across all subjects
+      overallPercentage: Number(
+        row.overall_percentage || 0,
+      ),
+
+      // Selected date
+      present:
+        row.present === null
+          ? null
+          : Boolean(row.present),
     }));
 
     return res.json(formatted);
   } catch (err) {
-    console.error("GET DAILY ATTENDANCE ERROR:", err);
+    console.error(
+      "GET DAILY ATTENDANCE ERROR:",
+      err,
+    );
 
     return res.status(500).json({
       error: err.message,
