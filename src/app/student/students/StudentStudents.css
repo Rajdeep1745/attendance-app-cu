@@ -146,6 +146,326 @@
   color: #b91c1c;
 }
 
+/* =========================================================
+   STUDENT ROSTER — RESPONSIVE CONTENT
+========================================================= */
+
+.student-roster-page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  overflow-x: hidden;
+}
+
+
+.student-roster-page .student-roster-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  overflow: hidden;
+}
+
+
+.student-roster-page
+.student-roster-card
+.card-body {
+  min-width: 0;
+  max-width: 100%;
+}
+
+
+/* =========================================================
+   SUMMARY CARD
+========================================================= */
+
+.student-roster-page
+.student-roster-summary {
+  min-width: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+
+.student-roster-page
+.student-summary-metrics {
+  min-width: 0;
+
+  display: flex;
+
+  gap: 10px;
+}
+
+
+.student-roster-page
+.student-summary-chip {
+  min-width: 100px;
+}
+
+
+/* =========================================================
+   ROSTER TABLE
+========================================================= */
+
+.student-roster-page
+.student-roster-table {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  overflow: hidden;
+}
+
+
+/*
+ * Desktop grid.
+ */
+
+.student-roster-page
+.student-roster-head,
+.student-roster-page
+.student-roster-row {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 2.2fr)
+    minmax(70px, 0.8fr)
+    minmax(85px, 0.8fr)
+    minmax(105px, 1fr);
+
+  column-gap: 12px;
+
+  align-items: center;
+}
+
+
+.student-roster-page
+.student-roster-head > *,
+.student-roster-page
+.student-roster-row > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1200px) {
+
+  /*
+   * Compress the four columns rather than allowing the table
+   * to extend beyond the card.
+   */
+
+  .student-roster-page
+  .student-roster-head,
+  .student-roster-page
+  .student-roster-row {
+    grid-template-columns:
+      minmax(0, 2fr)
+      minmax(55px, 0.7fr)
+      minmax(70px, 0.8fr)
+      minmax(85px, 0.9fr);
+
+    column-gap: 8px;
+  }
+
+
+  .student-roster-page
+  .student-roster-info {
+    min-width: 0;
+  }
+
+
+  .student-roster-page
+  .student-roster-info img {
+    flex-shrink: 0;
+  }
+
+
+  .student-roster-page
+  .student-roster-info > div {
+    min-width: 0;
+  }
+
+
+  .student-roster-page
+  .student-roster-info strong {
+    display: block;
+
+    max-width: 100%;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+  }
+
+
+  .student-roster-page
+  .student-face-pill {
+    max-width: 100%;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+  }
+}
+
+
+/* =========================================================
+   NARROW TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+  /*
+   * The sidebar + content area is now too narrow for four
+   * desktop-style columns.
+   *
+   * Turn each student into a compact 2-row information card.
+   */
+
+  .student-roster-page
+  .student-roster-head {
+    display: none;
+  }
+
+
+  .student-roster-page
+  .student-roster-row {
+    display: grid;
+
+    grid-template-columns:
+      minmax(0, 1fr)
+      auto;
+
+    grid-template-areas:
+      "student attendance"
+      "roll face";
+
+    row-gap: 7px;
+
+    padding: 13px 4px;
+
+    border-bottom: 1px solid #eef0f5;
+  }
+
+
+  .student-roster-page
+  .student-roster-row
+  > :nth-child(1) {
+    grid-area: student;
+  }
+
+
+  .student-roster-page
+  .student-roster-row
+  > :nth-child(2) {
+    grid-area: roll;
+
+    text-align: right;
+
+    color: #71809a;
+
+    font-size: 11px;
+  }
+
+
+  .student-roster-page
+  .student-roster-row
+  > :nth-child(3) {
+    grid-area: attendance;
+
+    justify-self: end;
+  }
+
+
+  .student-roster-page
+  .student-roster-row
+  > :nth-child(4) {
+    grid-area: face;
+
+    justify-self: end;
+  }
+
+
+  .student-roster-page
+  .student-roster-info {
+    min-width: 0;
+  }
+
+
+  .student-roster-page
+  .student-roster-info img {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+
+/* =========================================================
+   SUMMARY CARD — TABLET
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .student-roster-page
+  .student-roster-summary {
+    align-items: stretch;
+
+    flex-direction: column;
+  }
+
+
+  .student-roster-page
+  .student-summary-metrics {
+    width: 100%;
+  }
+
+
+  .student-roster-page
+  .student-summary-chip {
+    flex: 1;
+  }
+}
+
+
+/* =========================================================
+   PHONE
+========================================================= */
+
+@media (max-width: 575.98px) {
+
+  .student-roster-page
+  .student-roster-row {
+    padding: 12px 2px;
+  }
+
+
+  .student-roster-page
+  .student-attendance-pill,
+  .student-roster-page
+  .student-face-pill {
+    font-size: 10px;
+  }
+}
+
 @media (max-width: 991px) {
   .student-roster-summary {
     flex-direction: column;

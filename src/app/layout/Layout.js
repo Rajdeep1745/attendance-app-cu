@@ -193,10 +193,10 @@ const Layout = () => {
           {/* MAIN CONTENT */}
 
           <main
-            className={`flex-grow-1 p-4 app-main ${
-              sidebarOpen ? "sidebar-visible" : ""
-            }`}
-          >
+  className={`flex-grow-1 p-4 app-main ${
+    sidebarOpen ? "sidebar-visible" : "sidebar-hidden"
+  }`}
+>
             {/* NO SUBJECT SELECTED */}
 
             {!subjectId ? (

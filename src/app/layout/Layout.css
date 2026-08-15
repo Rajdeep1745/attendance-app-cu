@@ -126,6 +126,208 @@ body {
   margin: auto;
 }
 
+/* =========================================================
+   RESPONSIVE CONTENT CONSTRAINT
+   ---------------------------------------------------------
+   The sidebar is fixed/overlay-style, so the content area
+   must explicitly be allowed to shrink when it is open.
+========================================================= */
+
+.layout-wrapper {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.layout-wrapper > .d-flex {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.app-main {
+  min-width: 0 !important;
+  max-width: 100%;
+  width: 100%;
+
+  overflow-x: hidden;
+}
+
+/*
+ * Every nested flex/grid child must also be allowed to shrink.
+ * This is what was missing from the previous fix.
+ */
+.app-main > *,
+.app-main .container,
+.app-main .container-fluid,
+.app-main .row,
+.app-main [class*="col-"] {
+  min-width: 0;
+  max-width: 100%;
+}
+
+
+/* =========================================================
+   SIDEBAR OPEN — TABLET
+========================================================= */
+
+@media (max-width: 1200px) {
+
+  /*
+   * When the sidebar is open, don't let desktop two-column
+   * layouts survive inside the smaller content area.
+   */
+
+  .app-main.sidebar-visible {
+    min-width: 0 !important;
+    width: 100%;
+    max-width: 100%;
+
+    overflow-x: hidden;
+  }
+
+  .app-main.sidebar-visible > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 991.98px) {
+
+  .app-main {
+    padding: 20px !important;
+  }
+
+  .app-main.sidebar-visible {
+    width: 100%;
+    min-width: 0 !important;
+    max-width: 100%;
+  }
+}
+
+/* =========================================================
+   MOBILE SIDEBAR = OVERLAY
+   ---------------------------------------------------------
+   On phones the sidebar must NEVER reduce the page width.
+   It slides over the page instead.
+========================================================= */
+
+@media (max-width: 768px) {
+
+  /* -------------------------------------------------------
+     Main application area
+     ------------------------------------------------------- */
+
+  .app-main,
+  .app-main.sidebar-visible {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+
+    /*
+     * IMPORTANT:
+     * Do not leave room for the sidebar on mobile.
+     */
+    margin-left: 0 !important;
+
+    /*
+     * Keep the page full viewport width.
+     */
+    flex: 1 1 100% !important;
+
+    overflow-x: hidden !important;
+
+    /*
+     * The sidebar sits above this.
+     */
+    position: relative;
+    z-index: 1;
+  }
+
+
+  /* -------------------------------------------------------
+     Layout wrapper must remain full width
+     ------------------------------------------------------- */
+
+  .layout-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+
+    overflow-x: hidden !important;
+  }
+
+
+  .layout-wrapper > .d-flex {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+
+    display: block !important;
+  }
+
+
+  /* -------------------------------------------------------
+     Sidebar backdrop
+     ------------------------------------------------------- */
+
+  .sidebar-backdrop {
+    position: fixed !important;
+
+    top: 64px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+
+    width: auto !important;
+    height: auto !important;
+
+    background:
+      rgba(15, 23, 42, 0.34) !important;
+
+    backdrop-filter: blur(3px);
+
+    -webkit-backdrop-filter: blur(3px);
+
+    z-index: 998 !important;
+
+    cursor: pointer;
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 480px) {
+
+  .app-main,
+  .app-main.sidebar-visible {
+    margin-left: 0 !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* =========================================================
+   SMALL TABLET
+========================================================= */
+
+@media (max-width: 767.98px) {
+
+  .app-main {
+    padding: 15px !important;
+  }
+}
+
 @media (max-width: 991px) {
   .app-main {
     padding: 24px !important;

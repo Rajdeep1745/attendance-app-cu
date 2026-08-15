@@ -537,6 +537,7 @@ const FaceRegisterModal = ({
             same person. Using two different
             views helps the recognition system
             handle changes in angle and lighting.
+            <strong> The first photo will be used as your profile picture.</strong>
           </p>
 
 

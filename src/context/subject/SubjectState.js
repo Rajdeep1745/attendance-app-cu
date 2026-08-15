@@ -84,28 +84,29 @@ const SubjectState = ({ children }) => {
        * activeSubject.subject
        */
       const enrichedSubject = {
-        ...data,
+  ...data,
 
-        // Backend identifier
-        subject_id: data.subject_id || subjectId,
+  subject_id:
+    data.subject_id || subjectId,
 
-        // Name comes from programmes.js
-        name:
-          curriculumSubject?.name ||
-          data.name ||
-          data.subject_id ||
-          subjectId,
+  name:
+    curriculumSubject?.name ||
+    data.name ||
+    data.subject_id ||
+    subjectId,
 
-        // Curriculum information
-        programme: curriculumSubject?.programme || null,
+  programme:
+    curriculumSubject?.programme ||
+    null,
 
-        semester: curriculumSubject?.semester || null,
+  semester:
+    curriculumSubject?.semester ||
+    null,
 
-        subject: curriculumSubject?.subject || null,
-
-        // Temporary value because subject_code no longer exists
-        subject_code: "------",
-      };
+  subject:
+    curriculumSubject?.subject ||
+    null,
+};
 
       setActiveSubject(enrichedSubject);
 

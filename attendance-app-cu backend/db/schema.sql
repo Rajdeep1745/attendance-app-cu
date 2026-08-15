@@ -6,15 +6,24 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
     name TEXT NOT NULL,
+
     email TEXT NOT NULL UNIQUE,
+
     password TEXT,
+
     department TEXT,
+
     institution TEXT,
+
     role TEXT NOT NULL DEFAULT 'student',
+
     avatar TEXT,
+
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
 
 -- =====================================================
 -- TEACHERS
@@ -33,6 +42,7 @@ CREATE TABLE IF NOT EXISTS teachers (
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
 
 -- =====================================================
 -- SUBJECTS
@@ -54,8 +64,8 @@ CREATE TABLE IF NOT EXISTS subjects (
         CHECK (total_students >= 0),
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-
 );
+
 
 -- =====================================================
 -- STUDENTS
@@ -78,6 +88,7 @@ CREATE TABLE IF NOT EXISTS students (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+
 -- =====================================================
 -- ENROLLMENTS
 -- =====================================================
@@ -97,6 +108,7 @@ CREATE TABLE IF NOT EXISTS enrollments (
 
     UNIQUE(student_id, subject_id)
 );
+
 
 -- =====================================================
 -- SUBJECT ATTENDANCE
@@ -125,6 +137,7 @@ CREATE TABLE IF NOT EXISTS subject_attendances (
     UNIQUE(subject_id, date)
 );
 
+
 -- =====================================================
 -- STUDENT ATTENDANCE
 -- =====================================================
@@ -149,25 +162,48 @@ CREATE TABLE IF NOT EXISTS student_attendances (
     UNIQUE(student_id, subject_id, date)
 );
 
+
 -- =====================================================
 -- FACE DATA
+--
+-- One student can have up to TWO face templates.
+--
+-- sample_index:
+--     1 = first registration photo
+--     2 = second registration photo
+--
+-- embedding:
+--     512-dimensional ArcFace embedding
+--
+-- image_url:
+--     Kept nullable.
+--     Current faceController intentionally does NOT
+--     store the registration images here.
+--
+-- The first registration image is stored as users.avatar.
 -- =====================================================
 
 CREATE TABLE IF NOT EXISTS student_face_data (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    student_id UUID NOT NULL UNIQUE
+    student_id UUID NOT NULL
         REFERENCES students(student_id)
         ON DELETE CASCADE,
 
+    sample_index INTEGER NOT NULL
+        CHECK (sample_index BETWEEN 1 AND 2),
+
     image_url TEXT,
 
-    embedding JSONB,
+    embedding JSONB NOT NULL,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    UNIQUE(student_id, sample_index)
 );
+
 
 -- =====================================================
 -- INDEXES
@@ -176,11 +212,22 @@ CREATE TABLE IF NOT EXISTS student_face_data (
 CREATE INDEX IF NOT EXISTS idx_enrollments_subject_id
 ON enrollments(subject_id);
 
+
 CREATE INDEX IF NOT EXISTS idx_student_attendances_subject_date
 ON student_attendances(subject_id, date);
 
+
+CREATE INDEX IF NOT EXISTS idx_student_attendances_student_subject
+ON student_attendances(student_id, subject_id);
+
+
 CREATE INDEX IF NOT EXISTS idx_subject_attendances_subject_date
 ON subject_attendances(subject_id, date);
+
+
+CREATE INDEX IF NOT EXISTS idx_student_face_data_student_id
+ON student_face_data(student_id);
+
 
 -- =====================================================
 -- RPC: FREQUENT ABSENTEES
@@ -213,6 +260,7 @@ AS $$
         u.name ASC;
 $$;
 
+
 -- =====================================================
 -- AUTOMATICALLY UPDATE updated_at FOR FACE DATA
 -- =====================================================
@@ -223,12 +271,15 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     NEW.updated_at = NOW();
+
     RETURN NEW;
 END;
 $$;
 
+
 DROP TRIGGER IF EXISTS trg_student_face_updated_at
 ON student_face_data;
+
 
 CREATE TRIGGER trg_student_face_updated_at
 BEFORE UPDATE

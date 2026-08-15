@@ -1,24 +1,46 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import AlertContext from "../../../context/alert/AlertContext";
-import JoinClassModal from "../../../components/joinClassModal/JoinClassModal";
 
 import "./Sidebar.css";
 
-const LAST_ACTIVE_BATCH_ID_KEY = "lastActiveBatchId";
+const API_BASE = process.env.REACT_APP_BACKEND_URL;
+
+const getSubjectName = (subjectId) => {
+  if (!subjectId) return "Subject";
+
+  try {
+    // eslint-disable-next-line global-require
+    const { PROGRAMMES } = require("../../../data/programmes");
+
+    for (const programmeData of Object.values(PROGRAMMES)) {
+      for (const subjects of Object.values(programmeData.semesters || {})) {
+        const subject = subjects.find(
+          (item) => String(item.id) === String(subjectId),
+        );
+
+        if (subject) {
+          return subject.name;
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load programme subject name:", error);
+  }
+
+  return subjectId;
+};
 
 const studentRequest = async (path, options = {}) => {
   const token = localStorage.getItem("token");
-  const response = await fetch(
-    `${process.env.REACT_APP_BACKEND_URL}${path}`,
-    {
-      ...options,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        ...(options.headers || {}),
-      },
+
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(options.headers || {}),
     },
-  );
+  });
+
   const data = await response.json();
 
   if (!response.ok) {
@@ -29,32 +51,62 @@ const studentRequest = async (path, options = {}) => {
 };
 
 const StudentSidebar = ({ isOpen }) => {
-  const { userId, batchId } = useParams();
+  const { userId, subjectId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { showAlert } = useContext(AlertContext);
 
-  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
-  const [openMenuId, setOpenMenuId] = useState(null);
-  const [joinedBatches, setJoinedBatches] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  /*
+   * Current page:
+   *
+   * /user/subject/dashboard   -> dashboard
+   * /user/subject/attendance  -> attendance
+   * /user/subject/students    -> students
+   * /user/subject/reports     -> reports
+   */
   const currentPage = location.pathname.split("/")[3] || "dashboard";
 
+  /*
+   * -------------------------------------------------------
+   * LOAD STUDENT'S ENROLLED SUBJECTS
+   * -------------------------------------------------------
+   *
+   * The backend determines membership from:
+   *
+   * enrollments.student_id = logged-in user
+   *
+   * No batch code is involved.
+   */
   useEffect(() => {
     let ignore = false;
 
-    const loadJoinedBatches = async () => {
+    const loadSubjects = async () => {
       setLoading(true);
+
       try {
-        const data = await studentRequest("api/students/me/batches");
-        if (!ignore) {
-          setJoinedBatches(data);
-        }
+        const data = await studentRequest("api/subject/student");
+
+        if (ignore) return;
+
+        const normalizedSubjects = Array.isArray(data)
+          ? data.map((subject) => ({
+              ...subject,
+              subjectId: String(subject.subjectId),
+              name: getSubjectName(subject.subjectId),
+            }))
+          : [];
+
+        setSubjects(normalizedSubjects);
       } catch (error) {
-        console.error("Failed to load joined batches", error);
+        console.error(
+          "Failed to load enrolled subjects:",
+          error,
+        );
+
         if (!ignore) {
-          setJoinedBatches([]);
+          setSubjects([]);
         }
       } finally {
         if (!ignore) {
@@ -63,173 +115,161 @@ const StudentSidebar = ({ isOpen }) => {
       }
     };
 
-    loadJoinedBatches();
+    loadSubjects();
 
     return () => {
       ignore = true;
     };
   }, []);
 
+  /*
+   * -------------------------------------------------------
+   * AUTOMATIC SUBJECT SELECTION
+   * -------------------------------------------------------
+   *
+   * If the student visits /:userId without a subject,
+   * automatically open the first enrolled subject.
+   *
+   * If a stored subject exists and is still enrolled,
+   * restore it.
+   */
   useEffect(() => {
-    const handleOutsideClick = (event) => {
-      if (!event.target.closest(".batch-menu")) {
-        setOpenMenuId(null);
+    if (loading || !userId) return;
+
+    if (subjects.length === 0) {
+      if (subjectId) {
+        navigate(`/${userId}`, { replace: true });
       }
-    };
 
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, []);
-
-  useEffect(() => {
-    if (!loading && !batchId && joinedBatches.length > 0 && userId) {
-      const preferredBatchId =
-        joinedBatches.find(
-          (batch) => batch.id === localStorage.getItem(LAST_ACTIVE_BATCH_ID_KEY),
-        )?.id || joinedBatches[0].id;
-
-      navigate(`/${userId}/${preferredBatchId}/dashboard`, { replace: true });
       return;
     }
 
-    if (
-      !loading &&
-      batchId &&
-      joinedBatches.length > 0 &&
-      !joinedBatches.some((batch) => batch.id === batchId)
-    ) {
-      const fallbackBatchId = joinedBatches[0].id;
-      navigate(`/${userId}/${fallbackBatchId}/${currentPage}`, { replace: true });
-    }
-  }, [batchId, currentPage, joinedBatches, loading, navigate, userId]);
+    const isCurrentSubjectValid = subjects.some(
+      (subject) => subject.subjectId === String(subjectId),
+    );
 
-  const handleJoinClass = async (batchCode) => {
-    try {
-      const data = await studentRequest("api/students/me/join", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ batchCode }),
-      });
-      const joinedBatch = data.batch;
-      const alreadyJoined = joinedBatches.some((batch) => batch.id === joinedBatch.id);
-
-      if (!alreadyJoined) {
-        setJoinedBatches((prev) => [joinedBatch, ...prev]);
-      }
-
-      setIsJoinModalOpen(false);
-      showAlert(
-        alreadyJoined ? "Joined" : "Success",
-        data.message,
-        alreadyJoined ? "primary" : "success",
+    if (!subjectId || !isCurrentSubjectValid) {
+      const storedSubjectId = localStorage.getItem(
+        "lastActiveSubjectId",
       );
-      navigate(`/${userId}/${joinedBatch.id}/dashboard`);
-    } catch (error) {
-      showAlert("Error", error.message, "danger");
-      return;
-    }
-  };
 
-  const handleLeaveBatch = async (batchToLeave) => {
-    try {
-      await studentRequest(`api/students/me/batches/${batchToLeave.id}`, {
-        method: "DELETE",
-      });
-      const remainingBatches = joinedBatches.filter(
-        (batch) => batch.id !== batchToLeave.id,
+      const preferredSubject =
+        subjects.find(
+          (subject) =>
+            subject.subjectId === String(storedSubjectId),
+        ) || subjects[0];
+
+      localStorage.setItem(
+        "lastActiveSubjectId",
+        preferredSubject.subjectId,
       );
-      setJoinedBatches(remainingBatches);
-      setOpenMenuId(null);
-      showAlert("Left", `You left ${batchToLeave.name}`, "danger");
 
-      if (batchId === batchToLeave.id) {
-        if (remainingBatches.length > 0) {
-          navigate(`/${userId}/${remainingBatches[0].id}/dashboard`);
-        } else {
-          navigate(`/${userId}`);
-        }
-      }
-    } catch (error) {
-      showAlert("Error", error.message, "danger");
+      navigate(
+        `/${userId}/${preferredSubject.subjectId}/${currentPage}`,
+        { replace: true },
+      );
     }
+  }, [
+    loading,
+    subjects,
+    subjectId,
+    userId,
+    currentPage,
+    navigate,
+  ]);
+
+  /*
+   * -------------------------------------------------------
+   * HANDLE SUBJECT SELECTION
+   * -------------------------------------------------------
+   */
+  const handleSubjectSelect = (selectedSubjectId) => {
+    localStorage.setItem(
+      "lastActiveSubjectId",
+      selectedSubjectId,
+    );
+
+    navigate(
+      `/${userId}/${selectedSubjectId}/${currentPage}`,
+    );
   };
 
   return (
-    <aside className={`sidebar ${isOpen ? "open" : "closed"}`}>
+    <aside
+      className={`sidebar student-sidebar ${
+        isOpen ? "open" : "closed"
+      }`}
+    >
       <div className="sidebar-content">
-        <h6 className="fw-bold mb-1">Joined Batches</h6>
-        <p className="sidebar-subtitle mb-0">Select a batch to continue</p>
+        <h6 className="fw-bold mb-1">
+          My Subjects
+        </h6>
+
+        <p className="sidebar-subtitle mb-0">
+          Select a subject to continue
+        </p>
 
         <div className="list-group list-group-flush mt-3">
           {loading ? (
             <div className="sidebar-empty-state text-muted">
               <span className="spinner-border spinner-border-sm me-2"></span>
-              Loading your batches...
+              Loading your subjects...
             </div>
-          ) : joinedBatches.length === 0 ? (
+          ) : subjects.length === 0 ? (
             <div className="sidebar-empty-state">
-              <strong>No joined batches yet</strong>
+              <strong>No enrolled subjects</strong>
+
               <small>
-                Enter a valid batch code to join your first class.
+                You are not currently enrolled in any subjects.
               </small>
             </div>
           ) : (
-            joinedBatches.map((batch) => (
-              <div
-                key={batch.id}
-                className={`list-group-item batch-item batch-card text-start ${
-                  batch.id === batchId ? "active" : ""
-                }`}
-              >
-                <div className="batch-card-main">
-                  <div
-                    className="batch-name"
-                    onClick={() => navigate(`/${userId}/${batch.id}/${currentPage}`)}
-                  >
-                    {batch.name}
-                  </div>
-                  <small className="text-muted d-block mt-1">{batch.teacher}</small>
-                </div>
+            subjects.map((subject) => {
+              const isActive =
+                String(subject.subjectId) ===
+                String(subjectId);
 
-                <div className="batch-menu" onClick={(e) => e.stopPropagation()}>
-                  <i
-                    className="fa-solid fa-ellipsis-vertical"
-                    onClick={() =>
-                      setOpenMenuId(openMenuId === batch.id ? null : batch.id)
+              return (
+                <div
+                  key={subject.subjectId}
+                  className={`list-group-item batch-item batch-card text-start ${
+                    isActive ? "active" : ""
+                  }`}
+                  onClick={() =>
+                    handleSubjectSelect(
+                      subject.subjectId,
+                    )
+                  }
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (
+                      event.key === "Enter" ||
+                      event.key === " "
+                    ) {
+                      handleSubjectSelect(
+                        subject.subjectId,
+                      );
                     }
-                  ></i>
-
-                  {openMenuId === batch.id && (
-                    <div className="batch-dropdown">
-                      <button
-                        className="danger"
-                        onClick={() => handleLeaveBatch(batch)}
-                      >
-                        <i className="fa-solid fa-right-from-bracket"></i> Leave Batch
-                      </button>
+                  }}
+                >
+                  <div className="batch-card-main">
+                    <div className="batch-name">
+                      {subject.name}
                     </div>
-                  )}
+
+                    <small className="text-muted d-block mt-1">
+                      {subject.teacher
+                        ? `Teacher: ${subject.teacher}`
+                        : `Subject ID: ${subject.subjectId}`}
+                    </small>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
-
-      <div className="sidebar-footer">
-        <button
-          className="btn w-100 addBatchButton"
-          onClick={() => setIsJoinModalOpen(true)}
-        >
-          + Join Class
-        </button>
-      </div>
-
-      <JoinClassModal
-        isOpen={isJoinModalOpen}
-        onClose={() => setIsJoinModalOpen(false)}
-        onSubmit={handleJoinClass}
-      />
     </aside>
   );
 };
