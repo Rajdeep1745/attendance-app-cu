@@ -1,98 +1,236 @@
 import { useEffect, useState } from "react";
 import { DayPicker } from "react-day-picker";
+import { useParams } from "react-router-dom";
+
 import "react-day-picker/dist/style.css";
+
 import useDelayedLoading from "../../../hooks/useDelayedLoading";
-import { StudentAttendanceSkeleton } from "../../../components/skeletons/Skeletons";
+import {
+  StudentAttendanceSkeleton,
+} from "../../../components/skeletons/Skeletons";
 
 import "./StudentAttendance.css";
 
-const getStudentAttendanceByDate = async (date) => {
-  const token = localStorage.getItem("token");
-  const response = await fetch(
-    `${process.env.REACT_APP_BACKEND_URL}api/students/me/attendance?date=${encodeURIComponent(date)}`,
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
-  const data = await response.json();
+const API_BASE =
+  process.env.REACT_APP_BACKEND_URL;
 
-  if (!response.ok) throw new Error(data?.error || "Failed to load attendance");
-  return data;
+const getSubjectName = (subjectId) => {
+  try {
+    // eslint-disable-next-line global-require
+    const { PROGRAMMES } = require("../../../data/programmes");
+
+    for (const programmeData of Object.values(
+      PROGRAMMES,
+    )) {
+      for (const subjects of Object.values(
+        programmeData.semesters || {},
+      )) {
+        const subject = subjects.find(
+          (item) =>
+            String(item.id) ===
+            String(subjectId),
+        );
+
+        if (subject) {
+          return subject.name;
+        }
+      }
+    }
+  } catch (error) {
+    console.error(
+      "Failed to resolve subject name:",
+      error,
+    );
+  }
+
+  return subjectId;
 };
 
+const getStudentAttendanceByDate =
+  async (date) => {
+    const token =
+      localStorage.getItem("token");
+
+    const response = await fetch(
+      `${API_BASE}api/attendance/student?date=${encodeURIComponent(
+        date,
+      )}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data?.error ||
+          "Failed to load attendance",
+      );
+    }
+
+    return data;
+  };
+
 const formatLocalDate = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const year =
+    date.getFullYear();
+
+  const month = String(
+    date.getMonth() + 1,
+  ).padStart(2, "0");
+
+  const day = String(
+    date.getDate(),
+  ).padStart(2, "0");
+
   return `${year}-${month}-${day}`;
 };
 
 const StudentAttendance = () => {
-  const maxSelectableDate = new Date();
-  const [selectedDate, setSelectedDate] = useState(maxSelectableDate);
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { subjectId } =
+    useParams();
 
-  const selectedKey = formatLocalDate(selectedDate);
+  const maxSelectableDate =
+    new Date();
+
+  const [selectedDate, setSelectedDate] =
+    useState(maxSelectableDate);
+
+  const [selectedRow, setSelectedRow] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const selectedKey =
+    formatLocalDate(selectedDate);
+
+  const subjectName =
+    getSubjectName(subjectId);
 
   useEffect(() => {
+    if (!subjectId) return;
+
     let ignore = false;
 
-    const loadAttendance = async () => {
-      setLoading(true);
-      try {
-        const data = await getStudentAttendanceByDate(selectedKey);
-        if (!ignore) {
-          setSelectedRows(data);
+    const loadAttendance =
+      async () => {
+        setLoading(true);
+
+        try {
+          const data =
+            await getStudentAttendanceByDate(
+              selectedKey,
+            );
+
+          if (ignore) return;
+
+          /*
+           * Backend returns one row per enrolled subject.
+           *
+           * We only want the currently selected
+           * subject.
+           */
+          const currentSubject =
+            Array.isArray(data)
+              ? data.find(
+                  (item) =>
+                    String(
+                      item.subjectId,
+                    ) ===
+                    String(subjectId),
+                )
+              : null;
+
+          setSelectedRow(
+            currentSubject || {
+              subjectId,
+              status: "No Class",
+              recordedAt: "-",
+            },
+          );
+
           setError("");
+        } catch (err) {
+          if (!ignore) {
+            setError(err.message);
+            setSelectedRow(null);
+          }
+        } finally {
+          if (!ignore) {
+            setLoading(false);
+          }
         }
-      } catch (err) {
-        if (!ignore) {
-          setError(err.message);
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    };
+      };
 
     loadAttendance();
 
     return () => {
       ignore = true;
     };
-  }, [selectedKey]);
+  }, [selectedKey, subjectId]);
 
-  const showSkeleton = useDelayedLoading(loading);
+  const showSkeleton =
+    useDelayedLoading(loading);
 
-  const formattedHeadingDate = selectedDate.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  const formattedHeadingDate =
+    selectedDate.toLocaleDateString(
+      "en-US",
+      {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      },
+    );
 
-  const selectedWeekday = selectedDate.toLocaleDateString("en-US", {
-    weekday: "long",
-  });
-
-  const summary = {
-    present: selectedRows.filter((item) => item.status === "Present").length,
-    absent: selectedRows.filter((item) => item.status === "Absent").length,
-    noClass: selectedRows.filter((item) => item.status === "No Class").length,
-  };
+  const selectedWeekday =
+    selectedDate.toLocaleDateString(
+      "en-US",
+      {
+        weekday: "long",
+      },
+    );
 
   if (showSkeleton) {
-    return <StudentAttendanceSkeleton />;
+    return (
+      <StudentAttendanceSkeleton />
+    );
   }
+
+  const status =
+    selectedRow?.status ||
+    "No Class";
+
+  const statusClass =
+    status === "Present"
+      ? "present"
+      : status === "Absent"
+        ? "absent"
+        : "no-class";
 
   return (
     <div className="container-fluid attendance-page student-attendance-page">
-      {error && <div className="alert alert-danger mb-4">{error}</div>}
+      {error && (
+        <div className="alert alert-danger mb-4">
+          {error}
+        </div>
+      )}
+
       <div className="mb-4">
-        <h2 className="attendance-title">Attendance</h2>
+        <h2 className="attendance-title">
+          Attendance
+        </h2>
+
         <p className="attendance-subtitle">
-          Check your attendance status across all joined classes for a selected
-          day.
+          Check your attendance for{" "}
+          <strong>{subjectName}</strong>.
         </p>
       </div>
 
@@ -103,10 +241,20 @@ const StudentAttendance = () => {
               <div className="premium-date-picker-calendar attendance-page-calendar">
                 <DayPicker
                   mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => date && setSelectedDate(date)}
+                  selected={
+                    selectedDate
+                  }
+                  onSelect={(date) =>
+                    date &&
+                    setSelectedDate(
+                      date,
+                    )
+                  }
                   showOutsideDays
-                  disabled={{ after: maxSelectableDate }}
+                  disabled={{
+                    after:
+                      maxSelectableDate,
+                  }}
                 />
               </div>
 
@@ -114,7 +262,11 @@ const StudentAttendance = () => {
                 <button
                   type="button"
                   className="premium-date-picker-footer-btn primary"
-                  onClick={() => setSelectedDate(new Date())}
+                  onClick={() =>
+                    setSelectedDate(
+                      new Date(),
+                    )
+                  }
                 >
                   Today
                 </button>
@@ -125,35 +277,48 @@ const StudentAttendance = () => {
           <div className="student-date-copy">
             <div className="student-section-pill">
               <i className="fa-regular fa-calendar-days"></i>
-              <span>Daily Snapshot</span>
+
+              <span>
+                Daily Snapshot
+              </span>
             </div>
 
-            <h3>{formattedHeadingDate}</h3>
+            <h3>
+              {formattedHeadingDate}
+            </h3>
+
             <p className="attendance-subtitle">
-              Attendance summary for {selectedWeekday} across all joined
-              classes.
+              Attendance status for{" "}
+              {selectedWeekday} in{" "}
+              {subjectName}.
             </p>
 
             <div className="student-date-stats">
               <div className="date-stat-card">
-                <span>Present</span>
-                <strong>{summary.present}</strong>
+                <span>Status</span>
+
+                <strong>
+                  {status}
+                </strong>
               </div>
+
               <div className="date-stat-card">
-                <span>Absent</span>
-                <strong>{summary.absent}</strong>
-              </div>
-              <div className="date-stat-card">
-                <span>No Class</span>
-                <strong>{summary.noClass}</strong>
+                <span>Recorded At</span>
+
+                <strong>
+                  {selectedRow?.recordedAt ||
+                    "-"}
+                </strong>
               </div>
             </div>
 
             <div className="student-date-note">
               <i className="fa-regular fa-circle-check"></i>
+
               <span>
-                Use the calendar to jump between dates and review your
-                batch-wise status for each day.
+                Attendance shown here is
+                specific to the selected
+                subject.
               </span>
             </div>
           </div>
@@ -165,66 +330,56 @@ const StudentAttendance = () => {
           <div className="student-attendance-header">
             <div>
               <h3 className="mb-2">
-                Your Attendance for {formattedHeadingDate}
+                Your Attendance for{" "}
+                {formattedHeadingDate}
               </h3>
+
               <p className="attendance-subtitle mb-0">
-                Your attendance status across all classes for this day.
+                {subjectName}
               </p>
             </div>
           </div>
 
-          {selectedRows.length === 0 ? (
-            <div className="student-empty-state">
-              <i className="fa-regular fa-calendar-xmark"></i>
-              <h5>No attendance records for this date</h5>
-              <p className="mb-0">
-                Once attendance is recorded for your batches, it will appear
-                here.
-              </p>
+          <div className="student-status-table">
+            <div className="student-status-head">
+              <span>Subject</span>
+              <span>Recorded At</span>
+              <span>Status</span>
             </div>
-          ) : (
-            <div className="student-status-table">
-              <div className="student-status-head">
-                <span>Batch</span>
-                <span>Recorded At</span>
-                <span>Status</span>
+
+            <div className="student-status-row">
+              <div className="student-batch-cell">
+                <strong>
+                  {subjectName}
+                </strong>
               </div>
 
-              {selectedRows.map((row) => (
-                <div
-                  key={`${selectedKey}-${row.batchId}`}
-                  className="student-status-row"
+              <div className="student-time-cell">
+                {selectedRow?.recordedAt ||
+                  "-"}
+              </div>
+
+              <div className="student-status-cell">
+                <span
+                  className={`status-pill ${statusClass}`}
                 >
-                  <div className="student-batch-cell">
-                    <strong>{row.batchName}</strong>
-                  </div>
+                  {status ===
+                  "Absent" ? (
+                    <i className="fa-regular fa-circle-xmark"></i>
+                  ) : status ===
+                    "Present" ? (
+                    <i className="fa-regular fa-circle-check"></i>
+                  ) : (
+                    <i className="fa-regular fa-circle"></i>
+                  )}
 
-                  <div className="student-time-cell">{row.recordedAt}</div>
-
-                  <div className="student-status-cell">
-                    <span
-                      className={`status-pill ${
-                        row.status === "Present"
-                          ? "present"
-                          : row.status === "Absent"
-                            ? "absent"
-                            : "no-class"
-                      }`}
-                    >
-                      {row.status === "Absent" ? (
-                        <i className="fa-regular fa-circle-xmark"></i>
-                      ) : row.status === "Present" ? (
-                        <i className="fa-regular fa-circle-check"></i>
-                      ) : (
-                        <i className="fa-regular fa-circle"></i>
-                      )}
-                      <span>{row.status}</span>
-                    </span>
-                  </div>
-                </div>
-              ))}
+                  <span>
+                    {status}
+                  </span>
+                </span>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

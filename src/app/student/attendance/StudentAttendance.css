@@ -130,6 +130,8 @@
   grid-template-columns: minmax(260px, 1fr) 140px 160px;
   gap: 16px;
   align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .student-status-head {
@@ -186,6 +188,535 @@
 .student-empty-state i {
   font-size: 34px;
   color: #7c3aed;
+}
+
+/* =========================================================
+   TABLET / MOBILE OVERFLOW FIXES
+   IMPORTANT: These rules intentionally do NOT affect desktop.
+========================================================= */
+
+@media (max-width: 1200px) {
+  /* =========================================================
+     TABLET OVERFLOW FIX
+     Student Attendance page
+  ========================================================= */
+
+  /*
+   * The attendance page is inside a reduced-width content area
+   * when the sidebar is open. At tablet widths, the calendar and
+   * daily snapshot must stack instead of trying to remain side
+   * by side.
+   */
+
+  .student-attendance-page {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+
+  /* ---------------------------------------------------------
+     Main attendance card
+  --------------------------------------------------------- */
+
+  .student-attendance-page .attendance-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow: hidden;
+  }
+
+
+  /* ---------------------------------------------------------
+     Date card
+  --------------------------------------------------------- */
+
+  .student-attendance-page .student-date-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow: hidden;
+  }
+
+
+  /* ---------------------------------------------------------
+     Calendar + Daily Snapshot container
+  --------------------------------------------------------- */
+
+  .student-attendance-page .student-calendar-shell {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    display: grid;
+
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+
+    gap: 24px;
+
+    align-items: stretch;
+  }
+
+
+  /*
+   * Critical:
+   * Both children are allowed to shrink.
+   */
+  .student-attendance-page .student-calendar-shell > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+
+  /* ---------------------------------------------------------
+     Calendar
+  --------------------------------------------------------- */
+
+  .student-attendance-page
+    .attendance-page-calendar-shell {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow: hidden;
+  }
+
+
+  .student-attendance-page
+    .premium-date-picker-calendar {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow: hidden;
+  }
+
+
+  .student-attendance-page
+    .attendance-page-calendar {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+
+  /* ---------------------------------------------------------
+     DayPicker must never force the parent wider
+  --------------------------------------------------------- */
+
+  .student-attendance-page
+    .rdp {
+    width: 100%;
+    max-width: 100%;
+
+    margin: 0;
+  }
+
+
+  .student-attendance-page
+    .rdp-months {
+    width: 100%;
+    max-width: 100%;
+  }
+
+
+  .student-attendance-page
+    .rdp-month {
+    width: 100%;
+    max-width: 100%;
+  }
+
+
+  .student-attendance-page
+    .rdp-table {
+    width: 100%;
+    max-width: 100%;
+
+    table-layout: fixed;
+  }
+
+
+  .student-attendance-page
+    .rdp-cell {
+    min-width: 0;
+  }
+
+
+  .student-attendance-page
+    .rdp-button {
+    max-width: 100%;
+  }
+
+
+  /* ---------------------------------------------------------
+     Daily Snapshot
+  --------------------------------------------------------- */
+
+  .student-attendance-page .student-date-copy {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow: hidden;
+  }
+
+
+  .student-attendance-page .student-date-copy > * {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+
+  /* Prevent long text from creating horizontal overflow */
+  .student-attendance-page
+    .student-date-copy
+    h3,
+  .student-attendance-page
+    .student-date-copy
+    p {
+    max-width: 100%;
+
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+
+  /* ---------------------------------------------------------
+     Snapshot statistics
+  --------------------------------------------------------- */
+
+  .student-attendance-page
+    .student-date-stats {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    display: grid;
+
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+
+    gap: 10px;
+  }
+
+
+  .student-attendance-page
+    .student-date-stats > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+
+  .student-attendance-page
+    .date-stat-card {
+    min-width: 0;
+    max-width: 100%;
+
+    overflow: hidden;
+  }
+
+
+  /* ---------------------------------------------------------
+     Snapshot note
+  --------------------------------------------------------- */
+
+  .student-attendance-page
+    .student-date-note {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow-wrap: anywhere;
+  }
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1100px) {
+
+  /*
+   * THIS is the important fix.
+   *
+   * Once the sidebar is open, the usable content area becomes
+   * significantly narrower. Stack the calendar and snapshot.
+   */
+
+  .student-attendance-page
+    .student-calendar-shell {
+    grid-template-columns: 1fr;
+
+    gap: 20px;
+  }
+
+
+  /*
+   * Keep the calendar visually centered rather than allowing
+   * it to stretch awkwardly.
+   */
+
+  .student-attendance-page
+    .attendance-page-calendar-shell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+
+  .student-attendance-page
+    .premium-date-picker-calendar {
+    width: min(100%, 390px);
+  }
+
+
+  .student-attendance-page
+    .attendance-page-calendar-footer {
+    width: min(100%, 390px);
+  }
+
+
+  /*
+   * Daily Snapshot gets the full available width.
+   */
+
+  .student-attendance-page
+    .student-date-copy {
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   SMALL TABLET
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .student-attendance-page {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+
+  .student-attendance-page
+    .student-date-card {
+    padding: 18px;
+  }
+
+
+  .student-attendance-page
+    .student-date-stats {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+
+    gap: 8px;
+  }
+
+
+  .student-attendance-page
+    .date-stat-card {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
+
+/* =========================================================
+   PHONE
+========================================================= */
+
+@media (max-width: 575px) {
+
+  .student-attendance-page {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+
+  .student-attendance-page
+    .student-date-card {
+    padding: 14px;
+  }
+
+
+  .student-attendance-page
+    .student-date-stats {
+    grid-template-columns: 1fr;
+  }
+
+
+  .student-attendance-page
+    .date-stat-card {
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   GLOBAL SAFETY NET FOR THIS PAGE
+========================================================= */
+
+.student-attendance-page *,
+.student-attendance-page *::before,
+.student-attendance-page *::after {
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   FINAL TABLET FIX
+   IMPORTANT:
+   The calendar and Daily Snapshot are siblings inside
+   .student-date-card.
+========================================================= */
+
+@media (max-width: 1200px) {
+
+  /* -----------------------------------------------
+     THE ACTUAL FIX
+     ----------------------------------------------- */
+
+  .student-attendance-page .student-date-card {
+    display: grid !important;
+
+    grid-template-columns: minmax(0, 1fr) !important;
+
+    gap: 24px !important;
+
+    min-height: 0 !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+
+    overflow: hidden !important;
+  }
+
+
+  /* -----------------------------------------------
+     Calendar section
+     ----------------------------------------------- */
+
+  .student-attendance-page .student-calendar-shell {
+    display: flex !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+
+    justify-content: center !important;
+    align-items: center !important;
+
+    padding: 0 !important;
+  }
+
+
+  .student-attendance-page
+  .attendance-page-calendar-shell {
+    width: min(100%, 390px) !important;
+    max-width: 390px !important;
+
+    margin: 0 auto !important;
+  }
+
+
+  .student-attendance-page
+  .premium-date-picker-calendar {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    overflow: hidden !important;
+  }
+
+
+  /* -----------------------------------------------
+     Daily Snapshot
+     ----------------------------------------------- */
+
+  .student-attendance-page .student-date-copy {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+
+    overflow: hidden !important;
+
+    text-align: left !important;
+  }
+
+
+  .student-attendance-page .student-section-pill {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+
+  .student-attendance-page .student-date-copy h3 {
+    max-width: 100%;
+
+    overflow-wrap: break-word;
+  }
+
+
+  .student-attendance-page .student-date-copy .attendance-subtitle {
+    max-width: 100%;
+
+    overflow-wrap: break-word;
+  }
+
+
+  /* -----------------------------------------------
+     Snapshot statistics
+     ----------------------------------------------- */
+
+  .student-attendance-page .student-date-stats {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    display: grid !important;
+
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+
+    gap: 10px !important;
+  }
+
+
+  .student-attendance-page .date-stat-card {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+
+    overflow: hidden !important;
+  }
+
+
+  .student-attendance-page .student-date-note {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    overflow-wrap: break-word;
+  }
+}
+
+
+/* =========================================================
+   SMALL TABLET
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .student-attendance-page .student-date-card {
+    gap: 18px !important;
+  }
+
+
+  .student-attendance-page .student-date-stats {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 @media (max-width: 991px) {

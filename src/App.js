@@ -14,6 +14,8 @@ import TeacherDashboard from "./app/teacher/dashboard/TeacherDashboard";
 import TeacherAttendance from "./app/teacher/attendance/TeacherAttendance";
 import TeacherStudents from "./app/teacher/students/TeacherStudents";
 import TeacherReports from "./app/teacher/reports/TeacherReports";
+
+// Student pages
 import StudentDashboard from "./app/student/dashboard/StudentDashboard";
 import StudentAttendance from "./app/student/attendance/StudentAttendance";
 import StudentStudents from "./app/student/students/StudentStudents";
@@ -24,40 +26,92 @@ import Alert from "./components/alert/Alert";
 import "./App.css";
 
 function App() {
-  const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const token =
+    localStorage.getItem("token");
 
-  const defaultPath = token && user ? `/${user.id}` : "/landing";
+  let user = null;
+
+  try {
+    user = JSON.parse(
+      localStorage.getItem("user") ||
+        "null",
+    );
+  } catch {
+    user = null;
+  }
+
+  const defaultPath =
+    token && user
+      ? `/${user.id}`
+      : "/landing";
 
   return (
     <Router>
       <Routes>
-        {/* Public */}
-        <Route path="/landing" element={<LandingPage />} />
+        {/* -------------------------------------------------
+            PUBLIC
+        ------------------------------------------------- */}
 
-        {/* Root */}
-        <Route path="/" element={<Navigate to={defaultPath} />} />
+        <Route
+          path="/landing"
+          element={<LandingPage />}
+        />
 
-        {/* Shared Layout */}
+        {/* -------------------------------------------------
+            ROOT
+        ------------------------------------------------- */}
+
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to={defaultPath}
+              replace
+            />
+          }
+        />
+
+        {/* -------------------------------------------------
+            AUTHENTICATED APPLICATION
+        ------------------------------------------------- */}
+
         <Route
           path="/:userId"
-          element={token ? <Layout /> : <Navigate to="/landing" />}
+          element={
+            token ? (
+              <Layout />
+            ) : (
+              <Navigate
+                to="/landing"
+                replace
+              />
+            )
+          }
         >
+          {/* No subject selected yet */}
           <Route
             index
             element={
-              <div>
-                {user?.role === "teacher"
-                  ? "Select a subject"
-                  : "Choose a joined subject"}
+              <div className="container-fluid py-4">
+                <div className="text-center">
+                  {user?.role ===
+                  "teacher"
+                    ? "Select a subject"
+                    : "Loading your enrolled subjects..."}
+                </div>
               </div>
             }
           />
 
+          {/* -------------------------------------------------
+              SUBJECT DASHBOARD
+          ------------------------------------------------- */}
+
           <Route
             path=":subjectId/dashboard"
             element={
-              user?.role === "teacher" ? (
+              user?.role ===
+              "teacher" ? (
                 <TeacherDashboard />
               ) : (
                 <StudentDashboard />
@@ -65,10 +119,15 @@ function App() {
             }
           />
 
+          {/* -------------------------------------------------
+              SUBJECT ATTENDANCE
+          ------------------------------------------------- */}
+
           <Route
             path=":subjectId/attendance"
             element={
-              user?.role === "teacher" ? (
+              user?.role ===
+              "teacher" ? (
                 <TeacherAttendance />
               ) : (
                 <StudentAttendance />
@@ -76,10 +135,15 @@ function App() {
             }
           />
 
+          {/* -------------------------------------------------
+              SUBJECT STUDENTS
+          ------------------------------------------------- */}
+
           <Route
             path=":subjectId/students"
             element={
-              user?.role === "teacher" ? (
+              user?.role ===
+              "teacher" ? (
                 <TeacherStudents />
               ) : (
                 <StudentStudents />
@@ -87,15 +151,45 @@ function App() {
             }
           />
 
+          {/* -------------------------------------------------
+              SUBJECT REPORTS
+          ------------------------------------------------- */}
+
           <Route
             path=":subjectId/reports"
             element={
-              user?.role === "teacher" ? <TeacherReports /> : <StudentReports />
+              user?.role ===
+              "teacher" ? (
+                <TeacherReports />
+              ) : (
+                <StudentReports />
+              )
             }
           />
         </Route>
 
-        <Route path="/profile" element={<Profile />} />
+        {/* -------------------------------------------------
+            PROFILE
+        ------------------------------------------------- */}
+
+        <Route
+          path="/profile"
+          element={<Profile />}
+        />
+
+        {/* -------------------------------------------------
+            FALLBACK
+        ------------------------------------------------- */}
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to={defaultPath}
+              replace
+            />
+          }
+        />
       </Routes>
 
       <Alert />

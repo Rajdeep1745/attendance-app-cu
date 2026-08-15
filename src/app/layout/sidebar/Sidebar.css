@@ -264,6 +264,646 @@
   font-weight: 600;
 }
 
+/* =========================================================
+   PREMIUM STUDENT SIDEBAR
+   ---------------------------------------------------------
+   Scoped ONLY to .student-sidebar.
+   Teacher sidebar is completely unaffected.
+========================================================= */
+
+
+/* =========================================================
+   SIDEBAR SURFACE
+========================================================= */
+
+.student-sidebar {
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #fbfaff 52%,
+      #f8f7fc 100%
+    );
+
+  border-right:
+    1px solid rgba(124, 58, 237, 0.08);
+
+  box-shadow:
+    8px 0 30px rgba(30, 41, 59, 0.035);
+
+  overflow: hidden;
+}
+
+
+/* ---------------------------------------------------------
+   Inner content
+--------------------------------------------------------- */
+
+.student-sidebar .sidebar-content {
+  padding: 22px 14px 14px;
+
+  scrollbar-width: thin;
+  scrollbar-color:
+    rgba(124, 58, 237, 0.22)
+    transparent;
+}
+
+
+/* =========================================================
+   SIDEBAR HEADER
+========================================================= */
+
+.student-sidebar .sidebar-content > h6 {
+  position: relative;
+
+  margin: 0;
+
+  padding:
+    2px 10px 0 18px;
+
+  color: #17203a;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  letter-spacing: 0.105em;
+
+  text-transform: uppercase;
+}
+
+
+/*
+ * Small purple marker beside MY SUBJECTS.
+ */
+
+.student-sidebar .sidebar-content > h6::before {
+  content: "";
+
+  position: absolute;
+
+  left: 8px;
+  top: 3px;
+
+  width: 3px;
+  height: 14px;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #8b5cf6,
+      #6d28d9
+    );
+}
+
+
+/* Subtitle */
+
+.student-sidebar .sidebar-content > small {
+  display: block;
+
+  margin:
+    7px 10px 0 18px;
+
+  color: #7b87a0 !important;
+
+  font-size: 11.5px;
+
+  line-height: 1.45;
+
+  letter-spacing: 0.01em;
+}
+
+
+/* =========================================================
+   SUBJECT LIST
+========================================================= */
+
+.student-sidebar .list-group {
+  margin-top: 18px !important;
+
+  padding:
+    0 3px 6px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+
+/*
+ * Override Bootstrap list-group styling.
+ */
+
+.student-sidebar .list-group-flush {
+  border: none;
+}
+
+
+/* =========================================================
+   SUBJECT CARD
+========================================================= */
+
+.student-sidebar .list-group-item {
+  position: relative;
+
+  width: 100%;
+
+  min-height: 64px;
+
+  display: flex;
+
+  align-items: center;
+
+  padding:
+    11px 12px 11px 14px;
+
+  border:
+    1px solid rgba(226, 232, 240, 0.88) !important;
+
+  border-radius: 15px !important;
+
+  background:
+    rgba(255, 255, 255, 0.88);
+
+  color: #263044;
+
+  box-shadow:
+    0 2px 8px rgba(15, 23, 42, 0.025);
+
+  transition:
+    background 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s ease;
+
+  overflow: hidden;
+
+  isolation: isolate;
+}
+
+
+/*
+ * Permanent subtle purple accent at the left.
+ * Very subtle for inactive subjects.
+ */
+
+.student-sidebar .list-group-item::before {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+
+  width: 2px;
+
+  border-radius: 0 999px 999px 0;
+
+  background:
+    rgba(124, 58, 237, 0.10);
+
+  transition:
+    background 0.22s ease,
+    width 0.22s ease;
+}
+
+
+/* =========================================================
+   SUBJECT HOVER
+========================================================= */
+
+.student-sidebar .list-group-item:hover {
+  transform: translateY(-1px);
+
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff 0%,
+      #fbf9ff 100%
+    );
+
+  border-color:
+    rgba(124, 58, 237, 0.16) !important;
+
+  box-shadow:
+    0 8px 20px rgba(76, 29, 149, 0.07);
+}
+
+
+/*
+ * No oversized accent jumping out on hover.
+ */
+
+.student-sidebar
+.list-group-item:hover::before {
+  width: 3px;
+
+  background:
+    rgba(124, 58, 237, 0.32);
+}
+
+
+/* =========================================================
+   ACTIVE SUBJECT
+========================================================= */
+
+.student-sidebar
+.list-group-item.active {
+  position: relative;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f5f0ff 0%,
+      #eee8ff 100%
+    ) !important;
+
+  color: #4c1d95 !important;
+
+  border:
+    1px solid rgba(124, 58, 237, 0.20) !important;
+
+  box-shadow:
+    0 8px 24px rgba(124, 58, 237, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.90);
+
+  transform: none;
+}
+
+
+/*
+ * Strong permanent active indicator.
+ */
+
+.student-sidebar
+.list-group-item.active::before {
+  top: 9px;
+  bottom: 9px;
+
+  width: 4px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #8b5cf6,
+      #6d28d9
+    );
+}
+
+
+/* =========================================================
+   SUBJECT NAME
+========================================================= */
+
+.student-sidebar .batch-name {
+  display: block;
+
+  margin: 0;
+
+  color: #263044;
+
+  font-size: 13.5px;
+
+  font-weight: 600;
+
+  line-height: 1.3;
+
+  letter-spacing: -0.005em;
+
+  transition:
+    color 0.2s ease;
+}
+
+
+.student-sidebar
+.list-group-item.active
+.batch-name {
+  color: #4c1d95 !important;
+
+  font-weight: 700;
+}
+
+
+/* Hover */
+
+.student-sidebar
+.list-group-item:hover
+.batch-name {
+  color: #3f2a72;
+}
+
+
+/* =========================================================
+   TEACHER / SECONDARY TEXT
+========================================================= */
+
+.student-sidebar .batch-item small,
+.student-sidebar .batch-card small {
+  display: block;
+
+  margin-top: 4px !important;
+
+  color: #7c89a1 !important;
+
+  font-size: 10.5px;
+
+  font-weight: 500;
+
+  line-height: 1.35;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+
+.student-sidebar
+.list-group-item.active
+small {
+  color: #7656ad !important;
+}
+
+
+/* =========================================================
+   SUBJECT CONTENT
+========================================================= */
+
+.student-sidebar .batch-card-main {
+  min-width: 0;
+
+  padding-left: 2px;
+}
+
+
+/* =========================================================
+   THREE-DOT MENU
+========================================================= */
+
+.student-sidebar .batch-menu {
+  margin-left: 5px;
+
+  opacity: 0;
+
+  transition:
+    opacity 0.18s ease;
+}
+
+
+.student-sidebar
+.list-group-item:hover
+.batch-menu,
+.student-sidebar
+.list-group-item.active
+.batch-menu {
+  opacity: 1;
+}
+
+
+.student-sidebar .batch-menu i {
+  width: 28px;
+  height: 28px;
+
+  border-radius: 9px;
+
+  color: #8994a8;
+
+  background: transparent;
+
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+
+.student-sidebar .batch-menu i:hover {
+  color: #6d28d9;
+
+  background:
+    rgba(124, 58, 237, 0.09);
+}
+
+
+/* =========================================================
+   LOADING / EMPTY STATE
+========================================================= */
+
+.student-sidebar .sidebar-empty-state {
+  margin:
+    18px 4px 0;
+
+  padding:
+    18px 14px;
+
+  border:
+    1px solid rgba(226, 232, 240, 0.8);
+
+  border-radius: 15px;
+
+  background:
+    rgba(255, 255, 255, 0.72);
+
+  color: #718096;
+
+  text-align: center;
+
+  box-shadow:
+    0 4px 14px rgba(15, 23, 42, 0.025);
+}
+
+
+.student-sidebar
+.sidebar-empty-state strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #334155;
+
+  font-size: 12px;
+}
+
+
+.student-sidebar
+.sidebar-empty-state small {
+  display: block;
+
+  color: #8792a6;
+
+  font-size: 10.5px;
+
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.student-sidebar .sidebar-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+
+.student-sidebar .sidebar-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+.student-sidebar .sidebar-content::-webkit-scrollbar-thumb {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(139, 92, 246, 0.20),
+      rgba(109, 40, 217, 0.30)
+    );
+
+  border-radius: 999px;
+}
+
+
+.student-sidebar .sidebar-content::-webkit-scrollbar-thumb:hover {
+  background:
+    rgba(109, 40, 217, 0.42);
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.student-sidebar .sidebar-footer {
+  padding:
+    12px 14px 16px;
+
+  border-top:
+    1px solid rgba(226, 232, 240, 0.65);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.35),
+      rgba(250, 249, 255, 0.92)
+    );
+}
+
+
+/* =========================================================
+   JOIN / PRIMARY ACTION
+========================================================= */
+
+.student-sidebar .addBatchButton {
+  position: relative;
+
+  min-height: 46px;
+
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #7c3aed 0%,
+      #6d28d9 100%
+    );
+
+  color: white;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.01em;
+
+  border: none;
+
+  box-shadow:
+    0 8px 20px rgba(124, 58, 237, 0.18);
+
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    background 0.22s ease;
+}
+
+
+.student-sidebar .addBatchButton:hover {
+  transform: translateY(-1px);
+
+  background:
+    linear-gradient(
+      135deg,
+      #8b5cf6 0%,
+      #6d28d9 100%
+    );
+
+  box-shadow:
+    0 12px 26px rgba(124, 58, 237, 0.25);
+}
+
+
+.student-sidebar .addBatchButton:active {
+  transform: translateY(0);
+}
+
+
+/* =========================================================
+   TABLET
+   Keep the existing sidebar behavior, just refine spacing.
+========================================================= */
+
+@media (max-width: 991px) {
+
+  .student-sidebar .sidebar-content {
+    padding:
+      20px 12px 12px;
+  }
+
+  .student-sidebar .list-group {
+    gap: 6px;
+  }
+
+  .student-sidebar .list-group-item {
+    min-height: 62px;
+  }
+}
+
+
+/* =========================================================
+   PHONE
+   Visual refinement only.
+========================================================= */
+
+@media (max-width: 575px) {
+
+  .student-sidebar .sidebar-content {
+    padding:
+      18px 10px 10px;
+  }
+
+  .student-sidebar .list-group {
+    gap: 6px;
+
+    margin-top: 16px !important;
+  }
+
+  .student-sidebar .list-group-item {
+    min-height: 60px;
+
+    border-radius: 14px !important;
+  }
+
+  .student-sidebar .sidebar-footer {
+    padding:
+      10px 10px 14px;
+  }
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 991px) {
   .sidebar {
@@ -348,6 +988,7 @@
   }
 }
 
+
 /* Mobile */
 
 @media (max-width: 768px) {
@@ -371,5 +1012,80 @@
 
   .list-group-item {
     padding: 12px;
+  }
+}
+
+/* =========================================================
+   MOBILE SIDEBAR OVERLAY
+   ---------------------------------------------------------
+   Sidebar floats above the page instead of taking layout
+   space.
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .sidebar {
+    position: fixed !important;
+
+    top: 64px !important;
+    left: 0 !important;
+    bottom: 0 !important;
+
+    height: calc(100vh - 64px) !important;
+    height: calc(100svh - 64px) !important;
+
+    /*
+     * Sidebar width is independent from the page width.
+     */
+    width: min(280px, 88vw) !important;
+
+    /*
+     * CRITICAL:
+     * The sidebar is removed from the normal layout.
+     */
+    margin: 0 !important;
+
+    z-index: 999 !important;
+
+    transform: translateX(-100%) !important;
+
+    transition:
+      transform 0.32s cubic-bezier(0.22, 1, 0.36, 1) !important;
+
+    box-shadow:
+      18px 0 45px rgba(15, 23, 42, 0.20) !important;
+  }
+
+
+  /* Open */
+  .sidebar.open {
+    width: min(280px, 88vw) !important;
+
+    transform: translateX(0) !important;
+  }
+
+
+  /* Closed */
+  .sidebar.closed {
+    width: min(280px, 88vw) !important;
+
+    transform: translateX(-100%) !important;
+
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
+
+
+/* =========================================================
+   SMALL PHONES
+========================================================= */
+
+@media (max-width: 480px) {
+
+  .sidebar,
+  .sidebar.open,
+  .sidebar.closed {
+    width: min(280px, 88vw) !important;
   }
 }

@@ -226,18 +226,26 @@ exports.getStudentSubjects = async (req, res) => {
   }
 };
 
+
 // GET SUBJECT OVERVIEW
 exports.getStudentSubjectOverview = async (req, res) => {
   const { subjectId } = req.params;
   const studentId = req.user.id;
 
   try {
+    // Get the student's profile.
+    // This contains the overall attendance_percentage
+    // stored in the students table.
     const student = await getStudentRecordByStudentId(studentId);
 
     if (!student) {
-      return res.status(404).json({ error: "Student profile not found" });
+      return res.status(404).json({
+        error: "Student profile not found",
+      });
     }
 
+    // Verify that this student is actually enrolled
+    // in the requested subject and get subject details.
     const { rows } = await db.query(
       `SELECT
           e.created_at,
@@ -245,137 +253,233 @@ exports.getStudentSubjectOverview = async (req, res) => {
           s.threshold,
           s.total_students,
           u.name AS teacher_name
-      FROM enrollments e
-      JOIN subjects s
+       FROM enrollments e
+       JOIN subjects s
          ON s.subject_id = e.subject_id
-      JOIN teachers t
-        ON s.teacher_id = t.teacher_id
-      JOIN users u
-        ON t.teacher_id = u.id
+       JOIN teachers t
+         ON s.teacher_id = t.teacher_id
+       JOIN users u
+         ON t.teacher_id = u.id
        WHERE e.student_id = $1
          AND e.subject_id = $2`,
       [studentId, subjectId],
     );
 
     if (rows.length === 0) {
-      return res.status(403).json({ error: "Access denied" });
+      return res.status(403).json({
+        error: "Access denied",
+      });
     }
 
     const enrollment = rows[0];
 
-    const avgAttendance = await getSubjectAverageAttendance(subjectId);
-    const myAttendanceData = await getStudentSubjectAttendance(
-      studentId,
-      subjectId,
+    // Subject-level average attendance
+    const avgAttendance =
+      Number(
+      student.attendance_percentage || 0,
     );
-    const myAttendance = myAttendanceData.percentage;
-    const threshold = Number(enrollment.threshold || 0);
-    const thresholdGap = Number((myAttendance - threshold).toFixed(1));
 
-    res.json({
+    /*
+     * IMPORTANT:
+     * Use the overall attendance_percentage stored
+     * in the student's students table.
+     *
+     * Do NOT calculate this from the selected subject.
+     */
+    const myAttendanceData = await getStudentSubjectAttendance( studentId, subjectId, ); 
+    const myAttendance = myAttendanceData.percentage;
+
+    const threshold = Number(
+      enrollment.threshold || 0,
+    );
+
+    const thresholdGap = Number(
+      (myAttendance - threshold).toFixed(1),
+    );
+
+    return res.json({
       subjectId: enrollment.subject_id,
+
       teacher: enrollment.teacher_name,
+
       totalStudents: enrollment.total_students,
+
+      // Average attendance of this subject
       avgAttendance,
+
+      // Overall attendance percentage of this student
       myAttendance,
+
+      // Also expose it explicitly if the frontend
+      // wants to distinguish it from subject attendance.
+      overallAttendance: avgAttendance,
+
       threshold,
-      joinedOn: formatJoinedOn(enrollment.created_at),
+
+      joinedOn: formatJoinedOn(
+        enrollment.created_at,
+      ),
+
       thresholdGap,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(
+      "GET STUDENT SUBJECT OVERVIEW ERROR:",
+      err,
+    );
+
+    return res.status(500).json({
+      error: err.message,
+    });
   }
 };
 
+
+// =========================================================
 // GET STUDENT'S SUBJECT REPORT
+// =========================================================
+
 exports.getStudentSubjectReports = async (req, res) => {
   const { subjectId } = req.params;
   const studentId = req.user.id;
 
   try {
-    const student = await getStudentRecordByStudentId(req.user.id);
+    // -------------------------------------------------------
+    // 1. Verify student exists
+    // -------------------------------------------------------
+
+    const student = await getStudentRecordByStudentId(studentId);
 
     if (!student) {
-      return res.status(404).json({ error: "Student profile not found" });
+      return res.status(404).json({
+        error: "Student profile not found",
+      });
     }
+
+    // -------------------------------------------------------
+    // 2. Verify enrollment
+    //
+    // IMPORTANT:
+    // Enrollment is the source of truth.
+    // -------------------------------------------------------
 
     const hasAccess = await ensureStudentSubjectAccess(subjectId, studentId);
 
     if (!hasAccess) {
-      return res.status(403).json({ error: "Access denied" });
+      return res.status(403).json({
+        error: "Access denied",
+      });
     }
 
-    // Subject details
+    // -------------------------------------------------------
+    // 3. Get subject threshold
+    // -------------------------------------------------------
+
     const { rows: subjectRows } = await db.query(
-      `SELECT threshold
-       FROM subjects
-       WHERE subject_id = $1`,
+      `
+          SELECT
+            subject_id,
+            threshold
+          FROM subjects
+          WHERE subject_id = $1
+        `,
       [subjectId],
     );
 
     if (subjectRows.length === 0) {
-      return res.status(404).json({ error: "Subject not found" });
+      return res.status(404).json({
+        error: "Subject not found",
+      });
     }
 
     const subject = subjectRows[0];
 
-    // All classes conducted for this subject
-    const { rows: subjectAttendanceRows } = await db.query(
-      `SELECT date
-       FROM subject_attendances
-       WHERE subject_id = $1
-       ORDER BY date DESC`,
-      [subjectId],
-    );
+    // -------------------------------------------------------
+    // 4. Get every class conducted for this subject
+    //
+    // DATE is explicitly converted to text so Flutter
+    // receives:
+    //
+    //     2026-08-14
+    //
+    // instead of a timestamp-like value.
+    // -------------------------------------------------------
 
-    // Student attendance records
-    const { rows: classRows } = await db.query(
-      `SELECT date, present
-       FROM student_attendances
-       WHERE subject_id = $1
-         AND student_id = $2`,
+    const { rows: recentAttendance } = await db.query(
+      `
+          SELECT
+            sa.date::text AS date,
+
+            CASE
+              WHEN sta.present = TRUE
+                THEN 'Present'
+
+              WHEN sta.present = FALSE
+                THEN 'Absent'
+
+              ELSE 'Attendance not recorded'
+            END AS status
+
+          FROM subject_attendances sa
+
+          LEFT JOIN student_attendances sta
+            ON sta.student_id = $2
+           AND sta.subject_id = sa.subject_id
+           AND sta.date = sa.date
+
+          WHERE sa.subject_id = $1
+
+          ORDER BY sa.date DESC
+        `,
       [subjectId, studentId],
     );
 
-    const attendanceByDate = new Map(
-      classRows.map((row) => [row.date, row.present]),
-    );
-
-    const recentAttendance = subjectAttendanceRows.map((row) => {
-      const present = attendanceByDate.get(row.date);
-
-      return {
-        date: row.date,
-        status:
-          present === true
-            ? "Present"
-            : present === false
-              ? "Absent"
-              : "Attendance not recorded",
-      };
-    });
-
-    const avgAttendance = await getSubjectAverageAttendance(subjectId);
-
-    const attendedClasses = classRows.filter(
-      (row) => row.present === true,
-    ).length;
+    // -------------------------------------------------------
+    // 5. Calculate THIS student's attendance for THIS subject
+    //
+    // Do NOT use students.attendance_percentage here.
+    // That field is the student's OVERALL attendance.
+    // -------------------------------------------------------
 
     const myAttendanceData = await getStudentSubjectAttendance(
       studentId,
       subjectId,
     );
 
-    res.json({
+    // -------------------------------------------------------
+    // 6. Calculate average attendance of the subject
+    // -------------------------------------------------------
+
+    const avgAttendance = await getSubjectAverageAttendance(subjectId);
+
+    // -------------------------------------------------------
+    // 7. Send response
+    // -------------------------------------------------------
+
+    return res.json({
       subjectId,
+
+      // This is SUBJECT-SPECIFIC attendance.
       myAttendance: myAttendanceData.percentage,
+
       subjectAverage: avgAttendance,
-      totalClasses: subjectAttendanceRows.length,
+
+      totalClasses: myAttendanceData.totalClasses,
+
       attendedClasses: myAttendanceData.attendedClasses,
+
       threshold: Number(subject.threshold || 0),
-      recentAttendance,
+
+      recentAttendance: recentAttendance.map((row) => ({
+        date: row.date,
+        status: row.status,
+      })),
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("GET STUDENT SUBJECT REPORT ERROR:", err);
+
+    return res.status(500).json({
+      error: err.message,
+    });
   }
 };

@@ -2,171 +2,559 @@
   padding: 0;
 }
 
+/* ============================================================
+   GENERAL FORM CONTROLS
+   ============================================================ */
+
 .auto-attendance-panel .form-control {
   min-height: 48px;
   border-radius: 14px;
   border: 1px solid rgba(203, 213, 225, 0.95);
   background: rgba(255, 255, 255, 0.94);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .auto-attendance-panel .form-control:focus {
   border-color: rgba(124, 58, 237, 0.42);
+
   box-shadow:
     0 0 0 4px rgba(124, 58, 237, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
+
+/* ============================================================
+   HIDDEN FILE INPUT
+   ============================================================ */
+
+.auto-hidden-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+
+/* ============================================================
+   ADD PHOTO BUTTON
+   ============================================================ */
+
+.auto-add-photo-button {
+  width: 100%;
+  min-height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 10px 16px;
+
+  border: 1.5px dashed rgba(124, 58, 237, 0.42);
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(124, 58, 237, 0.07),
+      rgba(99, 102, 241, 0.04)
+    );
+
+  color: #5b21b6;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.auto-add-photo-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+
+  border-color: rgba(124, 58, 237, 0.7);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(124, 58, 237, 0.12),
+      rgba(99, 102, 241, 0.07)
+    );
+
+  box-shadow:
+    0 10px 24px rgba(124, 58, 237, 0.12);
+}
+
+.auto-add-photo-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auto-add-photo-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+
+/* ============================================================
+   UPLOAD META
+   ============================================================ */
+
+.auto-upload-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  margin-top: 8px;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  color: #64748b;
+}
+
+.auto-upload-meta span:first-child {
+  color: #5b21b6;
+}
+
+
+/* ============================================================
+   PREVIEW SECTION
+   ============================================================ */
+
+.auto-att-preview-section {
+  padding: 16px;
+
+  border: 1px solid rgba(203, 213, 225, 0.72);
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(248, 250, 252, 0.96)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 12px 28px rgba(15, 23, 42, 0.045);
+}
+
+
+/* ============================================================
+   PREVIEW HEADER
+   ============================================================ */
+
+.auto-att-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin-bottom: 14px;
+}
+
+.auto-att-preview-title {
+  color: #111827;
+
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.auto-att-preview-subtitle {
+  margin-top: 2px;
+
+  color: #64748b;
+
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.auto-clear-photos-button {
+  flex-shrink: 0;
+
+  border: 1px solid rgba(244, 63, 94, 0.18);
+  border-radius: 999px;
+
+  padding: 6px 11px;
+
+  background: rgba(255, 241, 242, 0.8);
+
+  color: #be123c;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.16s ease,
+    transform 0.16s ease;
+}
+
+.auto-clear-photos-button:hover {
+  transform: translateY(-1px);
+
+  background: rgba(255, 228, 230, 0.95);
+}
+
+
+/* ============================================================
+   PREVIEW GRID
+   ============================================================ */
+
 .auto-att-preview-grid {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(180px, 1fr)
-  );
+
+  grid-template-columns:
+    repeat(
+      auto-fill,
+      minmax(160px, 1fr)
+    );
+
   gap: 14px;
 }
+
+
+/* ============================================================
+   PREVIEW ITEM
+   ============================================================ */
 
 .auto-att-preview-item {
   min-width: 0;
 }
 
-.auto-att-preview {
+
+/* ============================================================
+   SQUARE IMAGE FRAME
+   ============================================================ */
+
+.auto-att-preview-frame {
+  position: relative;
+
   width: 100%;
-  height: 180px;
-  max-width: 100%;
-  border-radius: 18px;
-  border: 1px solid rgba(203, 213, 225, 0.85);
-  box-shadow:
-    0 20px 42px rgba(15, 23, 42, 0.08),
-    0 8px 18px rgba(124, 58, 237, 0.08);
-  object-fit: cover;
-}
 
-@media (max-width: 576px) {
-  .auto-att-preview-grid {
-    grid-template-columns: 1fr;
-  }
+  /*
+   * This makes every classroom preview square.
+   */
+  aspect-ratio: 1 / 1;
 
-  .auto-att-preview {
-    height: 220px;
-  }
-}
-
-.auto-file-input {
-  padding: 6px;
   overflow: hidden;
-  font-size: 14px;
-  line-height: 1.2;
-  color: #475569;
+
+  border-radius: 18px;
+
+  border: 1px solid rgba(203, 213, 225, 0.9);
+
+  background:
+    linear-gradient(
+      135deg,
+      #f8fafc,
+      #eef2ff
+    );
+
+  box-shadow:
+    0 16px 34px rgba(15, 23, 42, 0.08),
+    0 7px 16px rgba(124, 58, 237, 0.07);
 }
 
-.auto-file-input::file-selector-button {
-  height: 36px;
-  margin-right: 14px;
-  padding: 0 14px;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.14), rgba(99, 102, 241, 0.08));
-  color: #5b21b6;
-  font-size: 13px;
+
+/* ============================================================
+   IMAGE ITSELF
+   ============================================================ */
+
+.auto-att-preview {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  /*
+   * IMPORTANT:
+   *
+   * contain prevents the classroom image from being
+   * zoomed/cropped.
+   *
+   * The entire image remains visible inside the square.
+   */
+  object-fit: contain;
+
+  object-position: center;
+
+  background: #f8fafc;
+}
+
+
+/* ============================================================
+   PHOTO NUMBER
+   ============================================================ */
+
+.auto-att-preview-number {
+  position: absolute;
+
+  left: 9px;
+  bottom: 9px;
+
+  padding: 5px 9px;
+
+  border-radius: 999px;
+
+  background: rgba(15, 23, 42, 0.76);
+
+  color: white;
+
+  font-size: 10px;
   font-weight: 700;
+
+  backdrop-filter: blur(8px);
+
+  pointer-events: none;
+}
+
+
+/* ============================================================
+   REMOVE PHOTO BUTTON
+   ============================================================ */
+
+.auto-att-remove-photo {
+  position: absolute;
+
+  top: 9px;
+  right: 9px;
+
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.94);
+
+  color: #dc2626;
+
+  box-shadow:
+    0 5px 14px rgba(15, 23, 42, 0.16);
+
   cursor: pointer;
+
   transition:
     transform 0.16s ease,
-    box-shadow 0.16s ease,
-    background 0.16s ease;
+    background 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
-.auto-file-input::file-selector-button:hover {
-  transform: translateY(-1px);
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(99, 102, 241, 0.12));
-  box-shadow: 0 10px 18px rgba(124, 58, 237, 0.12);
-}
+.auto-att-remove-photo:hover {
+  transform: scale(1.08);
 
-.auto-att-preview {
-  max-height: 220px;
-  max-width: 100%;
-  border-radius: 18px;
-  border: 1px solid rgba(203, 213, 225, 0.85);
+  background: #ffffff;
+
   box-shadow:
-    0 20px 42px rgba(15, 23, 42, 0.08),
-    0 8px 18px rgba(124, 58, 237, 0.08);
-  object-fit: cover;
+    0 7px 18px rgba(15, 23, 42, 0.22);
 }
+
+
+/* ============================================================
+   FILE NAME
+   ============================================================ */
+
+.auto-att-preview-file-name {
+  margin-top: 7px;
+
+  padding: 0 3px;
+
+  color: #64748b;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* ============================================================
+   RECOGNITION BUTTON
+   ============================================================ */
+
+.auto-attendance-panel .auto-recognition-button {
+  min-height: 50px;
+
+  border-radius: 14px;
+
+  font-weight: 700;
+
+  box-shadow:
+    0 16px 30px rgba(124, 58, 237, 0.18);
+}
+
+
+/* ============================================================
+   OVERRIDE SECTION
+   ============================================================ */
 
 .override-section {
   border: 1px solid rgba(203, 213, 225, 0.7);
   border-radius: 20px;
+
   padding: 18px;
+
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(248, 250, 252, 0.96)
+    );
+
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.85),
     0 14px 30px rgba(15, 23, 42, 0.05);
 }
 
+
+/* ============================================================
+   OVERRIDE LIST
+   ============================================================ */
+
 .override-list {
   max-height: 420px;
+
   overflow-y: auto;
+
   display: flex;
   flex-direction: column;
+
   gap: 10px;
+
   padding-right: 4px;
 }
+
+
+/* ============================================================
+   OVERRIDE ROW
+   ============================================================ */
 
 .override-row {
   display: flex;
   align-items: center;
+
   gap: 14px;
+
   padding: 14px 16px;
+
   border-radius: 16px;
+
   cursor: pointer;
   user-select: none;
+
   transition:
     transform 0.18s ease,
     box-shadow 0.18s ease,
     border-color 0.18s ease,
     background 0.18s ease;
+
   border: 1px solid transparent;
 }
 
 .override-row.present {
-  background: linear-gradient(135deg, rgba(220, 252, 231, 0.82), rgba(240, 253, 244, 0.92));
-  border-color: rgba(22, 163, 74, 0.18);
-  box-shadow: 0 12px 24px rgba(34, 197, 94, 0.08);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(220, 252, 231, 0.82),
+      rgba(240, 253, 244, 0.92)
+    );
+
+  border-color:
+    rgba(22, 163, 74, 0.18);
+
+  box-shadow:
+    0 12px 24px
+    rgba(34, 197, 94, 0.08);
 }
 
 .override-row.absent {
-  background: linear-gradient(135deg, rgba(254, 226, 226, 0.82), rgba(255, 241, 242, 0.94));
-  border-color: rgba(244, 63, 94, 0.18);
-  box-shadow: 0 12px 24px rgba(244, 63, 94, 0.07);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(254, 226, 226, 0.82),
+      rgba(255, 241, 242, 0.94)
+    );
+
+  border-color:
+    rgba(244, 63, 94, 0.18);
+
+  box-shadow:
+    0 12px 24px
+    rgba(244, 63, 94, 0.07);
 }
 
 .override-row:hover {
   transform: translateY(-1px);
 }
 
+
+/* ============================================================
+   OVERRIDE AVATAR
+   ============================================================ */
+
 .override-avatar {
   width: 42px;
   height: 42px;
+
   border-radius: 50%;
+
   overflow: hidden;
-  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+
+  background:
+    linear-gradient(
+      135deg,
+      #7c3aed,
+      #4f46e5
+    );
+
   color: white;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   font-weight: 700;
   font-size: 15px;
+
   flex-shrink: 0;
-  box-shadow: 0 10px 18px rgba(124, 58, 237, 0.22);
+
+  box-shadow:
+    0 10px 18px
+    rgba(124, 58, 237, 0.22);
 }
 
 .override-avatar img {
   width: 100%;
   height: 100%;
+
   object-fit: cover;
 }
+
+
+/* ============================================================
+   OVERRIDE INFO
+   ============================================================ */
 
 .override-info {
   flex: 1;
@@ -176,7 +564,9 @@
 .override-name {
   font-size: 15px;
   font-weight: 700;
+
   color: #111827;
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -184,67 +574,142 @@
 
 .override-meta {
   font-size: 12px;
+
   color: #64748b;
 }
+
+
+/* ============================================================
+   OVERRIDE TOGGLE
+   ============================================================ */
 
 .override-toggle {
   display: flex;
   align-items: center;
+
   flex-shrink: 0;
+
   font-weight: 600;
 }
 
+
+/* ============================================================
+   SMALL BUTTON
+   ============================================================ */
+
 .btn-xs {
   padding: 6px 12px;
+
   font-size: 11px;
+
   border-radius: 999px;
+
   font-weight: 700;
+
   letter-spacing: 0.01em;
 }
 
-.auto-attendance-panel .btn-outline-success,
-.auto-attendance-panel .btn-outline-danger {
+.auto-attendance-panel
+  .btn-outline-success,
+.auto-attendance-panel
+  .btn-outline-danger {
   background: rgba(255, 255, 255, 0.88);
+
   border-width: 1px;
 }
 
-.auto-attendance-panel .btn-primary {
-  min-height: 50px;
+
+/* ============================================================
+   SAVE BUTTON
+   ============================================================ */
+
+.auto-attendance-panel
+  .btn-success {
+  min-height: 48px;
+
   border-radius: 14px;
+
   font-weight: 700;
-  box-shadow: 0 16px 30px rgba(124, 58, 237, 0.18);
+
+  box-shadow:
+    0 14px 28px
+    rgba(22, 163, 74, 0.18);
 }
 
-.auto-attendance-panel .btn-success {
-  min-height: 48px;
-  border-radius: 14px;
-  font-weight: 700;
-  box-shadow: 0 14px 28px rgba(22, 163, 74, 0.18);
-}
+
+/* ============================================================
+   OVERRIDE SCROLLBAR
+   ============================================================ */
 
 .override-list::-webkit-scrollbar {
   width: 8px;
 }
 
 .override-list::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.45);
+  background:
+    rgba(148, 163, 184, 0.45);
+
   border-radius: 999px;
 }
 
+
+
+/* ============================================================
+   TABLET / MOBILE
+   ============================================================ */
+
 @media (max-width: 576px) {
-  .auto-file-input {
+
+  .auto-upload-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .auto-att-preview-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 10px;
+  }
+
+  .auto-att-preview-section {
+    padding: 13px;
+    border-radius: 16px;
+  }
+
+  .auto-att-preview-header {
+    align-items: flex-start;
+  }
+
+  .auto-att-preview-title {
     font-size: 13px;
   }
 
-  .auto-file-input::file-selector-button {
-    display: block;
-    margin-right: 0;
-    margin-bottom: 8px;
-    width: 100%;
+  .auto-att-preview-subtitle {
+    font-size: 10px;
+  }
+
+  .auto-clear-photos-button {
+    padding: 5px 9px;
+    font-size: 10px;
+  }
+
+  .auto-att-preview-frame {
+    border-radius: 14px;
+  }
+
+  .auto-att-remove-photo {
+    width: 27px;
+    height: 27px;
+
+    top: 7px;
+    right: 7px;
   }
 
   .override-row {
     align-items: flex-start;
+
     padding: 12px 14px;
   }
 
@@ -253,7 +718,26 @@
   }
 }
 
+
+/* ============================================================
+   VERY SMALL MOBILE
+   ============================================================ */
+
 @media (max-width: 420px) {
+
+  .auto-att-preview-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .auto-att-preview-number {
+    left: 6px;
+    bottom: 6px;
+
+    padding: 4px 7px;
+
+    font-size: 9px;
+  }
+
   .override-section {
     padding: 14px;
     border-radius: 16px;
@@ -261,6 +745,7 @@
 
   .override-row {
     flex-wrap: wrap;
+
     gap: 10px;
   }
 
@@ -271,8 +756,10 @@
 
   .override-toggle .btn,
   .override-toggle button,
-  .auto-attendance-panel .btn-primary,
-  .auto-attendance-panel .btn-success {
+  .auto-attendance-panel
+    .btn-success,
+  .auto-attendance-panel
+    .auto-recognition-button {
     width: 100%;
   }
 }
