@@ -7,7 +7,6 @@ import {
   BellRing,
   TrendingUp,
   Shield,
-  BookOpen,
   Sparkles,
   ArrowRight,
   Clock,

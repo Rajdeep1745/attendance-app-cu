@@ -1,4 +1,11 @@
+import atexit
 import traceback
+
+from concurrent.futures import (
+    ProcessPoolExecutor,
+    as_completed,
+)
+
 from typing import Any, Dict
 
 from flask import (
@@ -17,6 +24,12 @@ from image_utils import (
     decode_base64_image,
 )
 
+from recognition_worker import (
+    initialize_recognition_worker,
+    recognize_single_classroom_image,
+)
+
+
 
 app = Flask(__name__)
 
@@ -24,6 +37,77 @@ app.config[
     "MAX_CONTENT_LENGTH"
 ] = config.MAX_REQUEST_BYTES
 
+# ============================================================
+# CLASSROOM RECOGNITION PROCESS POOL
+# ============================================================
+
+_recognition_pool = None
+
+
+def get_recognition_pool():
+    """
+    Lazily create the multiprocessing pool.
+
+    Each worker initializes its own:
+        RetinaFace
+        ArcFace
+
+    The pool stays alive between recognition requests so that
+    model initialization happens only once per worker.
+    """
+
+    global _recognition_pool
+
+    if _recognition_pool is None:
+
+        worker_count = min(
+            config.RECOGNITION_WORKERS,
+            config.RECOGNITION_MAX_PARALLEL_IMAGES,
+            config.CLASSROOM_MAX_IMAGES,
+        )
+
+        print(
+            "[app] Creating recognition process pool:",
+            worker_count,
+            "workers",
+        )
+
+        _recognition_pool = (
+            ProcessPoolExecutor(
+                max_workers=worker_count,
+                initializer=(
+                    initialize_recognition_worker
+                ),
+            )
+        )
+
+    return _recognition_pool
+
+
+def shutdown_recognition_pool():
+    """
+    Cleanly shut down worker processes when Flask exits.
+    """
+
+    global _recognition_pool
+
+    if _recognition_pool is not None:
+
+        print(
+            "[app] Shutting down recognition workers..."
+        )
+
+        _recognition_pool.shutdown(
+            wait=True,
+            cancel_futures=True,
+        )
+
+        _recognition_pool = None
+
+
+atexit.register(
+    shutdown_recognition_pool
+)
 
 # ============================================================
 # HEALTH
@@ -591,6 +675,10 @@ def extract_embeddings():
 # CLASSROOM MULTI-IMAGE RECOGNITION
 # ============================================================
 
+# ============================================================
+# CLASSROOM MULTI-IMAGE RECOGNITION
+# ============================================================
+
 @app.route(
     "/recognize",
     methods=["POST"],
@@ -599,6 +687,11 @@ def recognize():
 
     """
     Recognize students from multiple classroom images.
+
+    MULTIPROCESSING VERSION
+
+    Each classroom image is processed independently by a
+    separate CPU worker.
 
     Attendance rule:
 
@@ -630,22 +723,32 @@ def recognize():
     )
 
     if not data:
+
         return jsonify(
             {
-                "error": "No data provided"
+                "error":
+                "No data provided"
             }
         ), 400
 
-    images = data.get("images")
+    images = data.get(
+        "images"
+    )
 
-    if not isinstance(images, list):
+    if not isinstance(
+        images,
+        list,
+    ):
+
         return jsonify(
             {
-                "error": "images must be an array"
+                "error":
+                "images must be an array"
             }
         ), 400
 
     if len(images) == 0:
+
         return jsonify(
             {
                 "error":
@@ -654,12 +757,14 @@ def recognize():
         ), 400
 
     if len(images) > config.CLASSROOM_MAX_IMAGES:
+
         return jsonify(
             {
                 "error":
                 "too_many_classroom_images",
+
                 "max_images":
-                config.CLASSROOM_MAX_IMAGES,
+                    config.CLASSROOM_MAX_IMAGES,
             }
         ), 400
 
@@ -669,15 +774,23 @@ def recognize():
     )
 
     if (
-        not isinstance(students, list)
+        not isinstance(
+            students,
+            list,
+        )
         or not students
     ):
+
         return jsonify(
             {
                 "error":
                 "No students provided"
             }
         ), 400
+
+    # --------------------------------------------------------
+    # THRESHOLD
+    # --------------------------------------------------------
 
     try:
 
@@ -704,6 +817,7 @@ def recognize():
         threshold < -1.0
         or threshold > 1.0
     ):
+
         return jsonify(
             {
                 "error":
@@ -712,10 +826,16 @@ def recognize():
         ), 400
 
     # --------------------------------------------------------
-    # DECODE ALL IMAGES FIRST
+    # IMPORTANT:
+    #
+    # We intentionally DO NOT run face recognition here.
+    #
+    # We only validate/decode the images enough to make sure
+    # the request contains valid image data.
+    #
+    # The actual expensive RetinaFace + ArcFace processing
+    # happens inside the worker processes.
     # --------------------------------------------------------
-
-    decoded_images = []
 
     for image_index, image_b64 in enumerate(
         images,
@@ -724,10 +844,8 @@ def recognize():
 
         try:
 
-            decoded_images.append(
-                decode_base64_image(
-                    image_b64
-                )
+            decode_base64_image(
+                image_b64
             )
 
         except ValueError:
@@ -736,323 +854,127 @@ def recognize():
                 {
                     "error":
                     "invalid_image",
+
                     "image_index":
-                    image_index,
+                        image_index,
                 }
             ), 400
 
+    # --------------------------------------------------------
+    # CREATE / GET WORKER POOL
+    # --------------------------------------------------------
+
+    pool = get_recognition_pool()
+
+    # --------------------------------------------------------
+    # CREATE TASKS
+    # --------------------------------------------------------
+
+    futures = {}
+
+    for image_index, image_b64 in enumerate(
+        images,
+        start=1,
+    ):
+
+        task = {
+            "image_index":
+                image_index,
+
+            "image_b64":
+                image_b64,
+
+            "students":
+                students,
+
+            "threshold":
+                threshold,
+        }
+
+        future = pool.submit(
+            recognize_single_classroom_image,
+            task,
+        )
+
+        futures[
+            future
+        ] = image_index
+
+    # --------------------------------------------------------
+    # COLLECT RESULTS
+    # --------------------------------------------------------
+
+    worker_results = []
+
     try:
 
-        engine = get_face_engine()
-
-        # student_id -> aggregated evidence
-        evidence = {}
-
-        image_results = []
-
-        total_faces = 0
-
-        # ----------------------------------------------------
-        # PROCESS EACH CLASSROOM IMAGE
-        # ----------------------------------------------------
-
-        for image_index, image in enumerate(
-            decoded_images,
-            start=1,
+        for future in as_completed(
+            futures
         ):
 
-            faces = (
-                engine.extract_all_face_embeddings(
-                    image
-                )
-            )
+            image_index = futures[
+                future
+            ]
 
-            total_faces += len(faces)
+            try:
 
-            # Only keep the strongest observation of the
-            # same student within this particular image.
-            best_matches_this_image = {}
+                result = future.result()
 
-            for face_index, face in enumerate(
-                faces
-            ):
+            except Exception as exc:
 
-                match = (
-                    engine.find_best_match(
-                        face["embedding"],
-                        students,
-                        threshold,
-                    )
+                print(
+                    "[app] Worker failed for image",
+                    image_index,
+                    ":",
+                    repr(exc),
                 )
 
-                if match is None:
-                    continue
+                traceback.print_exc()
 
-                student_id = match["id"]
+                return jsonify(
+                    {
+                        "error":
+                        "recognition_failed",
 
-                observation = {
-                    "id":
-                        student_id,
-
-                    "similarity":
-                        match["similarity"],
-
-                    "matched_sample":
-                        match[
-                            "matched_sample"
-                        ],
-
-                    "image_index":
-                        image_index,
-
-                    "face_index":
-                        face_index,
-
-                    "detection_score":
-                        round(
-                            float(
-                                face[
-                                    "detection_score"
-                                ]
-                            ),
-                            6,
-                        ),
-
-                    "quality":
-                        face[
-                            "quality"
-                        ],
-                }
-
-                previous = (
-                    best_matches_this_image.get(
-                        student_id
-                    )
-                )
-
-                if (
-                    previous is None
-                    or observation[
-                        "similarity"
-                    ]
-                    > previous[
-                        "similarity"
-                    ]
-                ):
-
-                    best_matches_this_image[
-                        student_id
-                    ] = observation
-
-            # ------------------------------------------------
-            # AGGREGATE IMAGE RESULTS
-            # ------------------------------------------------
-
-            for (
-                student_id,
-                observation,
-            ) in best_matches_this_image.items():
-
-                if student_id not in evidence:
-
-                    evidence[
-                        student_id
-                    ] = {
-                        "id":
-                            student_id,
-
-                        "similarity":
-                            observation[
-                                "similarity"
-                            ],
-
-                        "matched_sample":
-                            observation[
-                                "matched_sample"
-                            ],
-
-                        "best_image_index":
+                        "image_index":
                             image_index,
 
-                        "observations":
-                            0,
-
-                        "image_indices":
-                            [],
-
-                        "matches":
-                            [],
+                        "message":
+                            str(exc),
                     }
+                ), 500
 
-                student_evidence = (
-                    evidence[
-                        student_id
-                    ]
-                )
+            if not result.get(
+                "success",
+                False,
+            ):
 
-                student_evidence[
-                    "observations"
-                ] += 1
-
-                if (
-                    image_index
-                    not in student_evidence[
-                        "image_indices"
-                    ]
-                ):
-
-                    student_evidence[
-                        "image_indices"
-                    ].append(
-                        image_index
-                    )
-
-                student_evidence[
-                    "matches"
-                ].append(
-                    observation
-                )
-
-                # Keep the strongest observation across
-                # ALL classroom images.
-                if (
-                    observation[
-                        "similarity"
-                    ]
-                    > student_evidence[
-                        "similarity"
-                    ]
-                ):
-
-                    student_evidence[
-                        "similarity"
-                    ] = (
-                        observation[
-                            "similarity"
-                        ]
-                    )
-
-                    student_evidence[
-                        "matched_sample"
-                    ] = (
-                        observation[
-                            "matched_sample"
-                        ]
-                    )
-
-                    student_evidence[
-                        "best_image_index"
-                    ] = image_index
-
-            image_results.append(
-                {
-                    "image_index":
-                        image_index,
-
-                    "faces_detected":
-                        len(faces),
-
-                    "recognized_students":
-                        len(
-                            best_matches_this_image
+                return jsonify(
+                    {
+                        "error":
+                        result.get(
+                            "error",
+                            "recognition_failed",
                         ),
-                }
-            )
 
-        # ----------------------------------------------------
-        # FINAL UNIQUE RECOGNIZED STUDENTS
-        # ----------------------------------------------------
+                        "image_index":
+                            image_index,
 
-        recognized = []
-
-        for student in evidence.values():
-
-            recognized.append(
-                {
-                    "id":
-                        student[
-                            "id"
-                        ],
-
-                    "similarity":
-                        round(
-                            float(
-                                student[
-                                    "similarity"
-                                ]
+                        "message":
+                            result.get(
+                                "message"
                             ),
-                            6,
-                        ),
+                    }
+                ), 400
 
-                    "matched_sample":
-                        student[
-                            "matched_sample"
-                        ],
-
-                    "best_image_index":
-                        student[
-                            "best_image_index"
-                        ],
-
-                    "observations":
-                        student[
-                            "observations"
-                        ],
-
-                    "image_indices":
-                        student[
-                            "image_indices"
-                        ],
-
-                    "matches":
-                        student[
-                            "matches"
-                        ],
-                }
+            worker_results.append(
+                result
             )
-
-        recognized.sort(
-            key=lambda item:
-                item[
-                    "similarity"
-                ],
-            reverse=True,
-        )
-
-        return jsonify(
-            {
-                "recognized":
-                    recognized,
-
-                "images_processed":
-                    len(
-                        decoded_images
-                    ),
-
-                "faces_detected":
-                    total_faces,
-
-                "image_results":
-                    image_results,
-
-                "detector":
-                    "RetinaFace",
-
-                "recognizer":
-                    "ArcFace",
-
-                "embedding_dimension":
-                    config.ARC_FACE_EMBEDDING_DIMENSION,
-
-                "threshold":
-                    threshold,
-            }
-        )
 
     except Exception as exc:
 
         print(
-            "[app] Recognition error:",
+            "[app] Recognition pool error:",
             repr(exc),
         )
 
@@ -1065,6 +987,278 @@ def recognize():
             }
         ), 500
 
+    # --------------------------------------------------------
+    # SORT RESULTS BY ORIGINAL IMAGE ORDER
+    # --------------------------------------------------------
+
+    worker_results.sort(
+        key=lambda result:
+            result[
+                "image_index"
+            ]
+    )
+
+    # --------------------------------------------------------
+    # AGGREGATE ALL IMAGE RESULTS
+    # --------------------------------------------------------
+
+    evidence = {}
+
+    image_results = []
+
+    total_faces = 0
+
+    for result in worker_results:
+
+        image_index = result[
+            "image_index"
+        ]
+
+        faces_detected = result[
+            "faces_detected"
+        ]
+
+        total_faces += (
+            faces_detected
+        )
+
+        matches = result[
+            "matches"
+        ]
+
+        # ----------------------------------------------------
+        # IMAGE SUMMARY
+        # ----------------------------------------------------
+
+        image_results.append(
+            {
+                "image_index":
+                    image_index,
+
+                "faces_detected":
+                    faces_detected,
+
+                "recognized_students":
+                    len(matches),
+            }
+        )
+
+        # ----------------------------------------------------
+        # MERGE STUDENT EVIDENCE
+        # ----------------------------------------------------
+
+        for observation in matches:
+
+            student_id = observation[
+                "id"
+            ]
+
+            if student_id not in evidence:
+
+                evidence[
+                    student_id
+                ] = {
+                    "id":
+                        student_id,
+
+                    "similarity":
+                        observation[
+                            "similarity"
+                        ],
+
+                    "matched_sample":
+                        observation[
+                            "matched_sample"
+                        ],
+
+                    "best_image_index":
+                        image_index,
+
+                    "observations":
+                        0,
+
+                    "image_indices":
+                        [],
+
+                    "matches":
+                        [],
+                }
+
+            student_evidence = (
+                evidence[
+                    student_id
+                ]
+            )
+
+            student_evidence[
+                "observations"
+            ] += 1
+
+            if (
+                image_index
+                not in student_evidence[
+                    "image_indices"
+                ]
+            ):
+
+                student_evidence[
+                    "image_indices"
+                ].append(
+                    image_index
+                )
+
+            student_evidence[
+                "matches"
+            ].append(
+                observation
+            )
+
+            # ------------------------------------------------
+            # KEEP STRONGEST OBSERVATION
+            # ------------------------------------------------
+
+            if (
+                observation[
+                    "similarity"
+                ]
+                > student_evidence[
+                    "similarity"
+                ]
+            ):
+
+                student_evidence[
+                    "similarity"
+                ] = (
+                    observation[
+                        "similarity"
+                    ]
+                )
+
+                student_evidence[
+                    "matched_sample"
+                ] = (
+                    observation[
+                        "matched_sample"
+                    ]
+                )
+
+                student_evidence[
+                    "best_image_index"
+                ] = image_index
+
+    # --------------------------------------------------------
+    # FINAL UNIQUE STUDENTS
+    # --------------------------------------------------------
+
+    recognized = []
+
+    for student in evidence.values():
+
+        recognized.append(
+            {
+                "id":
+                    student[
+                        "id"
+                    ],
+
+                "similarity":
+                    round(
+                        float(
+                            student[
+                                "similarity"
+                            ]
+                        ),
+                        6,
+                    ),
+
+                "matched_sample":
+                    student[
+                        "matched_sample"
+                    ],
+
+                "best_image_index":
+                    student[
+                        "best_image_index"
+                    ],
+
+                "observations":
+                    student[
+                        "observations"
+                    ],
+
+                "image_indices":
+                    student[
+                        "image_indices"
+                    ],
+
+                "matches":
+                    student[
+                        "matches"
+                    ],
+            }
+        )
+
+    # --------------------------------------------------------
+    # SORT BY STRONGEST MATCH
+    # --------------------------------------------------------
+
+    recognized.sort(
+        key=lambda item:
+            item[
+                "similarity"
+            ],
+        reverse=True,
+    )
+
+    # --------------------------------------------------------
+    # RESPONSE
+    # --------------------------------------------------------
+
+    return jsonify(
+        {
+            "recognized":
+                recognized,
+
+            "images_processed":
+                len(
+                    worker_results
+                ),
+
+            "faces_detected":
+                total_faces,
+
+            "image_results":
+                image_results,
+
+            "detector":
+                "RetinaFace",
+
+            "recognizer":
+                "ArcFace",
+
+            "embedding_dimension":
+                config.ARC_FACE_EMBEDDING_DIMENSION,
+
+            "threshold":
+                threshold,
+
+            "processing":
+                {
+                    "mode":
+                        "multiprocessing",
+
+                    "workers":
+                        min(
+                            config.RECOGNITION_WORKERS,
+                            config.RECOGNITION_MAX_PARALLEL_IMAGES,
+                        ),
+
+                    "cpu_threads_per_worker":
+                        config.RECOGNITION_CPU_THREADS_PER_WORKER,
+                },
+        }
+    )
+    
 # ============================================================
 # GLOBAL ERROR HANDLERS
 # ============================================================
@@ -1137,7 +1331,37 @@ if __name__ == "__main__":
         config.ARC_FACE_EMBEDDING_DIMENSION,
     )
 
+    print(
+        "Recognition workers:",
+        config.RECOGNITION_WORKERS,
+    )
+
+    print(
+        "CPU threads per worker:",
+        config.RECOGNITION_CPU_THREADS_PER_WORKER,
+    )
+
+    # --------------------------------------------------------
+    # Load the normal face engine for:
+    #
+    # /health/models
+    # /extract-embedding
+    # /extract-embeddings
+    #
+    # Classroom recognition workers have their own engines.
+    # --------------------------------------------------------
+
     get_face_engine()
+
+    # --------------------------------------------------------
+    # Pre-create the recognition workers.
+    #
+    # This means RetinaFace + ArcFace are loaded before the
+    # first classroom recognition request instead of making
+    # the teacher wait for model initialization.
+    # --------------------------------------------------------
+
+    get_recognition_pool()
 
     app.run(
         host=config.HOST,

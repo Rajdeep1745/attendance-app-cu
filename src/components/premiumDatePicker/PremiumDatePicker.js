@@ -100,7 +100,6 @@ const PremiumDatePicker = ({
     const rect = trigger.getBoundingClientRect();
 
     const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
 
     const gap = 12;
     const horizontalPadding = 12;
