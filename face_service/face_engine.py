@@ -1,10 +1,59 @@
 import os
 
+# ============================================================
+# CPU THREAD CONFIGURATION
+# ============================================================
+
 # RetinaFace 0.0.18 expects the legacy Keras API when
 # TensorFlow 2.16+ is used.
 #
 # This MUST happen before TensorFlow / RetinaFace is imported.
 os.environ["TF_USE_LEGACY_KERAS"] = "1"
+
+
+# Each multiprocessing worker gets a controlled number
+# of TensorFlow/OpenMP CPU threads.
+#
+# For an 8-core VM:
+#
+#     4 workers × 2 threads = 8 CPU threads
+#
+# This prevents CPU oversubscription.
+#
+# IMPORTANT:
+# These environment variables must be set BEFORE TensorFlow
+# is imported.
+
+try:
+    import config as _cpu_config
+
+    _threads_per_worker = str(
+        _cpu_config.RECOGNITION_CPU_THREADS_PER_WORKER
+    )
+
+except Exception:
+    _threads_per_worker = "2"
+
+
+os.environ.setdefault(
+    "TF_NUM_INTRAOP_THREADS",
+    _threads_per_worker,
+)
+
+os.environ.setdefault(
+    "TF_NUM_INTEROP_THREADS",
+    "1",
+)
+
+os.environ.setdefault(
+    "OMP_NUM_THREADS",
+    _threads_per_worker,
+)
+
+os.environ.setdefault(
+    "MKL_NUM_THREADS",
+    _threads_per_worker,
+)
 
 
 import threading

@@ -418,3 +418,50 @@ MODEL_ROOT = os.getenv(
     "INSIGHTFACE_HOME",
     os.path.expanduser("~/.insightface"),
 )
+
+# ============================================================
+# CPU MULTIPROCESSING
+# ============================================================
+
+# Number of independent face-recognition worker processes.
+#
+# For the planned VM:
+#   CPU  : 8 cores
+#   RAM  : 16 GB
+#
+# Start with 4 workers.
+#
+# Each worker owns its own RetinaFace + ArcFace model instance.
+# This allows different classroom images to be processed
+# concurrently.
+RECOGNITION_WORKERS = int(
+    os.getenv(
+        "RECOGNITION_WORKERS",
+        "4",
+    )
+)
+
+
+# Number of TensorFlow CPU threads available to each worker.
+#
+# 4 workers × 2 threads = approximately 8 CPU cores.
+#
+# This prevents every worker from trying to consume all
+# available CPU cores simultaneously.
+RECOGNITION_CPU_THREADS_PER_WORKER = int(
+    os.getenv(
+        "RECOGNITION_CPU_THREADS_PER_WORKER",
+        "2",
+    )
+)
+
+
+# Maximum number of images processed concurrently.
+#
+# Keep this equal to RECOGNITION_WORKERS initially.
+RECOGNITION_MAX_PARALLEL_IMAGES = int(
+    os.getenv(
+        "RECOGNITION_MAX_PARALLEL_IMAGES",
+        "4",
+    )
+)
