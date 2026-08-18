@@ -9,6 +9,12 @@ import Layout from "./app/layout/Layout";
 import LandingPage from "./app/login/LandingPage";
 import Profile from "./app/profile/Profile";
 
+import AdminLogin from "./app/admin/AdminLogin";
+import AdminLayout from "./app/admin/AdminLayout";
+import AdminDashboard from "./app/admin/AdminDashboard";
+import AdminStudents from "./app/admin/AdminStudents";
+import AdminSubjects from "./app/admin/AdminSubjects";
+
 // Teacher pages
 import TeacherDashboard from "./app/teacher/dashboard/TeacherDashboard";
 import TeacherAttendance from "./app/teacher/attendance/TeacherAttendance";
@@ -26,50 +32,45 @@ import Alert from "./components/alert/Alert";
 import "./App.css";
 
 function App() {
-  const token =
-    localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
   let user = null;
 
   try {
-    user = JSON.parse(
-      localStorage.getItem("user") ||
-        "null",
-    );
+    user = JSON.parse(localStorage.getItem("user") || "null");
   } catch {
     user = null;
   }
 
-  const defaultPath =
-    token && user
-      ? `/${user.id}`
-      : "/landing";
+  const defaultPath = token && user ? `/${user.id}` : "/landing";
 
   return (
     <Router>
       <Routes>
         {/* -------------------------------------------------
+                ADMIN
+            ------------------------------------------------- */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+
+          <Route path="students" element={<AdminStudents />} />
+
+          <Route path="subjects" element={<AdminSubjects />} />
+        </Route>
+
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        {/* -------------------------------------------------
             PUBLIC
         ------------------------------------------------- */}
 
-        <Route
-          path="/landing"
-          element={<LandingPage />}
-        />
+        <Route path="/landing" element={<LandingPage />} />
 
         {/* -------------------------------------------------
             ROOT
         ------------------------------------------------- */}
 
-        <Route
-          path="/"
-          element={
-            <Navigate
-              to={defaultPath}
-              replace
-            />
-          }
-        />
+        <Route path="/" element={<Navigate to={defaultPath} replace />} />
 
         {/* -------------------------------------------------
             AUTHENTICATED APPLICATION
@@ -77,16 +78,7 @@ function App() {
 
         <Route
           path="/:userId"
-          element={
-            token ? (
-              <Layout />
-            ) : (
-              <Navigate
-                to="/landing"
-                replace
-              />
-            )
-          }
+          element={token ? <Layout /> : <Navigate to="/landing" replace />}
         >
           {/* No subject selected yet */}
           <Route
@@ -94,8 +86,7 @@ function App() {
             element={
               <div className="container-fluid py-4">
                 <div className="text-center">
-                  {user?.role ===
-                  "teacher"
+                  {user?.role === "teacher"
                     ? "Select a subject"
                     : "Loading your enrolled subjects..."}
                 </div>
@@ -110,8 +101,7 @@ function App() {
           <Route
             path=":subjectId/dashboard"
             element={
-              user?.role ===
-              "teacher" ? (
+              user?.role === "teacher" ? (
                 <TeacherDashboard />
               ) : (
                 <StudentDashboard />
@@ -126,8 +116,7 @@ function App() {
           <Route
             path=":subjectId/attendance"
             element={
-              user?.role ===
-              "teacher" ? (
+              user?.role === "teacher" ? (
                 <TeacherAttendance />
               ) : (
                 <StudentAttendance />
@@ -142,8 +131,7 @@ function App() {
           <Route
             path=":subjectId/students"
             element={
-              user?.role ===
-              "teacher" ? (
+              user?.role === "teacher" ? (
                 <TeacherStudents />
               ) : (
                 <StudentStudents />
@@ -158,12 +146,7 @@ function App() {
           <Route
             path=":subjectId/reports"
             element={
-              user?.role ===
-              "teacher" ? (
-                <TeacherReports />
-              ) : (
-                <StudentReports />
-              )
+              user?.role === "teacher" ? <TeacherReports /> : <StudentReports />
             }
           />
         </Route>
@@ -172,24 +155,13 @@ function App() {
             PROFILE
         ------------------------------------------------- */}
 
-        <Route
-          path="/profile"
-          element={<Profile />}
-        />
+        <Route path="/profile" element={<Profile />} />
 
         {/* -------------------------------------------------
             FALLBACK
         ------------------------------------------------- */}
 
-        <Route
-          path="*"
-          element={
-            <Navigate
-              to={defaultPath}
-              replace
-            />
-          }
-        />
+        <Route path="*" element={<Navigate to={defaultPath} replace />} />
       </Routes>
 
       <Alert />

@@ -1,10 +1,16 @@
+-- UNCOMMENT ONLY WHEN NECESSARY
+
+-- DROP SCHEMA public CASCADE;
+
+-- CREATE SCHEMA public;
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- =====================================================
 -- USERS
 -- =====================================================
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     name TEXT NOT NULL,
@@ -17,7 +23,8 @@ CREATE TABLE IF NOT EXISTS users (
 
     institution TEXT,
 
-    role TEXT NOT NULL DEFAULT 'student',
+    role TEXT NOT NULL DEFAULT 'student'
+        CHECK (role IN ('teacher', 'student')),
 
     avatar TEXT,
 
@@ -29,7 +36,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- TEACHERS
 -- =====================================================
 
-CREATE TABLE IF NOT EXISTS teachers (
+CREATE TABLE teachers (
     teacher_id UUID PRIMARY KEY
         REFERENCES users(id)
         ON DELETE CASCADE,
@@ -46,14 +53,31 @@ CREATE TABLE IF NOT EXISTS teachers (
 
 -- =====================================================
 -- SUBJECTS
+--
+-- IMPORTANT:
+--
+-- Subject IDs come from programmes.js.
+--
+-- The subject name is NOT stored here.
+--
+-- Example:
+--
+--     bt5_ml
+--
+-- programmes.js knows that this means:
+--
+--     Machine Learning
+--
+-- teacher_id is nullable because a subject may exist
+-- before the admin assigns a teacher.
 -- =====================================================
 
-CREATE TABLE IF NOT EXISTS subjects (
+CREATE TABLE subjects (
     subject_id TEXT PRIMARY KEY,
 
-    teacher_id UUID NOT NULL
+    teacher_id UUID
         REFERENCES teachers(teacher_id)
-        ON DELETE CASCADE,
+        ON DELETE SET NULL,
 
     threshold INTEGER NOT NULL
         DEFAULT 75
@@ -69,14 +93,29 @@ CREATE TABLE IF NOT EXISTS subjects (
 
 -- =====================================================
 -- STUDENTS
+--
+-- Program and semester are the student's CURRENT
+-- academic information.
+--
+-- Initial values are supplied during signup.
+--
+-- Admin is allowed to change them later.
+--
+-- Valid program + semester combinations are validated
+-- by the backend against programmes.js.
 -- =====================================================
 
-CREATE TABLE IF NOT EXISTS students (
+CREATE TABLE students (
     student_id UUID PRIMARY KEY
         REFERENCES users(id)
         ON DELETE CASCADE,
 
     roll_no TEXT NOT NULL DEFAULT '-',
+
+    program TEXT NOT NULL,
+
+    semester INTEGER NOT NULL
+        CHECK (semester BETWEEN 1 AND 8),
 
     face_registered BOOLEAN NOT NULL DEFAULT FALSE,
 
@@ -91,9 +130,15 @@ CREATE TABLE IF NOT EXISTS students (
 
 -- =====================================================
 -- ENROLLMENTS
+--
+-- Defines:
+--
+--     Student <-> Subject
+--
+-- Admin will manage these relationships.
 -- =====================================================
 
-CREATE TABLE IF NOT EXISTS enrollments (
+CREATE TABLE enrollments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     student_id UUID NOT NULL
@@ -114,7 +159,7 @@ CREATE TABLE IF NOT EXISTS enrollments (
 -- SUBJECT ATTENDANCE
 -- =====================================================
 
-CREATE TABLE IF NOT EXISTS subject_attendances (
+CREATE TABLE subject_attendances (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     subject_id TEXT NOT NULL
@@ -142,7 +187,7 @@ CREATE TABLE IF NOT EXISTS subject_attendances (
 -- STUDENT ATTENDANCE
 -- =====================================================
 
-CREATE TABLE IF NOT EXISTS student_attendances (
+CREATE TABLE student_attendances (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     student_id UUID NOT NULL
@@ -176,14 +221,14 @@ CREATE TABLE IF NOT EXISTS student_attendances (
 --     512-dimensional ArcFace embedding
 --
 -- image_url:
---     Kept nullable.
---     Current faceController intentionally does NOT
---     store the registration images here.
+--     Nullable.
 --
--- The first registration image is stored as users.avatar.
+-- Current faceController stores the first registration
+-- image as users.avatar and does not store the second
+-- registration image.
 -- =====================================================
 
-CREATE TABLE IF NOT EXISTS student_face_data (
+CREATE TABLE student_face_data (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     student_id UUID NOT NULL
@@ -209,31 +254,45 @@ CREATE TABLE IF NOT EXISTS student_face_data (
 -- INDEXES
 -- =====================================================
 
-CREATE INDEX IF NOT EXISTS idx_enrollments_subject_id
+CREATE INDEX idx_enrollments_subject_id
 ON enrollments(subject_id);
 
 
-CREATE INDEX IF NOT EXISTS idx_student_attendances_subject_date
+CREATE INDEX idx_enrollments_student_id
+ON enrollments(student_id);
+
+
+CREATE INDEX idx_student_attendances_subject_date
 ON student_attendances(subject_id, date);
 
 
-CREATE INDEX IF NOT EXISTS idx_student_attendances_student_subject
+CREATE INDEX idx_student_attendances_student_subject
 ON student_attendances(student_id, subject_id);
 
 
-CREATE INDEX IF NOT EXISTS idx_subject_attendances_subject_date
+CREATE INDEX idx_subject_attendances_subject_date
 ON subject_attendances(subject_id, date);
 
 
-CREATE INDEX IF NOT EXISTS idx_student_face_data_student_id
+CREATE INDEX idx_student_face_data_student_id
 ON student_face_data(student_id);
+
+
+CREATE INDEX idx_students_program_semester
+ON students(program, semester);
+
+
+CREATE INDEX idx_subjects_teacher_id
+ON subjects(teacher_id);
 
 
 -- =====================================================
 -- RPC: FREQUENT ABSENTEES
 -- =====================================================
 
-CREATE OR REPLACE FUNCTION frequent_absentees(subject_id_input TEXT)
+CREATE OR REPLACE FUNCTION frequent_absentees(
+    subject_id_input TEXT
+)
 RETURNS TABLE (
     id UUID,
     name TEXT,
@@ -245,16 +304,22 @@ AS $$
         s.student_id AS id,
         u.name,
         COUNT(*) AS absences
+
     FROM student_attendances sa
+
     INNER JOIN students s
         ON s.student_id = sa.student_id
+
     INNER JOIN users u
         ON u.id = s.student_id
+
     WHERE sa.subject_id = subject_id_input
       AND sa.present = FALSE
+
     GROUP BY
         s.student_id,
         u.name
+
     ORDER BY
         absences DESC,
         u.name ASC;
@@ -262,7 +327,7 @@ $$;
 
 
 -- =====================================================
--- AUTOMATICALLY UPDATE updated_at FOR FACE DATA
+-- UPDATED_AT FUNCTION
 -- =====================================================
 
 CREATE OR REPLACE FUNCTION update_timestamp()
@@ -277,12 +342,89 @@ END;
 $$;
 
 
-DROP TRIGGER IF EXISTS trg_student_face_updated_at
-ON student_face_data;
-
+-- =====================================================
+-- FACE DATA UPDATED_AT TRIGGER
+-- =====================================================
 
 CREATE TRIGGER trg_student_face_updated_at
 BEFORE UPDATE
 ON student_face_data
 FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
+
+-- =====================================================
+-- INSERT SUBJECTS DATA INTO DB
+-- =====================================================
+
+-- =====================================================
+-- FIXED SUBJECTS FROM programmes.js
+-- =====================================================
+
+INSERT INTO subjects (subject_id)
+VALUES
+
+-- B.Tech
+('bt1_phy'),
+('bt1_math'),
+('bt1_prog'),
+
+('bt2_oop'),
+('bt2_dsa'),
+('bt2_ele'),
+
+('bt3_dbms'),
+('bt3_os'),
+('bt3_cn'),
+
+('bt4_ai'),
+('bt4_comp'),
+('bt4_cloud'),
+
+('bt5_os'),
+('bt5_ml'),
+('bt5_se'),
+
+('bt6_bd'),
+('bt6_cs'),
+('bt6_bc'),
+
+('bt7_proj'),
+('bt7_dl'),
+
+('bt8_intern'),
+('bt8_seminar'),
+
+-- M.Tech
+('mt1_aai'),
+('mt1_ds'),
+
+('mt2_rm'),
+('mt2_ml'),
+
+('mt3_thesis'),
+
+('mt4_dissertation'),
+
+-- MSc
+('msc1_stats'),
+('msc1_py'),
+
+('msc2_dm'),
+('msc2_net'),
+
+('msc3_ml'),
+
+('msc4_proj'),
+
+-- MCA
+('mca1_stats'),
+('mca1_py'),
+
+('mca2_dm'),
+('mca2_net'),
+
+('mca3_ml'),
+
+('mca4_proj')
+
+ON CONFLICT (subject_id) DO NOTHING;

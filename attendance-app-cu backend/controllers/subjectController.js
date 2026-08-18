@@ -203,9 +203,9 @@ exports.getStudentSubjects = async (req, res) => {
       FROM enrollments e
       JOIN subjects s
           ON s.subject_id = e.subject_id
-      JOIN teachers t
+      LEFT JOIN teachers t
           ON s.teacher_id = t.teacher_id
-      JOIN users u
+      LEFT JOIN users u
           ON t.teacher_id = u.id
       WHERE e.student_id = $1
       ORDER BY e.created_at DESC`,
@@ -225,7 +225,6 @@ exports.getStudentSubjects = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
 
 // GET SUBJECT OVERVIEW
 exports.getStudentSubjectOverview = async (req, res) => {
@@ -256,10 +255,10 @@ exports.getStudentSubjectOverview = async (req, res) => {
        FROM enrollments e
        JOIN subjects s
          ON s.subject_id = e.subject_id
-       JOIN teachers t
-         ON s.teacher_id = t.teacher_id
-       JOIN users u
-         ON t.teacher_id = u.id
+      LEFT JOIN teachers t
+          ON s.teacher_id = t.teacher_id
+      LEFT JOIN users u
+          ON t.teacher_id = u.id
        WHERE e.student_id = $1
          AND e.subject_id = $2`,
       [studentId, subjectId],
@@ -274,10 +273,7 @@ exports.getStudentSubjectOverview = async (req, res) => {
     const enrollment = rows[0];
 
     // Subject-level average attendance
-    const avgAttendance =
-      Number(
-      student.attendance_percentage || 0,
-    );
+    const avgAttendance = Number(student.attendance_percentage || 0);
 
     /*
      * IMPORTANT:
@@ -286,16 +282,15 @@ exports.getStudentSubjectOverview = async (req, res) => {
      *
      * Do NOT calculate this from the selected subject.
      */
-    const myAttendanceData = await getStudentSubjectAttendance( studentId, subjectId, ); 
+    const myAttendanceData = await getStudentSubjectAttendance(
+      studentId,
+      subjectId,
+    );
     const myAttendance = myAttendanceData.percentage;
 
-    const threshold = Number(
-      enrollment.threshold || 0,
-    );
+    const threshold = Number(enrollment.threshold || 0);
 
-    const thresholdGap = Number(
-      (myAttendance - threshold).toFixed(1),
-    );
+    const thresholdGap = Number((myAttendance - threshold).toFixed(1));
 
     return res.json({
       subjectId: enrollment.subject_id,
@@ -316,24 +311,18 @@ exports.getStudentSubjectOverview = async (req, res) => {
 
       threshold,
 
-      joinedOn: formatJoinedOn(
-        enrollment.created_at,
-      ),
+      joinedOn: formatJoinedOn(enrollment.created_at),
 
       thresholdGap,
     });
   } catch (err) {
-    console.error(
-      "GET STUDENT SUBJECT OVERVIEW ERROR:",
-      err,
-    );
+    console.error("GET STUDENT SUBJECT OVERVIEW ERROR:", err);
 
     return res.status(500).json({
       error: err.message,
     });
   }
 };
-
 
 // =========================================================
 // GET STUDENT'S SUBJECT REPORT

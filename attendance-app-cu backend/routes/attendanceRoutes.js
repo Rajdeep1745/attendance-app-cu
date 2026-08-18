@@ -20,7 +20,7 @@ const {
 router.get(
   "/:subjectId/stats",
   authMiddleware,
-  roleMiddleware("teacher", "student"),
+  roleMiddleware("teacher"),
   getAttendanceStats,
 );
 

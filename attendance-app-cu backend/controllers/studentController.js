@@ -80,10 +80,7 @@ exports.getStudentsBySubject = async (req, res) => {
       });
     }
 
-    const hasAccess = await ensureSubjectAccess(
-      subjectId,
-      req.user,
-    );
+    const hasAccess = await ensureSubjectAccess(subjectId, req.user);
 
     if (!hasAccess) {
       return res.status(403).json({
@@ -124,10 +121,10 @@ exports.getStudentsBySubject = async (req, res) => {
       JOIN subjects sub
         ON e.subject_id = sub.subject_id
 
-      JOIN teachers t
+      LEFT JOIN teachers t
         ON sub.teacher_id = t.teacher_id
 
-      JOIN users tu
+      LEFT JOIN users tu
         ON t.teacher_id = tu.id
 
       LEFT JOIN student_attendances sa
@@ -171,168 +168,10 @@ exports.getStudentsBySubject = async (req, res) => {
 
     res.json(formatted);
   } catch (err) {
-    console.error(
-      "GET STUDENTS ERROR:",
-      err,
-    );
+    console.error("GET STUDENTS ERROR:", err);
 
     res.status(500).json({
       error: "Server error",
     });
-  }
-};
-
-// ADD STUDENT
-exports.addStudentToSubject = async (req, res) => {
-  const { name, email, roll, subjectId, department, institution } = req.body;
-  const userId = req.user.id;
-
-  const client = await db.pool.connect();
-
-  try {
-    const hasAccess = await ensureTeacherSubjectAccess(subjectId, userId);
-
-    if (!hasAccess) {
-      client.release();
-      return res.status(403).json({ error: "Access denied" });
-    }
-
-    await client.query("BEGIN");
-
-    let studentId;
-
-    // Find existing user
-    const { rows: existingUsers } = await client.query(
-      `SELECT id, name, avatar
-       FROM users
-       WHERE email = $1`,
-      [email],
-    );
-
-    if (existingUsers.length > 0) {
-      studentId = existingUsers[0].id;
-    } else {
-      // Create user
-      const hashedPassword = await bcrypt.hash(
-        TEACHER_CREATED_STUDENT_PASSWORD,
-        10,
-      );
-
-      const { rows: newUsers } = await client.query(
-        `INSERT INTO users (
-            name,
-            email,
-            department,
-            institution,
-            role,
-            avatar,
-            password
-         )
-         VALUES ($1, $2, $3, $4, 'student', $5, $6)
-         RETURNING id, name, avatar`,
-        [
-          name,
-          email,
-          department,
-          institution,
-          "https://i.pravatar.cc/150",
-          hashedPassword,
-        ],
-      );
-
-      studentId = newUsers[0].id;
-
-      // Create student
-      await client.query(
-        `INSERT INTO students (
-            student_id,
-            roll_no,
-            attendance_percentage
-         )
-         VALUES ($1, $2, 0)`,
-        [studentId, roll],
-      );
-    }
-
-    // Check if already enrolled
-    const { rows: existingEnrollment } = await client.query(
-      `SELECT id
-       FROM enrollments
-       WHERE student_id = $1
-         AND subject_id = $2`,
-      [studentId, subjectId],
-    );
-
-    if (existingEnrollment.length > 0) {
-      await client.query("ROLLBACK");
-      client.release();
-
-      return res.json({
-        message: "Student already enrolled in this subject",
-      });
-    }
-
-    // Enroll student
-    await client.query(
-      `INSERT INTO enrollments (
-          student_id,
-          subject_id
-       )
-       VALUES ($1, $2)`,
-      [studentId, subjectId],
-    );
-
-    // Increase subject student count
-    await incrementSubjectStudentCount(subjectId);
-
-    await client.query("COMMIT");
-    client.release();
-
-    res.json({
-      id: studentId,
-      name: existingUsers[0]?.name || name,
-      roll,
-      avatar: existingUsers[0]?.avatar,
-      attendance: 0,
-      faceRegistered: false,
-      isNew: true,
-    });
-  } catch (err) {
-    await client.query("ROLLBACK");
-    client.release();
-
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Remove student from subject
-exports.removeStudentFromSubject = async (req, res) => {
-  const { studentId, subjectId } = req.params;
-  const userId = req.user.id;
-
-  try {
-    const hasAccess = await ensureTeacherSubjectAccess(subjectId, userId);
-
-    if (!hasAccess) {
-      return res.status(403).json({ error: "Access denied" });
-    }
-
-    const { rows } = await db.query(
-      `DELETE FROM enrollments
-        WHERE student_id = $1
-        AND subject_id = $2
-        RETURNING id`,
-      [studentId, subjectId],
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ error: "Enrollment not found" });
-    }
-
-    await decrementSubjectStudentCount(subjectId);
-
-    res.json({ message: "Student removed from subject" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
   }
 };

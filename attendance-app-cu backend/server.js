@@ -9,6 +9,7 @@ const attendanceRoutes = require("./routes/attendanceRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/usersRoutes");
 const faceRoutes = require("./routes/faceRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
@@ -21,6 +22,11 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/face", faceRoutes);
+app.use("/api/admin", adminRoutes);
+
+app.use("/health", (req, res) => {
+  res.status(200).json({ status: "API is running" });
+});
 
 app.use("/api", (req, res) => {
   res.status(404).json({ error: "API route not found" });

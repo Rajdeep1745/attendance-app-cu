@@ -485,11 +485,7 @@ exports.markAttendanceByFace = async (req, res) => {
     // 1. Verify teacher access
     // ----------------------------------------------------------
 
-    const hasAccess =
-      await ensureTeacherSubjectAccess(
-        subjectId,
-        teacherId,
-      );
+    const hasAccess = await ensureTeacherSubjectAccess(subjectId, teacherId);
 
     if (!hasAccess) {
       return res.status(404).json({
@@ -501,9 +497,8 @@ exports.markAttendanceByFace = async (req, res) => {
     // 2. Load enrolled students + ALL face templates
     // ----------------------------------------------------------
 
-    const { rows: enrolled } =
-      await db.query(
-        `SELECT
+    const { rows: enrolled } = await db.query(
+      `SELECT
             e.student_id,
             s.face_registered,
             sfd.sample_index,
@@ -517,13 +512,12 @@ exports.markAttendanceByFace = async (req, res) => {
          ORDER BY
            e.student_id,
            sfd.sample_index ASC NULLS LAST`,
-        [subjectId],
-      );
+      [subjectId],
+    );
 
     if (enrolled.length === 0) {
       return res.status(400).json({
-        error:
-          "No students are enrolled in this subject",
+        error: "No students are enrolled in this subject",
       });
     }
 
@@ -535,43 +529,27 @@ exports.markAttendanceByFace = async (req, res) => {
 
     for (const row of enrolled) {
       if (!studentMap.has(row.student_id)) {
-        studentMap.set(
-          row.student_id,
-          {
-            id: row.student_id,
-            embeddings: [],
-          },
-        );
+        studentMap.set(row.student_id, {
+          id: row.student_id,
+          embeddings: [],
+        });
       }
 
-      const embedding =
-        normalizeFaceEmbedding(
-          row.embedding,
-        );
+      const embedding = normalizeFaceEmbedding(row.embedding);
 
       if (embedding) {
-        studentMap
-          .get(row.student_id)
-          .embeddings
-          .push(embedding);
+        studentMap.get(row.student_id).embeddings.push(embedding);
       }
     }
 
     // Unique enrolled students.
-    const allStudentIds =
-      Array.from(
-        studentMap.keys(),
-      );
+    const allStudentIds = Array.from(studentMap.keys());
 
     // Only students with at least one usable
     // registered face template.
-    const studentsWithFaces =
-      Array.from(
-        studentMap.values(),
-      ).filter(
-        (student) =>
-          student.embeddings.length > 0,
-      );
+    const studentsWithFaces = Array.from(studentMap.values()).filter(
+      (student) => student.embeddings.length > 0,
+    );
 
     // ----------------------------------------------------------
     // 4. Run recognition on ALL classroom images
@@ -579,39 +557,23 @@ exports.markAttendanceByFace = async (req, res) => {
 
     let recognized = [];
 
-    if (
-      studentsWithFaces.length > 0
-    ) {
+    if (studentsWithFaces.length > 0) {
       try {
-        const result =
-          await recognizeFaces(
-            files.map(
-              (file) =>
-                file.buffer,
-            ),
+        const result = await recognizeFaces(
+          files.map((file) => file.buffer),
 
-            files.map(
-              (file) =>
-                file.mimetype,
-            ),
+          files.map((file) => file.mimetype),
 
-            studentsWithFaces,
+          studentsWithFaces,
 
-            0.5,
-          );
+          0.5,
+        );
 
-        recognized =
-          Array.isArray(
-            result.recognized,
-          )
-            ? result.recognized
-            : [];
-
+        recognized = Array.isArray(result.recognized) ? result.recognized : [];
       } catch (err) {
         console.error(
           "[attendanceController] recognizeFaces error:",
-          err.response?.data ||
-            err.message,
+          err.response?.data || err.message,
         );
 
         return res.status(503).json({
@@ -625,42 +587,27 @@ exports.markAttendanceByFace = async (req, res) => {
     // 5. Unique recognized students
     // ----------------------------------------------------------
 
-    const recognizedSet =
-      new Set(
-        recognized.map(
-          (row) => row.id,
-        ),
-      );
+    const recognizedSet = new Set(recognized.map((row) => row.id));
 
     // ----------------------------------------------------------
     // 6. Mark PRESENT if recognized in ANY image
     // ----------------------------------------------------------
 
-    const attendanceRows =
-      allStudentIds.map(
-        (studentId) => ({
-          student_id:
-            studentId,
+    const attendanceRows = allStudentIds.map((studentId) => ({
+      student_id: studentId,
 
-          subject_id:
-            subjectId,
+      subject_id: subjectId,
 
-          date,
+      date,
 
-          present:
-            recognizedSet.has(
-              studentId,
-            ),
-        }),
-      );
+      present: recognizedSet.has(studentId),
+    }));
 
     // ----------------------------------------------------------
     // 7. Save attendance
     // ----------------------------------------------------------
 
-    for (
-      const row of attendanceRows
-    ) {
+    for (const row of attendanceRows) {
       await db.query(
         `INSERT INTO student_attendances (
            student_id,
@@ -677,12 +624,7 @@ exports.markAttendanceByFace = async (req, res) => {
          DO UPDATE SET
            present =
              EXCLUDED.present`,
-        [
-          row.student_id,
-          row.subject_id,
-          row.date,
-          row.present,
-        ],
+        [row.student_id, row.subject_id, row.date, row.present],
       );
     }
 
@@ -690,110 +632,71 @@ exports.markAttendanceByFace = async (req, res) => {
     // 8. Recalculate subject attendance
     // ----------------------------------------------------------
 
-    await recalcSubjectDate(
-      subjectId,
-      date,
-    );
+    await recalcSubjectDate(subjectId, date);
+
+    // ----------------------------------------------------------
+    // 8A. Recalculate overall student attendance
+    // ----------------------------------------------------------
+
+    for (const studentId of allStudentIds) {
+      await recalcStudentOverallAttendance(studentId);
+    }
 
     // ----------------------------------------------------------
     // 9. Face-registration status
     // ----------------------------------------------------------
 
-    const faceStudentIds =
-      new Set(
-        studentsWithFaces.map(
-          (student) =>
-            student.id,
-        ),
-      );
+    const faceStudentIds = new Set(
+      studentsWithFaces.map((student) => student.id),
+    );
 
-    const unregisteredCount =
-      allStudentIds.filter(
-        (studentId) =>
-          !faceStudentIds.has(
-            studentId,
-          ),
-      ).length;
+    const unregisteredCount = allStudentIds.filter(
+      (studentId) => !faceStudentIds.has(studentId),
+    ).length;
 
-    const presentCount =
-      attendanceRows.filter(
-        (row) =>
-          row.present,
-      ).length;
+    const presentCount = attendanceRows.filter((row) => row.present).length;
 
     // ----------------------------------------------------------
     // 10. Return recognition evidence
     // ----------------------------------------------------------
 
     return res.json({
-      message:
-        "Attendance marked",
+      message: "Attendance marked",
 
-      present_count:
-        presentCount,
+      present_count: presentCount,
 
-      total_count:
-        allStudentIds.length,
+      total_count: allStudentIds.length,
 
-      unregistered_count:
-        unregisteredCount,
+      unregistered_count: unregisteredCount,
 
-      images_processed:
-        files.length,
+      images_processed: files.length,
 
-      recognized_count:
-        recognized.length,
+      recognized_count: recognized.length,
 
       recognized,
 
-      attendance:
-        attendanceRows.map(
-          (row) => {
-            const match =
-              recognized.find(
-                (item) =>
-                  item.id ===
-                  row.student_id,
-              );
+      attendance: attendanceRows.map((row) => {
+        const match = recognized.find((item) => item.id === row.student_id);
 
-            return {
-              student_id:
-                row.student_id,
+        return {
+          student_id: row.student_id,
 
-              present:
-                row.present,
+          present: row.present,
 
-              auto_recognized:
-                recognizedSet.has(
-                  row.student_id,
-                ),
+          auto_recognized: recognizedSet.has(row.student_id),
 
-              has_face:
-                faceStudentIds.has(
-                  row.student_id,
-                ),
+          has_face: faceStudentIds.has(row.student_id),
 
-              similarity:
-                match?.similarity ??
-                null,
+          similarity: match?.similarity ?? null,
 
-              observations:
-                match?.observations ??
-                0,
+          observations: match?.observations ?? 0,
 
-              image_indices:
-                match?.image_indices ??
-                [],
-            };
-          },
-        ),
+          image_indices: match?.image_indices ?? [],
+        };
+      }),
     });
-
   } catch (err) {
-    console.error(
-      "MARK ATTENDANCE BY FACE ERROR:",
-      err,
-    );
+    console.error("MARK ATTENDANCE BY FACE ERROR:", err);
 
     return res.status(500).json({
       error: err.message,
@@ -827,12 +730,12 @@ exports.overrideAttendance = async (req, res) => {
     const studentIds = overrides.map((override) => override.student_id);
 
     const { rows: enrolledStudents } = await db.query(
-    `SELECT student_id
+      `SELECT student_id
     FROM enrollments
     WHERE subject_id = $1
       AND student_id = ANY($2::uuid[])`,
-    [subjectId, studentIds],
-  );
+      [subjectId, studentIds],
+    );
 
     const enrolledIds = new Set(enrolledStudents.map((row) => row.student_id));
 
