@@ -80,6 +80,17 @@ const AdminLayout = () => {
           </NavLink>
 
           <NavLink
+            to="/admin/teachers"
+            className={({ isActive }) =>
+              `admin-nav-item ${isActive ? "admin-nav-active" : ""}`
+            }
+          >
+            <span className="admin-nav-icon">♙</span>
+
+            {sidebarOpen && <span>Teachers</span>}
+          </NavLink>
+
+          <NavLink
             to="/admin/subjects"
             className={({ isActive }) =>
               `admin-nav-item ${isActive ? "admin-nav-active" : ""}`

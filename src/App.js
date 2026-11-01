@@ -14,21 +14,19 @@ import AdminLayout from "./app/admin/AdminLayout";
 import AdminDashboard from "./app/admin/AdminDashboard";
 import AdminStudents from "./app/admin/AdminStudents";
 import AdminSubjects from "./app/admin/AdminSubjects";
+import AdminTeachers from "./app/admin/AdminTeachers";
 
-// Teacher pages
 import TeacherDashboard from "./app/teacher/dashboard/TeacherDashboard";
 import TeacherAttendance from "./app/teacher/attendance/TeacherAttendance";
 import TeacherStudents from "./app/teacher/students/TeacherStudents";
 import TeacherReports from "./app/teacher/reports/TeacherReports";
 
-// Student pages
 import StudentDashboard from "./app/student/dashboard/StudentDashboard";
 import StudentAttendance from "./app/student/attendance/StudentAttendance";
 import StudentStudents from "./app/student/students/StudentStudents";
 import StudentReports from "./app/student/reports/StudentReports";
 
 import Alert from "./components/alert/Alert";
-
 import "./App.css";
 
 function App() {
@@ -47,40 +45,27 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* -------------------------------------------------
-                ADMIN
-            ------------------------------------------------- */}
+        {/* ADMIN */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
-
           <Route path="students" element={<AdminStudents />} />
-
           <Route path="subjects" element={<AdminSubjects />} />
+          <Route path="teachers" element={<AdminTeachers />} />
         </Route>
 
         <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* -------------------------------------------------
-            PUBLIC
-        ------------------------------------------------- */}
-
+        {/* PUBLIC */}
         <Route path="/landing" element={<LandingPage />} />
 
-        {/* -------------------------------------------------
-            ROOT
-        ------------------------------------------------- */}
-
+        {/* ROOT */}
         <Route path="/" element={<Navigate to={defaultPath} replace />} />
 
-        {/* -------------------------------------------------
-            AUTHENTICATED APPLICATION
-        ------------------------------------------------- */}
-
+        {/* AUTHENTICATED APPLICATION */}
         <Route
           path="/:userId"
           element={token ? <Layout /> : <Navigate to="/landing" replace />}
         >
-          {/* No subject selected yet */}
           <Route
             index
             element={
@@ -94,10 +79,6 @@ function App() {
             }
           />
 
-          {/* -------------------------------------------------
-              SUBJECT DASHBOARD
-          ------------------------------------------------- */}
-
           <Route
             path=":subjectId/dashboard"
             element={
@@ -108,10 +89,6 @@ function App() {
               )
             }
           />
-
-          {/* -------------------------------------------------
-              SUBJECT ATTENDANCE
-          ------------------------------------------------- */}
 
           <Route
             path=":subjectId/attendance"
@@ -124,10 +101,6 @@ function App() {
             }
           />
 
-          {/* -------------------------------------------------
-              SUBJECT STUDENTS
-          ------------------------------------------------- */}
-
           <Route
             path=":subjectId/students"
             element={
@@ -139,10 +112,6 @@ function App() {
             }
           />
 
-          {/* -------------------------------------------------
-              SUBJECT REPORTS
-          ------------------------------------------------- */}
-
           <Route
             path=":subjectId/reports"
             element={
@@ -151,16 +120,10 @@ function App() {
           />
         </Route>
 
-        {/* -------------------------------------------------
-            PROFILE
-        ------------------------------------------------- */}
-
+        {/* PROFILE */}
         <Route path="/profile" element={<Profile />} />
 
-        {/* -------------------------------------------------
-            FALLBACK
-        ------------------------------------------------- */}
-
+        {/* FALLBACK */}
         <Route path="*" element={<Navigate to={defaultPath} replace />} />
       </Routes>
 

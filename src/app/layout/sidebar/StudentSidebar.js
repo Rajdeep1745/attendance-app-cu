@@ -5,31 +5,6 @@ import "./Sidebar.css";
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL;
 
-const getSubjectName = (subjectId) => {
-  if (!subjectId) return "Subject";
-
-  try {
-    // eslint-disable-next-line global-require
-    const { PROGRAMMES } = require("../../../data/programmes");
-
-    for (const programmeData of Object.values(PROGRAMMES)) {
-      for (const subjects of Object.values(programmeData.semesters || {})) {
-        const subject = subjects.find(
-          (item) => String(item.id) === String(subjectId),
-        );
-
-        if (subject) {
-          return subject.name;
-        }
-      }
-    }
-  } catch (error) {
-    console.error("Failed to load programme subject name:", error);
-  }
-
-  return subjectId;
-};
-
 const studentRequest = async (path, options = {}) => {
   const token = localStorage.getItem("token");
 
@@ -94,16 +69,13 @@ const StudentSidebar = ({ isOpen }) => {
           ? data.map((subject) => ({
               ...subject,
               subjectId: String(subject.subjectId),
-              name: getSubjectName(subject.subjectId),
+              name: subject.name || "Subject",
             }))
           : [];
 
         setSubjects(normalizedSubjects);
       } catch (error) {
-        console.error(
-          "Failed to load enrolled subjects:",
-          error,
-        );
+        console.error("Failed to load enrolled subjects:", error);
 
         if (!ignore) {
           setSubjects([]);
@@ -149,34 +121,20 @@ const StudentSidebar = ({ isOpen }) => {
     );
 
     if (!subjectId || !isCurrentSubjectValid) {
-      const storedSubjectId = localStorage.getItem(
-        "lastActiveSubjectId",
-      );
+      const storedSubjectId = localStorage.getItem("lastActiveSubjectId");
 
       const preferredSubject =
         subjects.find(
-          (subject) =>
-            subject.subjectId === String(storedSubjectId),
+          (subject) => subject.subjectId === String(storedSubjectId),
         ) || subjects[0];
 
-      localStorage.setItem(
-        "lastActiveSubjectId",
-        preferredSubject.subjectId,
-      );
+      localStorage.setItem("lastActiveSubjectId", preferredSubject.subjectId);
 
-      navigate(
-        `/${userId}/${preferredSubject.subjectId}/${currentPage}`,
-        { replace: true },
-      );
+      navigate(`/${userId}/${preferredSubject.subjectId}/${currentPage}`, {
+        replace: true,
+      });
     }
-  }, [
-    loading,
-    subjects,
-    subjectId,
-    userId,
-    currentPage,
-    navigate,
-  ]);
+  }, [loading, subjects, subjectId, userId, currentPage, navigate]);
 
   /*
    * -------------------------------------------------------
@@ -184,30 +142,17 @@ const StudentSidebar = ({ isOpen }) => {
    * -------------------------------------------------------
    */
   const handleSubjectSelect = (selectedSubjectId) => {
-    localStorage.setItem(
-      "lastActiveSubjectId",
-      selectedSubjectId,
-    );
+    localStorage.setItem("lastActiveSubjectId", selectedSubjectId);
 
-    navigate(
-      `/${userId}/${selectedSubjectId}/${currentPage}`,
-    );
+    navigate(`/${userId}/${selectedSubjectId}/${currentPage}`);
   };
 
   return (
-    <aside
-      className={`sidebar student-sidebar ${
-        isOpen ? "open" : "closed"
-      }`}
-    >
+    <aside className={`sidebar student-sidebar ${isOpen ? "open" : "closed"}`}>
       <div className="sidebar-content">
-        <h6 className="fw-bold mb-1">
-          My Subjects
-        </h6>
+        <h6 className="fw-bold mb-1">My Subjects</h6>
 
-        <p className="sidebar-subtitle mb-0">
-          Select a subject to continue
-        </p>
+        <p className="sidebar-subtitle mb-0">Select a subject to continue</p>
 
         <div className="list-group list-group-flush mt-3">
           {loading ? (
@@ -219,15 +164,11 @@ const StudentSidebar = ({ isOpen }) => {
             <div className="sidebar-empty-state">
               <strong>No enrolled subjects</strong>
 
-              <small>
-                You are not currently enrolled in any subjects.
-              </small>
+              <small>You are not currently enrolled in any subjects.</small>
             </div>
           ) : (
             subjects.map((subject) => {
-              const isActive =
-                String(subject.subjectId) ===
-                String(subjectId);
+              const isActive = String(subject.subjectId) === String(subjectId);
 
               return (
                 <div
@@ -235,33 +176,22 @@ const StudentSidebar = ({ isOpen }) => {
                   className={`list-group-item batch-item batch-card text-start ${
                     isActive ? "active" : ""
                   }`}
-                  onClick={() =>
-                    handleSubjectSelect(
-                      subject.subjectId,
-                    )
-                  }
+                  onClick={() => handleSubjectSelect(subject.subjectId)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(event) => {
-                    if (
-                      event.key === "Enter" ||
-                      event.key === " "
-                    ) {
-                      handleSubjectSelect(
-                        subject.subjectId,
-                      );
+                    if (event.key === "Enter" || event.key === " ") {
+                      handleSubjectSelect(subject.subjectId);
                     }
                   }}
                 >
                   <div className="batch-card-main">
-                    <div className="batch-name">
-                      {subject.name}
-                    </div>
+                    <div className="batch-name">{subject.name}</div>
 
                     <small className="text-muted d-block mt-1">
                       {subject.teacher
                         ? `Teacher: ${subject.teacher}`
-                        : `Subject ID: ${subject.subjectId}`}
+                        : `Teacher: Not Assigned`}
                     </small>
                   </div>
                 </div>

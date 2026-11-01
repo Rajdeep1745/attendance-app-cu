@@ -1,7 +1,6 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AlertContext from "../../context/alert/AlertContext";
-import { PROGRAMMES } from "../../data/programmes";
 import "./signupForm.css";
 
 const SignupForm = ({ switchToLogin }) => {
@@ -9,6 +8,7 @@ const SignupForm = ({ switchToLogin }) => {
 
   const navigate = useNavigate();
 
+  const [academicProgrammes, setAcademicProgrammes] = useState([]);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -23,7 +23,16 @@ const SignupForm = ({ switchToLogin }) => {
   // PROGRAMME OPTIONS
   // -------------------------------------------------------
 
-  const programmeOptions = Object.keys(PROGRAMMES);
+  useEffect(() => {
+    fetch(`${process.env.REACT_APP_BACKEND_URL}api/academic/options`)
+      .then((response) => response.json().then((data) => {
+        if (!response.ok) throw new Error(data.error || "Failed to load academic options");
+        setAcademicProgrammes(data.programmes || []);
+      }))
+      .catch((error) => showAlert("Error", error.message, "danger"));
+  }, []);
+
+  const programmeOptions = academicProgrammes.map((item) => item.program);
 
   // -------------------------------------------------------
   // SEMESTER OPTIONS
@@ -31,9 +40,7 @@ const SignupForm = ({ switchToLogin }) => {
   // Derived from the selected programme.
   // -------------------------------------------------------
 
-  const semesterOptions = form.program
-    ? Object.keys(PROGRAMMES[form.program].semesters)
-    : [];
+  const semesterOptions = academicProgrammes.find((item) => item.program === form.program)?.semesters || [];
 
   // -------------------------------------------------------
   // HANDLE CHANGE

@@ -1,16 +1,5 @@
 body {
-  background:
-    radial-gradient(
-      circle at top right,
-      rgba(124, 58, 237, 0.08),
-      transparent 35%
-    ),
-    radial-gradient(
-      circle at bottom left,
-      rgba(99, 102, 241, 0.06),
-      transparent 40%
-    ),
-    #f8fafc;
+  background: #f8fafc;
 }
 
 .layout-wrapper {

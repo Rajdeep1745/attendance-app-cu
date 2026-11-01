@@ -4,8 +4,8 @@ export default function Footer() {
   return (
     <footer className="app-footer">
       <div className="footer-bottom">
-        © {new Date().getFullYear()} Attendify • Developed by Rajdeep
-        Sarkar & Jinea Saha
+        © {new Date().getFullYear()} Attendify • Developed by Jinea Saha &
+        Rajdeep Sarkar
       </div>
     </footer>
   );

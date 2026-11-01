@@ -106,7 +106,7 @@ exports.getTeacherSubjects = async (req, res) => {
       `SELECT *
       FROM subjects
       WHERE teacher_id = $1
-      ORDER BY subject_id`,
+      ORDER BY name, subject_id`,
       [teacher_id],
     );
 
@@ -196,6 +196,7 @@ exports.getStudentSubjects = async (req, res) => {
     const { rows } = await db.query(
       `SELECT
           e.subject_id,
+          s.name AS subject_name,
           e.created_at,
           s.threshold,
           s.total_students,
@@ -215,6 +216,7 @@ exports.getStudentSubjects = async (req, res) => {
     res.json(
       rows.map((row) => ({
         subjectId: row.subject_id,
+        name: row.subject_name || "Subject",
         threshold: row.threshold,
         totalStudents: row.total_students,
         teacher: row.teacher_name,
@@ -249,6 +251,9 @@ exports.getStudentSubjectOverview = async (req, res) => {
       `SELECT
           e.created_at,
           s.subject_id,
+          s.name AS subject_name,
+          s.program,
+          s.semester,
           s.threshold,
           s.total_students,
           u.name AS teacher_name
@@ -294,6 +299,9 @@ exports.getStudentSubjectOverview = async (req, res) => {
 
     return res.json({
       subjectId: enrollment.subject_id,
+      name: enrollment.subject_name,
+      program: enrollment.program,
+      semester: enrollment.semester,
 
       teacher: enrollment.teacher_name,
 
@@ -368,6 +376,7 @@ exports.getStudentSubjectReports = async (req, res) => {
       `
           SELECT
             subject_id,
+            name,
             threshold
           FROM subjects
           WHERE subject_id = $1
@@ -447,6 +456,7 @@ exports.getStudentSubjectReports = async (req, res) => {
 
     return res.json({
       subjectId,
+      subjectName: subject.name || "Subject",
 
       // This is SUBJECT-SPECIFIC attendance.
       myAttendance: myAttendanceData.percentage,

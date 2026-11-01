@@ -2,7 +2,6 @@ const db = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const { isValidProgrammeSemester } = require("../config/programmes");
 
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET is missing");
@@ -77,7 +76,13 @@ exports.signup = async (req, res) => {
       });
     }
 
-    if (!isValidProgrammeSemester(program, studentSemester)) {
+    const validAcademicOption = await db.query(
+      `SELECT 1 FROM academic_programme_semesters
+       WHERE program = $1 AND semester = $2 LIMIT 1`,
+      [String(program).trim(), studentSemester],
+    );
+
+    if (validAcademicOption.rows.length === 0) {
       return res.status(400).json({
         error: "Invalid program and semester combination",
       });

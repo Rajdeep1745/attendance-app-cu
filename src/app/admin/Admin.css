@@ -1290,28 +1290,19 @@
 
 .admin-subject-card {
   display: grid;
-
   grid-template-columns:
-    minmax(260px, 1.8fr)
-    minmax(190px, 1fr)
-    minmax(100px, 0.6fr)
-    auto;
-
+    minmax(220px, 1.5fr)
+    minmax(160px, 1fr)
+    minmax(85px, 0.5fr)
+    minmax(440px, 2fr);
   align-items: center;
-
-  gap: 22px;
-
-  padding: 20px;
-
+  gap: 16px;
+  padding: 14px 16px;
   background: #ffffff;
-
   border: 1px solid #e7eaf0;
-
   border-radius: 15px;
-
   box-shadow: 0 6px 20px rgba(15, 23, 42, 0.025);
 }
-
 .admin-subject-main {
   display: flex;
 
@@ -1509,15 +1500,17 @@
 
 .admin-subject-actions {
   display: flex;
-
-  flex-direction: column;
-
+  flex-direction: row;
+  align-items: center;
   gap: 7px;
-
-  min-width: 145px;
+  min-width: 0;
 }
 
 .admin-subject-actions button {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 10px 8px;
+  font-size: 11px;
   white-space: nowrap;
 }
 
@@ -1698,17 +1691,31 @@
    SUBJECT RESPONSIVE
 ========================================================= */
 
-@media (max-width: 1100px) {
+@media (max-width: 1250px) {
   .admin-subject-card {
-    grid-template-columns: 1fr 1fr;
-
-    gap: 18px;
+    grid-template-columns: minmax(200px, 1.4fr) minmax(150px, 1fr) minmax(80px, 0.5fr);
+    gap: 14px;
   }
 
   .admin-subject-actions {
     grid-column: 1 / -1;
+  }
+}
 
+@media (max-width: 900px) {
+  .admin-subject-card {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .admin-subject-actions {
+    grid-column: 1 / -1;
     flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .admin-subject-actions button {
+    flex: 1 1 135px;
   }
 }
 
@@ -1719,7 +1726,507 @@
 
   .admin-subject-actions {
     grid-column: auto;
-
     flex-direction: column;
+  }
+}
+/* =========================================================
+   STUDENT SPREADSHEET IMPORT / EXPORT
+========================================================= */
+
+.admin-spreadsheet-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid #e7eaf0;
+  border-radius: 14px;
+}
+
+.admin-spreadsheet-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 220px;
+}
+
+.admin-spreadsheet-copy strong {
+  color: #111827;
+  font-size: 14px;
+}
+
+.admin-spreadsheet-copy span {
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.admin-spreadsheet-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.admin-secondary-button,
+.admin-primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 9px 13px;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    opacity 0.15s;
+}
+
+.admin-secondary-button {
+  border: 1px solid #e1e5eb;
+  background: #ffffff;
+  color: #374151;
+}
+
+.admin-secondary-button:hover {
+  background: #f8f9fb;
+  border-color: #cbd5e1;
+}
+
+.admin-primary-button {
+  border: 1px solid #111827;
+  background: #111827;
+  color: #ffffff;
+}
+
+.admin-primary-button:hover {
+  background: #1f2937;
+}
+
+.admin-primary-button:disabled,
+.admin-secondary-button:disabled,
+.admin-file-button.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-file-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-import-result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+  padding: 13px 15px;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 13px;
+}
+
+.admin-import-result span {
+  font-size: 12px;
+}
+
+.admin-import-row-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0 0;
+  padding-left: 20px;
+  color: #b91c1c;
+  font-size: 12px;
+}
+
+.admin-import-error {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .admin-spreadsheet-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-spreadsheet-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-spreadsheet-actions > * {
+    flex: 1 1 100%;
+  }
+}
+
+/* Bulk-import correction modal */
+.admin-import-review-modal {
+  width: min(1180px, calc(100vw - 32px));
+  max-width: 1180px;
+  max-height: calc(100vh - 40px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-import-review-errors {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff7f7;
+  color: #991b1b;
+  max-height: 130px;
+  overflow: auto;
+  font-size: 13px;
+}
+
+.admin-import-review-errors > div + div {
+  margin-top: 6px;
+}
+
+.admin-import-review-table-wrap {
+  overflow: auto;
+  min-height: 120px;
+  max-height: min(52vh, 560px);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+}
+
+.admin-import-review-table {
+  min-width: 1050px;
+}
+
+.admin-import-review-table th,
+.admin-import-review-table td {
+  vertical-align: top;
+}
+
+.admin-import-review-table td input,
+.admin-import-review-table td select {
+  width: 150px;
+  min-width: 120px;
+  max-width: 220px;
+  padding: 8px 9px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  background: #fff;
+  color: #111827;
+  font: inherit;
+}
+
+.admin-import-review-issue {
+  min-width: 180px;
+  max-width: 260px;
+  color: #b45309;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .admin-import-review-modal {
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+    padding: 16px;
+  }
+}
+
+/* Teacher management spreadsheet / review additions */
+.admin-teacher-review-modal {
+  width: min(1100px, calc(100vw - 32px));
+  max-width: 1100px;
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+}
+.admin-teacher-review-modal td input {
+  width: 150px;
+  min-width: 120px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font: inherit;
+}
+
+/* Center action buttons in admin tables */
+.admin-table th:last-child,
+.admin-table td:last-child {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.admin-table td:last-child {
+  white-space: nowrap;
+}
+
+.admin-table td:last-child .admin-danger-button,
+.admin-table td:last-child .admin-secondary-button,
+.admin-table td:last-child .admin-primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 4px;
+}
+
+
+/* Polished edit-teacher modal */
+.admin-edit-teacher-modal {
+  width: min(560px, calc(100vw - 32px));
+  max-width: 560px;
+}
+
+.admin-edit-teacher-modal .admin-modal-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 16px;
+  padding: 22px 24px 24px;
+}
+
+.admin-edit-teacher-modal .admin-modal-body label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.admin-edit-teacher-modal .admin-modal-body input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid #dfe3e8;
+  border-radius: 9px;
+  background: #fff;
+  color: #111827;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.admin-edit-teacher-modal .admin-modal-body input:focus {
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, .08);
+}
+
+.admin-edit-teacher-modal .admin-modal-footer {
+  align-items: center;
+}
+
+@media (max-width: 560px) {
+  .admin-edit-teacher-modal .admin-modal-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 18px;
+  }
+  .admin-edit-teacher-modal .admin-modal-header {
+    padding: 20px 18px 16px;
+  }
+  .admin-edit-teacher-modal .admin-modal-footer {
+    padding: 14px 18px;
+  }
+}
+
+
+/* Add-student modal polish: consistent controls and full-width helper note */
+.admin-add-student-modal {
+  width: min(620px, calc(100vw - 32px));
+  max-width: 620px;
+}
+
+.admin-add-student-modal .admin-modal-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 16px 18px;
+  padding: 22px 24px 24px;
+}
+
+.admin-add-student-modal .admin-modal-body > label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.admin-add-student-modal .admin-modal-body input,
+.admin-add-student-modal .admin-modal-body select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #dfe3e8;
+  border-radius: 9px;
+  background-color: #fff;
+  color: #111827;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.admin-add-student-modal .admin-modal-body input:focus,
+.admin-add-student-modal .admin-modal-body select:focus {
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, .08);
+}
+
+.admin-add-student-modal .admin-modal-body select:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.admin-add-student-modal .admin-form-help {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid #e5e7eb;
+  border-radius: 9px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.admin-add-student-modal .admin-modal-footer {
+  align-items: center;
+}
+
+@media (max-width: 560px) {
+  .admin-add-student-modal {
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+  }
+  .admin-add-student-modal .admin-modal-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 18px;
+  }
+  .admin-add-student-modal .admin-modal-header {
+    padding: 20px 18px 16px;
+  }
+  .admin-add-student-modal .admin-modal-footer {
+    padding: 14px 18px;
+  }
+}
+
+
+/* Subject editor modal: polished, consistent form layout */
+.admin-subject-editor-modal {
+  width: min(620px, calc(100vw - 32px));
+  max-width: 620px;
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-subject-editor-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 18px;
+  padding: 22px 24px 24px;
+}
+
+.admin-subject-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.admin-subject-field label {
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.admin-subject-field input,
+.admin-subject-field select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #dfe3e8;
+  border-radius: 9px;
+  background: #fff;
+  color: #111827;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.admin-subject-field input:focus,
+.admin-subject-field select:focus {
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, .08);
+}
+
+.admin-subject-field input:disabled,
+.admin-subject-field select:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.admin-subject-editor-fields .admin-form-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid #e5e7eb;
+  border-radius: 9px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.admin-subject-editor-modal .admin-modal-footer {
+  align-items: center;
+}
+
+@media (max-width: 560px) {
+  .admin-subject-editor-modal {
+    overflow-y: auto;
+  }
+  .admin-subject-editor-fields {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 18px;
+  }
+  .admin-subject-editor-modal .admin-modal-header {
+    padding: 20px 18px 16px;
+  }
+  .admin-subject-editor-modal .admin-modal-footer {
+    padding: 14px 18px;
   }
 }

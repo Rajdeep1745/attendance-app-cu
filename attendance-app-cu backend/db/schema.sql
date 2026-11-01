@@ -72,8 +72,36 @@ CREATE TABLE teachers (
 -- before the admin assigns a teacher.
 -- =====================================================
 
+-- =====================================================
+-- ACADEMIC PROGRAMMES AND SEMESTERS (DATABASE SOURCE OF TRUTH)
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS academic_programmes (
+    program TEXT PRIMARY KEY,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS academic_programme_semesters (
+    program TEXT NOT NULL REFERENCES academic_programmes(program) ON DELETE CASCADE,
+    semester INTEGER NOT NULL CHECK (semester BETWEEN 1 AND 12),
+    PRIMARY KEY (program, semester)
+);
+
+INSERT INTO academic_programmes(program) VALUES
+    ('B.Tech'), ('M.Tech'), ('MSc'), ('MCA')
+ON CONFLICT (program) DO NOTHING;
+
+INSERT INTO academic_programme_semesters(program, semester)
+SELECT p.program, gs.semester
+FROM (VALUES ('B.Tech', 8), ('M.Tech', 4), ('MSc', 4), ('MCA', 4)) AS p(program, max_semester)
+CROSS JOIN LATERAL generate_series(1, p.max_semester) AS gs(semester)
+ON CONFLICT (program, semester) DO NOTHING;
+
 CREATE TABLE subjects (
     subject_id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    program TEXT NOT NULL,
+    semester INTEGER NOT NULL,
 
     teacher_id UUID
         REFERENCES teachers(teacher_id)
@@ -102,7 +130,7 @@ CREATE TABLE subjects (
 -- Admin is allowed to change them later.
 --
 -- Valid program + semester combinations are validated
--- by the backend against programmes.js.
+-- by the backend against academic_programme_semesters in the database.
 -- =====================================================
 
 CREATE TABLE students (
@@ -153,6 +181,67 @@ CREATE TABLE enrollments (
 
     UNIQUE(student_id, subject_id)
 );
+
+-- Keep subject enrollment synchronized with the authoritative database fields.
+CREATE OR REPLACE FUNCTION sync_subject_enrollments()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  DELETE FROM enrollments e
+  USING students st
+  WHERE e.student_id = st.student_id
+    AND e.subject_id = NEW.subject_id
+    AND (st.program <> NEW.program OR st.semester <> NEW.semester);
+
+  INSERT INTO enrollments(student_id, subject_id)
+  SELECT st.student_id, NEW.subject_id
+  FROM students st
+  WHERE st.program = NEW.program AND st.semester = NEW.semester
+  ON CONFLICT (student_id, subject_id) DO NOTHING;
+
+  UPDATE subjects
+  SET total_students = (
+    SELECT COUNT(*) FROM enrollments e WHERE e.subject_id = NEW.subject_id
+  )
+  WHERE subject_id = NEW.subject_id;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_sync_subject_enrollments ON subjects;
+CREATE TRIGGER trg_sync_subject_enrollments
+AFTER INSERT OR UPDATE OF program, semester ON subjects
+FOR EACH ROW EXECUTE FUNCTION sync_subject_enrollments();
+
+CREATE OR REPLACE FUNCTION sync_student_enrollments()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  DELETE FROM enrollments e
+  USING subjects su
+  WHERE e.subject_id = su.subject_id
+    AND e.student_id = NEW.student_id
+    AND (su.program <> NEW.program OR su.semester <> NEW.semester);
+
+  INSERT INTO enrollments(student_id, subject_id)
+  SELECT NEW.student_id, su.subject_id
+  FROM subjects su
+  WHERE su.program = NEW.program AND su.semester = NEW.semester
+  ON CONFLICT (student_id, subject_id) DO NOTHING;
+
+  UPDATE subjects su
+  SET total_students = (
+    SELECT COUNT(*) FROM enrollments e WHERE e.subject_id = su.subject_id
+  );
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_sync_student_enrollments ON students;
+CREATE TRIGGER trg_sync_student_enrollments
+AFTER INSERT OR UPDATE OF program, semester ON students
+FOR EACH ROW EXECUTE FUNCTION sync_student_enrollments();
+
 
 
 -- =====================================================
@@ -357,74 +446,3 @@ EXECUTE FUNCTION update_timestamp();
 -- =====================================================
 
 -- =====================================================
--- FIXED SUBJECTS FROM programmes.js
--- =====================================================
-
-INSERT INTO subjects (subject_id)
-VALUES
-
--- B.Tech
-('bt1_phy'),
-('bt1_math'),
-('bt1_prog'),
-
-('bt2_oop'),
-('bt2_dsa'),
-('bt2_ele'),
-
-('bt3_dbms'),
-('bt3_os'),
-('bt3_cn'),
-
-('bt4_ai'),
-('bt4_comp'),
-('bt4_cloud'),
-
-('bt5_os'),
-('bt5_ml'),
-('bt5_se'),
-
-('bt6_bd'),
-('bt6_cs'),
-('bt6_bc'),
-
-('bt7_proj'),
-('bt7_dl'),
-
-('bt8_intern'),
-('bt8_seminar'),
-
--- M.Tech
-('mt1_aai'),
-('mt1_ds'),
-
-('mt2_rm'),
-('mt2_ml'),
-
-('mt3_thesis'),
-
-('mt4_dissertation'),
-
--- MSc
-('msc1_stats'),
-('msc1_py'),
-
-('msc2_dm'),
-('msc2_net'),
-
-('msc3_ml'),
-
-('msc4_proj'),
-
--- MCA
-('mca1_stats'),
-('mca1_py'),
-
-('mca2_dm'),
-('mca2_net'),
-
-('mca3_ml'),
-
-('mca4_proj')
-
-ON CONFLICT (subject_id) DO NOTHING;

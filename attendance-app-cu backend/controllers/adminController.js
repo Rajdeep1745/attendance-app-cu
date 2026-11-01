@@ -1,32 +1,31 @@
 const db = require("../config/db");
 const jwt = require("jsonwebtoken");
 
-const {
-  PROGRAMMES,
-  isValidProgrammeSemester,
-} = require("../config/programmes");
+// All subject metadata is read from the database. subject_id is only a stable
+// relational key; it is never decoded into a name, programme, or semester.
+const getSubjectDetails = async (subjectId) => {
+  const result = await db.query(
+    `SELECT subject_id AS id, subject_id, name, program, semester
+     FROM subjects
+     WHERE subject_id = $1
+     LIMIT 1`,
+    [subjectId],
+  );
+  return result.rows[0] || null;
+};
 
-// =========================================================
-// FIND SUBJECT DETAILS FROM PROGRAMMES.JS
-// =========================================================
-
-const getSubjectDetails = (subjectId) => {
-  for (const [program, programData] of Object.entries(PROGRAMMES)) {
-    for (const [semester, subjects] of Object.entries(programData.semesters)) {
-      const subject = subjects.find((item) => item.id === subjectId);
-
-      if (subject) {
-        return {
-          id: subject.id,
-          name: subject.name,
-          program,
-          semester: Number(semester),
-        };
-      }
-    }
+const isValidProgrammeSemester = async (program, semester) => {
+  if (!program || semester === undefined || semester === null || semester === "") {
+    return false;
   }
-
-  return null;
+  const result = await db.query(
+    `SELECT 1
+     FROM academic_programme_semesters
+     WHERE program = $1 AND semester = $2
+     LIMIT 1`,
+    [String(program).trim(), Number(semester)],
+  );
+  return result.rows.length > 0;
 };
 
 if (!process.env.JWT_SECRET) {
@@ -245,10 +244,10 @@ exports.updateStudent = async (req, res) => {
 
   // -------------------------------------------------------
   // Validate program + semester
-  // against programmes.js
+  // against database academic programme options
   // -------------------------------------------------------
 
-  if (!isValidProgrammeSemester(studentProgram, studentSemester)) {
+  if (!(await isValidProgrammeSemester(studentProgram, studentSemester))) {
     return res.status(400).json({
       error: "Invalid program and semester combination",
     });
@@ -311,18 +310,13 @@ exports.getTeachers = async (req, res) => {
           u.name,
           u.email,
           u.department,
+          u.institution,
           u.avatar,
-
           t.default_mode,
           t.default_threshold
-
         FROM teachers t
-
-        INNER JOIN users u
-          ON u.id = t.teacher_id
-
-        ORDER BY
-          u.name ASC
+        INNER JOIN users u ON u.id = t.teacher_id
+        ORDER BY u.name ASC
       `,
     );
 
@@ -338,6 +332,119 @@ exports.getTeachers = async (req, res) => {
   }
 };
 
+
+// =========================================================
+// CREATE / UPDATE / DELETE SUBJECTS (DATABASE-DRIVEN)
+// =========================================================
+const crypto = require("crypto");
+
+exports.createSubject = async (req, res) => {
+  const { name, program, semester, subjectId } = req.body;
+  const cleanName = String(name || "").trim();
+  const cleanProgram = String(program || "").trim();
+  const cleanSemester = Number(semester);
+  const id = String(subjectId || crypto.randomUUID()).trim();
+
+  if (!cleanName || !cleanProgram || !Number.isInteger(cleanSemester)) {
+    return res.status(400).json({ error: "Subject name, programme, and semester are required" });
+  }
+
+  try {
+    if (!(await isValidProgrammeSemester(cleanProgram, cleanSemester))) {
+      return res.status(400).json({ error: "Select a programme and semester configured in the database" });
+    }
+
+    const result = await db.query(
+      `INSERT INTO subjects (subject_id, name, program, semester)
+       VALUES ($1, $2, $3, $4)
+       RETURNING subject_id, name, program, semester, teacher_id, threshold, total_students`,
+      [id, cleanName, cleanProgram, cleanSemester],
+    );
+
+    await db.query(
+      `INSERT INTO enrollments (student_id, subject_id)
+       SELECT s.student_id, $1 FROM students s
+       WHERE s.program = $2 AND s.semester = $3
+       ON CONFLICT (student_id, subject_id) DO NOTHING`,
+      [id, cleanProgram, cleanSemester],
+    );
+
+    const count = await db.query(`SELECT COUNT(*)::int AS count FROM enrollments WHERE subject_id = $1`, [id]);
+    await db.query(`UPDATE subjects SET total_students = $1 WHERE subject_id = $2`, [count.rows[0].count, id]);
+
+    return res.status(201).json({ subject: { ...result.rows[0], total_students: count.rows[0].count } });
+  } catch (err) {
+    console.error("ADMIN CREATE SUBJECT ERROR:", err);
+    return res.status(err.code === "23505" ? 409 : 500).json({
+      error: err.code === "23505" ? "That subject ID already exists" : "Failed to create subject",
+    });
+  }
+};
+
+exports.updateSubject = async (req, res) => {
+  const { subjectId } = req.params;
+  const { name, program, semester } = req.body;
+  const cleanName = String(name || "").trim();
+  const cleanProgram = String(program || "").trim();
+  const cleanSemester = Number(semester);
+
+  if (!cleanName || !cleanProgram || !Number.isInteger(cleanSemester)) {
+    return res.status(400).json({ error: "Subject name, programme, and semester are required" });
+  }
+
+  try {
+    if (!(await isValidProgrammeSemester(cleanProgram, cleanSemester))) {
+      return res.status(400).json({ error: "Select a programme and semester configured in the database" });
+    }
+
+    const result = await db.query(
+      `UPDATE subjects SET name = $1, program = $2, semester = $3
+       WHERE subject_id = $4
+       RETURNING subject_id, name, program, semester, teacher_id, threshold, total_students`,
+      [cleanName, cleanProgram, cleanSemester, subjectId],
+    );
+    if (!result.rows.length) return res.status(404).json({ error: "Subject not found" });
+
+    // Keep enrollment membership synchronized with the database programme/semester.
+    await db.query(
+      `DELETE FROM enrollments e
+       USING students s
+       WHERE e.student_id = s.student_id
+         AND e.subject_id = $1
+         AND (s.program <> $2 OR s.semester <> $3)`,
+      [subjectId, cleanProgram, cleanSemester],
+    );
+    await db.query(
+      `INSERT INTO enrollments (student_id, subject_id)
+       SELECT s.student_id, $1 FROM students s
+       WHERE s.program = $2 AND s.semester = $3
+       ON CONFLICT (student_id, subject_id) DO NOTHING`,
+      [subjectId, cleanProgram, cleanSemester],
+    );
+    const count = await db.query(`SELECT COUNT(*)::int AS count FROM enrollments WHERE subject_id = $1`, [subjectId]);
+    await db.query(`UPDATE subjects SET total_students = $1 WHERE subject_id = $2`, [count.rows[0].count, subjectId]);
+
+    return res.json({ subject: { ...result.rows[0], total_students: count.rows[0].count } });
+  } catch (err) {
+    console.error("ADMIN UPDATE SUBJECT ERROR:", err);
+    return res.status(500).json({ error: "Failed to update subject" });
+  }
+};
+
+exports.deleteSubject = async (req, res) => {
+  try {
+    const result = await db.query(
+      `DELETE FROM subjects WHERE subject_id = $1 RETURNING subject_id, name`,
+      [req.params.subjectId],
+    );
+    if (!result.rows.length) return res.status(404).json({ error: "Subject not found" });
+    return res.json({ message: "Subject deleted", subject: result.rows[0] });
+  } catch (err) {
+    console.error("ADMIN DELETE SUBJECT ERROR:", err);
+    return res.status(500).json({ error: "Failed to delete subject" });
+  }
+};
+
 // =========================================================
 // GET ALL SUBJECTS
 // =========================================================
@@ -348,6 +455,9 @@ exports.getSubjects = async (req, res) => {
       `
         SELECT
           s.subject_id,
+          s.name,
+          s.program,
+          s.semester,
           s.teacher_id,
           u.name AS teacher_name,
           u.email AS teacher_email,
@@ -363,29 +473,11 @@ exports.getSubjects = async (req, res) => {
           ON u.id = t.teacher_id
 
         ORDER BY
-          s.subject_id ASC
+          s.program ASC, s.semester ASC, s.name ASC
       `,
     );
 
-    const subjects = result.rows.map((subject) => {
-      const details = getSubjectDetails(subject.subject_id);
-
-      return {
-        subject_id: subject.subject_id,
-
-        // Comes from programmes.js
-        name: details?.name || "Unknown Subject",
-        program: details?.program || null,
-        semester: details?.semester || null,
-
-        teacher_id: subject.teacher_id,
-        teacher_name: subject.teacher_name,
-        teacher_email: subject.teacher_email,
-
-        threshold: subject.threshold,
-        total_students: subject.total_students,
-      };
-    });
+    const subjects = result.rows;
 
     return res.json({
       subjects,
@@ -415,14 +507,14 @@ exports.assignTeacherToSubject = async (req, res) => {
   }
 
   // -------------------------------------------------------
-  // Make sure subject exists in programmes.js
+  // Make sure subject exists in the database
   // -------------------------------------------------------
 
-  const subjectDetails = getSubjectDetails(subjectId);
+  const subjectDetails = await getSubjectDetails(subjectId);
 
   if (!subjectDetails) {
     return res.status(404).json({
-      error: "Subject does not exist in programmes.js",
+      error: "Subject not found in database",
     });
   }
 
@@ -522,11 +614,11 @@ exports.assignTeacherToSubject = async (req, res) => {
 exports.removeTeacherFromSubject = async (req, res) => {
   const { subjectId } = req.params;
 
-  const subjectDetails = getSubjectDetails(subjectId);
+  const subjectDetails = await getSubjectDetails(subjectId);
 
   if (!subjectDetails) {
     return res.status(404).json({
-      error: "Subject does not exist in programmes.js",
+      error: "Subject not found in database",
     });
   }
 
@@ -598,11 +690,11 @@ exports.removeTeacherFromSubject = async (req, res) => {
 exports.getSubjectStudents = async (req, res) => {
   const { subjectId } = req.params;
 
-  const subjectDetails = getSubjectDetails(subjectId);
+  const subjectDetails = await getSubjectDetails(subjectId);
 
   if (!subjectDetails) {
     return res.status(404).json({
-      error: "Subject does not exist in programmes.js",
+      error: "Subject not found in database",
     });
   }
 
@@ -679,11 +771,11 @@ exports.enrollStudent = async (req, res) => {
     });
   }
 
-  const subjectDetails = getSubjectDetails(subjectId);
+  const subjectDetails = await getSubjectDetails(subjectId);
 
   if (!subjectDetails) {
     return res.status(404).json({
-      error: "Subject does not exist in programmes.js",
+      error: "Subject not found in database",
     });
   }
 
@@ -830,11 +922,11 @@ exports.enrollStudent = async (req, res) => {
 exports.removeStudentFromSubject = async (req, res) => {
   const { subjectId, studentId } = req.params;
 
-  const subjectDetails = getSubjectDetails(subjectId);
+  const subjectDetails = await getSubjectDetails(subjectId);
 
   if (!subjectDetails) {
     return res.status(404).json({
-      error: "Subject does not exist in programmes.js",
+      error: "Subject not found in database",
     });
   }
 
@@ -899,6 +991,781 @@ exports.removeStudentFromSubject = async (req, res) => {
 
     return res.status(500).json({
       error: "Failed to remove student",
+    });
+  }
+};
+
+// =========================================================
+
+/** Delete a student account from the admin student list. */
+exports.deleteStudent = async (req, res) => {
+  const studentId = String(req.params.studentId || "").trim();
+  if (!studentId) return res.status(400).json({ error: "Student ID is required." });
+  let client;
+  try {
+    client = await db.pool.connect();
+    await client.query("BEGIN");
+    const result = await client.query(
+      `DELETE FROM users WHERE id = $1 AND role = 'student' RETURNING id, name`,
+      [studentId],
+    );
+    if (!result.rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Student not found." });
+    }
+    await client.query("COMMIT");
+    return res.json({ message: `Student ${result.rows[0].name} deleted successfully.` });
+  } catch (err) {
+    if (client) { try { await client.query("ROLLBACK"); } catch (_) {} }
+    console.error("ADMIN DELETE STUDENT ERROR:", err);
+    return res.status(500).json({ error: "Failed to delete student. Related records may prevent deletion." });
+  } finally {
+    if (client) client.release();
+  }
+};
+
+// STUDENT SPREADSHEET IMPORT / EXPORT
+// =========================================================
+
+const bcrypt = require("bcryptjs");
+
+exports.importStudents = async (req, res) => {
+  const rows = req.body?.students;
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return res.status(400).json({
+      error: "Upload a CSV template containing at least one student row.",
+    });
+  }
+
+  if (rows.length > 2000) {
+    return res.status(400).json({
+      error: "A maximum of 2,000 students can be imported at once.",
+    });
+  }
+
+  const normalizeEmail = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase();
+  const seenEmails = new Map();
+  const duplicateRows = [];
+
+  rows.forEach((row, index) => {
+    const email = normalizeEmail(row?.email);
+    if (!email) return;
+    if (seenEmails.has(email)) {
+      duplicateRows.push({
+        row: index + 2,
+        email,
+        error: `Email is repeated in this file (first appears on row ${seenEmails.get(email)}).`,
+      });
+    } else {
+      seenEmails.set(email, index + 2);
+    }
+  });
+
+  if (duplicateRows.length) {
+    return res.status(400).json({
+      error:
+        "The file contains duplicate email addresses. Correct these rows and import again.",
+      rowErrors: duplicateRows,
+    });
+  }
+
+  const results = {
+    created: 0,
+    updated: 0,
+    failed: 0,
+    rows: [],
+  };
+
+  for (let index = 0; index < rows.length; index += 1) {
+    const rowNumber = index + 2;
+    const row = rows[index] || {};
+    const name = String(row.name || "").trim();
+    const email = normalizeEmail(row.email);
+    const department = String(row.department || "").trim() || null;
+    const institution = String(row.institution || "").trim() || null;
+    const rollNo = String(row.roll_no || "").trim();
+    const program = String(row.program || "").trim();
+    const semester = Number(row.semester);
+    const avatar = String(row.avatar || "").trim() || null;
+
+    const fail = (message) => {
+      results.failed += 1;
+      results.rows.push({
+        row: rowNumber,
+        email: email || null,
+        status: "failed",
+        message,
+      });
+    };
+
+    if (!name || !email || !rollNo || !program || !row.semester) {
+      fail("name, email, roll_no, program, and semester are required.");
+      continue;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      fail("Email address is not valid.");
+      continue;
+    }
+
+    if (
+      !Number.isInteger(semester) ||
+      !(await isValidProgrammeSemester(program, semester))
+    ) {
+      fail(
+        "Invalid program and semester combination. Use the exact program names and valid semesters configured in the database.",
+      );
+      continue;
+    }
+
+    const client = await db.pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      const existing = await client.query(
+        `SELECT id, role FROM users WHERE LOWER(email) = $1 FOR UPDATE`,
+        [email],
+      );
+
+      if (existing.rows.length) {
+        const user = existing.rows[0];
+
+        if (user.role !== "student") {
+          await client.query("ROLLBACK");
+          fail(
+            "This email belongs to a non-student account; it was not changed.",
+          );
+          continue;
+        }
+
+        const profile = await client.query(
+          `SELECT student_id FROM students WHERE student_id = $1`,
+          [user.id],
+        );
+
+        if (!profile.rows.length) {
+          await client.query("ROLLBACK");
+          fail(
+            "The account is marked as a student but has no student profile.",
+          );
+          continue;
+        }
+
+        // Deliberately never update users.email or users.password.
+        await client.query(
+          `UPDATE users
+             SET name = $1,
+                 department = $2,
+                 institution = $3,
+                 avatar = COALESCE($4, avatar)
+           WHERE id = $5`,
+          [name, department, institution, avatar, user.id],
+        );
+
+        // Only the student's academic fields are updated. Face data,
+        // attendance, enrollments, account email and password are preserved.
+        await client.query(
+          `UPDATE students
+              SET roll_no = $1, program = $2, semester = $3
+            WHERE student_id = $4`,
+          [rollNo, program, semester, user.id],
+        );
+
+        await client.query("COMMIT");
+        results.updated += 1;
+        results.rows.push({
+          row: rowNumber,
+          email,
+          status: "updated",
+          message: "Existing student updated; email and password preserved.",
+        });
+      } else {
+        const hashedPassword = await bcrypt.hash("12345678", 10);
+        const userResult = await client.query(
+          `INSERT INTO users (name, email, password, department, institution, role, avatar)
+           VALUES ($1, $2, $3, $4, $5, 'student', $6)
+           RETURNING id`,
+          [
+            name,
+            email,
+            hashedPassword,
+            department,
+            institution,
+            avatar || "https://i.pravatar.cc/150",
+          ],
+        );
+
+        const studentId = userResult.rows[0].id;
+
+        await client.query(
+          `INSERT INTO students (student_id, roll_no, program, semester)
+           VALUES ($1, $2, $3, $4)`,
+          [studentId, rollNo, program, semester],
+        );
+
+        await client.query("COMMIT");
+        results.created += 1;
+        results.rows.push({
+          row: rowNumber,
+          email,
+          status: "created",
+          message: "New student created with the default password 12345678.",
+        });
+      }
+    } catch (err) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (_) {}
+      console.error(`ADMIN STUDENT IMPORT ROW ${rowNumber} ERROR:`, err);
+      fail(
+        err.code === "23505"
+          ? "A unique field conflicts with another record."
+          : "Database error while processing this row.",
+      );
+    } finally {
+      client.release();
+    }
+  }
+
+  return res.json({
+    message: "Student import processed.",
+    summary: {
+      total: rows.length,
+      created: results.created,
+      updated: results.updated,
+      failed: results.failed,
+    },
+    rows: results.rows,
+  });
+};
+
+// Export endpoint intentionally returns only safe student fields; password hashes
+// and internal authentication data are never exposed.
+exports.exportStudents = async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT
+         u.name, u.email, u.department, u.institution, u.avatar,
+         s.roll_no, s.program, s.semester
+       FROM students s
+       INNER JOIN users u ON u.id = s.student_id
+       ORDER BY s.program ASC, s.semester ASC, s.roll_no ASC, u.name ASC`,
+    );
+
+    return res.json({ students: result.rows });
+  } catch (err) {
+    console.error("ADMIN EXPORT STUDENTS ERROR:", err);
+    return res.status(500).json({ error: "Failed to export students." });
+  }
+};
+
+// =========================================================
+// TEACHER SPREADSHEET IMPORT / EXPORT
+// Columns: name, email, department, institution
+// Existing teacher email/password are never changed.
+// =========================================================
+
+exports.importTeachers = async (req, res) => {
+  const rows = req.body?.teachers;
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return res
+      .status(400)
+      .json({ error: "Upload a CSV with at least one teacher row." });
+  }
+  if (rows.length > 2000) {
+    return res
+      .status(400)
+      .json({ error: "A maximum of 2,000 teachers can be imported at once." });
+  }
+
+  const normalizeEmail = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase();
+  const seen = new Map();
+  const duplicateErrors = [];
+  rows.forEach((row, i) => {
+    const email = normalizeEmail(row?.email);
+    if (!email) return;
+    if (seen.has(email))
+      duplicateErrors.push({
+        row: i + 2,
+        email,
+        error: `Email is repeated in this file (first appears on row ${seen.get(email)}).`,
+      });
+    else seen.set(email, i + 2);
+  });
+  if (duplicateErrors.length) {
+    return res.status(400).json({
+      error: "Duplicate emails found. Correct the listed rows and retry.",
+      rowErrors: duplicateErrors,
+    });
+  }
+
+  const summary = { total: rows.length, created: 0, updated: 0, failed: 0 };
+  const results = [];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i] || {};
+    const rowNumber = i + 2;
+    const name = String(row.name || "").trim();
+    const email = normalizeEmail(row.email);
+    const department = String(row.department || "").trim() || null;
+    const institution = String(row.institution || "").trim() || null;
+    const fail = (message) => {
+      summary.failed++;
+      results.push({
+        row: rowNumber,
+        email: email || null,
+        status: "failed",
+        message,
+      });
+    };
+
+    if (!name || !email) {
+      fail("name and email are required.");
+      continue;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      fail("Email address is invalid.");
+      continue;
+    }
+
+    const client = await db.pool.connect();
+    try {
+      await client.query("BEGIN");
+      const existing = await client.query(
+        "SELECT id, role FROM users WHERE LOWER(email) = $1 FOR UPDATE",
+        [email],
+      );
+      if (existing.rows.length) {
+        const user = existing.rows[0];
+        if (user.role !== "teacher") {
+          await client.query("ROLLBACK");
+          fail(
+            "This email belongs to a non-teacher account; it was not changed.",
+          );
+          continue;
+        }
+        const profile = await client.query(
+          "SELECT teacher_id FROM teachers WHERE teacher_id = $1",
+          [user.id],
+        );
+        if (!profile.rows.length) {
+          await client.query("ROLLBACK");
+          fail("Teacher account has no teacher profile.");
+          continue;
+        }
+        await client.query(
+          "UPDATE users SET name = $1, department = $2, institution = $3 WHERE id = $4",
+          [name, department, institution, user.id],
+        );
+        await client.query("COMMIT");
+        summary.updated++;
+        results.push({
+          row: rowNumber,
+          email,
+          status: "updated",
+          message: "Teacher details updated; email and password preserved.",
+        });
+      } else {
+        const passwordHash = await bcrypt.hash("12345678", 10);
+        const userResult = await client.query(
+          `INSERT INTO users (name, email, password, department, institution, role)
+           VALUES ($1, $2, $3, $4, $5, 'teacher') RETURNING id`,
+          [name, email, passwordHash, department, institution],
+        );
+        const teacherId = userResult.rows[0].id;
+        await client.query("INSERT INTO teachers (teacher_id) VALUES ($1)", [
+          teacherId,
+        ]);
+        await client.query("COMMIT");
+        summary.created++;
+        results.push({
+          row: rowNumber,
+          email,
+          status: "created",
+          message: "Teacher account created with default password 12345678.",
+        });
+      }
+    } catch (err) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (_) {}
+      console.error(`ADMIN TEACHER IMPORT ROW ${rowNumber} ERROR:`, err);
+      fail(
+        err.code === "23505"
+          ? "A unique field conflicts with another record."
+          : "Database error while processing this row.",
+      );
+    } finally {
+      client.release();
+    }
+  }
+  return res.json({
+    message: "Teacher import processed.",
+    summary,
+    rows: results,
+  });
+};
+
+exports.exportTeachers = async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT u.name, u.email, u.department, u.institution
+       FROM teachers t
+       INNER JOIN users u ON u.id = t.teacher_id
+       ORDER BY u.name ASC`,
+    );
+    return res.json({ teachers: result.rows });
+  } catch (err) {
+    console.error("ADMIN EXPORT TEACHERS ERROR:", err);
+    return res.status(500).json({ error: "Failed to export teachers." });
+  }
+};
+
+/**
+ * Import teachers from spreadsheet data.
+ * Expected columns: name, email, department, institution
+ */
+exports.importTeachers = async (req, res) => {
+  const rows = req.body?.teachers;
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return res.status(400).json({
+      error: "Upload a CSV with at least one teacher row.",
+    });
+  }
+
+  if (rows.length > 2000) {
+    return res.status(400).json({
+      error: "A maximum of 2,000 teachers can be imported at once.",
+    });
+  }
+
+  const normalizeEmail = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase();
+
+  const seen = new Set();
+
+  for (let i = 0; i < rows.length; i++) {
+    const email = normalizeEmail(rows[i]?.email);
+
+    if (!rows[i]?.name?.trim?.() || !email) {
+      return res.status(400).json({
+        error: `Row ${i + 2}: name and email are required.`,
+      });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({
+        error: `Row ${i + 2}: invalid email address.`,
+      });
+    }
+
+    if (seen.has(email)) {
+      return res.status(400).json({
+        error: `Duplicate email in uploaded file: ${email}`,
+      });
+    }
+
+    seen.add(email);
+  }
+
+  const summary = {
+    total: rows.length,
+    created: 0,
+    updated: 0,
+    failed: 0,
+  };
+
+  const results = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowNumber = i + 2;
+    const name = String(row.name || "").trim();
+    const email = normalizeEmail(row.email);
+    const department = String(row.department || "").trim() || null;
+    const institution = String(row.institution || "").trim() || null;
+
+    let client;
+
+    try {
+      client = await db.pool.connect();
+      await client.query("BEGIN");
+
+      const existing = await client.query(
+        `SELECT id, role
+         FROM users
+         WHERE LOWER(email) = $1
+         FOR UPDATE`,
+        [email],
+      );
+
+      if (existing.rows.length) {
+        const user = existing.rows[0];
+
+        if (user.role !== "teacher") {
+          await client.query("ROLLBACK");
+          summary.failed++;
+          results.push({
+            row: rowNumber,
+            email,
+            status: "failed",
+            message: "Email belongs to a non-teacher account.",
+          });
+          continue;
+        }
+
+        const profile = await client.query(
+          `SELECT teacher_id
+           FROM teachers
+           WHERE teacher_id = $1`,
+          [user.id],
+        );
+
+        if (!profile.rows.length) {
+          await client.query("ROLLBACK");
+          summary.failed++;
+          results.push({
+            row: rowNumber,
+            email,
+            status: "failed",
+            message: "Teacher profile not found.",
+          });
+          continue;
+        }
+
+        // Preserve the existing email and password.
+        await client.query(
+          `UPDATE users
+           SET name = $1,
+               department = $2,
+               institution = $3
+           WHERE id = $4`,
+          [name, department, institution, user.id],
+        );
+
+        await client.query("COMMIT");
+        summary.updated++;
+
+        results.push({
+          row: rowNumber,
+          email,
+          status: "updated",
+          message: "Teacher details updated.",
+        });
+      } else {
+        const passwordHash = await bcrypt.hash("12345678", 10);
+
+        const userResult = await client.query(
+          `INSERT INTO users
+             (name, email, password, department, institution, role)
+           VALUES ($1, $2, $3, $4, $5, 'teacher')
+           RETURNING id`,
+          [name, email, passwordHash, department, institution],
+        );
+
+        const teacherId = userResult.rows[0].id;
+
+        await client.query(
+          `INSERT INTO teachers (teacher_id)
+           VALUES ($1)`,
+          [teacherId],
+        );
+
+        await client.query("COMMIT");
+        summary.created++;
+
+        results.push({
+          row: rowNumber,
+          email,
+          status: "created",
+          message: "Teacher created with default password 12345678.",
+        });
+      }
+    } catch (err) {
+      if (client) {
+        try {
+          await client.query("ROLLBACK");
+        } catch (_) {}
+      }
+
+      console.error("ADMIN TEACHER IMPORT ERROR:", err);
+      summary.failed++;
+
+      results.push({
+        row: rowNumber,
+        email,
+        status: "failed",
+        message:
+          err.code === "23505"
+            ? "A unique field conflicts with another record."
+            : "Database error while processing this teacher.",
+      });
+    } finally {
+      if (client) client.release();
+    }
+  }
+
+  return res.json({
+    message: "Teacher import processed.",
+    summary,
+    rows: results,
+  });
+};
+
+/**
+ * Export teacher details.
+ * Never return password hashes.
+ */
+exports.exportTeachers = async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT u.name, u.email, u.department, u.institution
+       FROM teachers t
+       INNER JOIN users u ON u.id = t.teacher_id
+       ORDER BY u.name ASC`,
+    );
+
+    return res.json({ teachers: result.rows });
+  } catch (err) {
+    console.error("ADMIN EXPORT TEACHERS ERROR:", err);
+
+    return res.status(500).json({
+      error: "Failed to export teachers.",
+    });
+  }
+};
+
+/**
+ * Delete a teacher account.
+ */
+exports.deleteTeacher = async (req, res) => {
+  const teacherId = String(req.params.teacherId || "").trim();
+
+  if (!teacherId) {
+    return res.status(400).json({
+      error: "Teacher ID is required.",
+    });
+  }
+
+  let client;
+
+  try {
+    client = await db.pool.connect();
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `DELETE FROM users
+       WHERE id = $1
+         AND role = 'teacher'
+       RETURNING id, name`,
+      [teacherId],
+    );
+
+    if (!result.rows.length) {
+      await client.query("ROLLBACK");
+
+      return res.status(404).json({
+        error: "Teacher not found.",
+      });
+    }
+
+    await client.query("COMMIT");
+
+    return res.json({
+      message: `Teacher ${result.rows[0].name} deleted successfully.`,
+    });
+  } catch (err) {
+    if (client) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (_) {}
+    }
+
+    console.error("ADMIN DELETE TEACHER ERROR:", err);
+
+    return res.status(500).json({
+      error: "Failed to delete teacher.",
+    });
+  } finally {
+    if (client) client.release();
+  }
+};
+
+exports.updateTeacher = async (req, res) => {
+  const { teacherId } = req.params;
+  const { name, email, department, institution } = req.body;
+
+  const cleanName = String(name || "").trim();
+  const cleanEmail = String(email || "")
+    .trim()
+    .toLowerCase();
+
+  if (!cleanName || !cleanEmail) {
+    return res.status(400).json({
+      error: "Name and email are required.",
+    });
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    return res.status(400).json({
+      error: "Enter a valid email address.",
+    });
+  }
+
+  try {
+    const result = await db.query(
+      `UPDATE users
+       SET name = $1,
+           email = $2,
+           department = $3,
+           institution = $4
+       WHERE id = $5
+         AND role = 'teacher'
+         AND EXISTS (
+           SELECT 1 FROM teachers
+           WHERE teachers.teacher_id = users.id
+         )
+       RETURNING id, name, email, department, institution`,
+      [
+        cleanName,
+        cleanEmail,
+        String(department || "").trim() || null,
+        String(institution || "").trim() || null,
+        teacherId,
+      ],
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        error: "Teacher not found.",
+      });
+    }
+
+    return res.json({
+      message: "Teacher updated successfully.",
+      teacher: result.rows[0],
+    });
+  } catch (err) {
+    if (err.code === "23505") {
+      return res.status(409).json({
+        error: "That email address is already in use.",
+      });
+    }
+
+    console.error("ADMIN UPDATE TEACHER ERROR:", err);
+
+    return res.status(500).json({
+      error: "Failed to update teacher.",
     });
   }
 };

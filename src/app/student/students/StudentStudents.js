@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
+import SubjectContext from "../../../context/subject/SubjectContext";
 import { useParams } from "react-router-dom";
 
 import useDelayedLoading from "../../../hooks/useDelayedLoading";
@@ -8,38 +9,6 @@ import "./StudentStudents.css";
 
 const API_BASE =
   process.env.REACT_APP_BACKEND_URL;
-
-const getSubjectName = (subjectId) => {
-  try {
-    // eslint-disable-next-line global-require
-    const { PROGRAMMES } = require("../../../data/programmes");
-
-    for (const programmeData of Object.values(
-      PROGRAMMES,
-    )) {
-      for (const subjects of Object.values(
-        programmeData.semesters || {},
-      )) {
-        const subject = subjects.find(
-          (item) =>
-            String(item.id) ===
-            String(subjectId),
-        );
-
-        if (subject) {
-          return subject.name;
-        }
-      }
-    }
-  } catch (error) {
-    console.error(
-      "Failed to resolve subject name:",
-      error,
-    );
-  }
-
-  return subjectId;
-};
 
 const getStudentRoster = async (
   subjectId,
@@ -73,6 +42,7 @@ const getStudentRoster = async (
 const StudentStudents = () => {
   const { subjectId } =
     useParams();
+  const { activeSubject } = useContext(SubjectContext);
 
   const [students, setStudents] =
     useState([]);
@@ -83,8 +53,7 @@ const StudentStudents = () => {
   const [error, setError] =
     useState("");
 
-  const subjectName =
-    getSubjectName(subjectId);
+  const subjectName = activeSubject?.name || "Subject";
 
   useEffect(() => {
     if (!subjectId) return;

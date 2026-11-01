@@ -8,38 +8,6 @@ import "./StudentReports.css";
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL;
 
-const getSubjectName = (subjectId) => {
-  try {
-    // eslint-disable-next-line global-require
-    const { PROGRAMMES } = require("../../../data/programmes");
-
-    for (const programmeData of Object.values(
-      PROGRAMMES,
-    )) {
-      for (const subjects of Object.values(
-        programmeData.semesters || {},
-      )) {
-        const subject = subjects.find(
-          (item) =>
-            String(item.id) ===
-            String(subjectId),
-        );
-
-        if (subject) {
-          return subject.name;
-        }
-      }
-    }
-  } catch (error) {
-    console.error(
-      "Failed to resolve subject name:",
-      error,
-    );
-  }
-
-  return subjectId;
-};
-
 const getStudentReports = async (
   subjectId,
 ) => {
@@ -80,6 +48,26 @@ const StudentReports = () => {
 
   const [error, setError] =
     useState("");
+  const [subjectName, setSubjectName] = useState("Loading subject…");
+
+  useEffect(() => {
+    let ignore = false;
+    const loadSubject = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE}api/subject/${encodeURIComponent(subjectId)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error || "Failed to load subject");
+        if (!ignore) setSubjectName(data.name || data.subject_name || "Subject");
+      } catch (err) {
+        if (!ignore) setSubjectName("Subject");
+      }
+    };
+    if (subjectId) loadSubject();
+    return () => { ignore = true; };
+  }, [subjectId]);
 
   useEffect(() => {
     if (!subjectId) return;
@@ -162,9 +150,6 @@ const StudentReports = () => {
   const thresholdGap =
     Number(details.myAttendance || 0) -
     Number(details.threshold || 0);
-
-  const subjectName =
-    getSubjectName(subjectId);
 
   const overviewCards = [
     {

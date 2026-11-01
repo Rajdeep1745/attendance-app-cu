@@ -10,6 +10,7 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/usersRoutes");
 const faceRoutes = require("./routes/faceRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const academicRoutes = require("./routes/academicRoutes");
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/face", faceRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/academic", academicRoutes);
 
 app.use("/health", (req, res) => {
   res.status(200).json({ status: "API is running" });

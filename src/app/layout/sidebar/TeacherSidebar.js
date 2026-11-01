@@ -1,324 +1,301 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useMemo } from "react";
 import SubjectContext from "../../../context/subject/SubjectContext";
-
 import "./Sidebar.css";
-import { PROGRAMMES } from "../../../data/programmes";
 
 const TeacherSidebar = ({ isOpen }) => {
   const { userId, subjectId } = useParams();
   const navigate = useNavigate();
-
   const { setActiveSubject } = useContext(SubjectContext);
 
-  // Subjects actually owned by the logged-in teacher
   const [teacherSubjects, setTeacherSubjects] = useState([]);
-
   const [subjectsLoading, setSubjectsLoading] = useState(true);
-
-  // Expanding folder state
-  const [expandedProgrammes, setExpandedProgrammes] = useState({
-    "B.Tech": true,
-    "M.Tech": false,
-    MSc: false,
-    MCA: false,
-  });
-
+  const [loadError, setLoadError] = useState("");
+  const [expandedPrograms, setExpandedPrograms] = useState({});
   const [expandedSemesters, setExpandedSemesters] = useState({});
 
-  // Currently selected subject
-  const [selectedSubject, setSelectedSubject] = useState(null);
-
-  // ---------------------------------------------------------
-  // FETCH TEACHER SUBJECTS
-  // ---------------------------------------------------------
-
   useEffect(() => {
-    const fetchTeacherSubjects = async () => {
+    let ignore = false;
+
+    const loadTeacherSubjects = async () => {
+      setSubjectsLoading(true);
+      setLoadError("");
+
       try {
-        setSubjectsLoading(true);
-
         const token = localStorage.getItem("token");
-
         if (!token) {
-          setTeacherSubjects([]);
-          return;
+          throw new Error("Your session has expired. Please sign in again.");
         }
 
-        const res = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}api/subject/teacher`,
+        const baseUrl = process.env.REACT_APP_BACKEND_URL;
+        if (!baseUrl) {
+          throw new Error("Backend URL is not configured.");
+        }
+
+        const response = await fetch(
+          `${baseUrl.replace(/\/?$/, "/")}api/subject/teacher`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           },
         );
 
-        const data = await res.json();
+        const data = await response.json();
 
-        if (!res.ok) {
-          throw new Error(data?.error || "Failed to fetch teacher subjects");
+        if (!response.ok) {
+          throw new Error(data?.error || "Failed to fetch assigned subjects.");
         }
 
         if (!Array.isArray(data)) {
-          throw new Error("Invalid subjects response from server");
+          throw new Error("The server returned an invalid subjects response.");
         }
 
-        setTeacherSubjects(data);
-      } catch (err) {
-        console.error("[TeacherSidebar] Failed to fetch subjects:", err);
+        if (!ignore) {
+          setTeacherSubjects(
+            data.map((subject) => ({
+              ...subject,
+              subject_id: String(subject.subject_id),
+              name: subject.name || "Unnamed subject",
+              program: subject.program || "Program not set",
+              semester: subject.semester,
+            })),
+          );
+        }
+      } catch (error) {
+        console.error("[TeacherSidebar] Failed to fetch subjects:", error);
 
-        setTeacherSubjects([]);
+        if (!ignore) {
+          setTeacherSubjects([]);
+          setLoadError(error.message || "Unable to load subjects.");
+        }
       } finally {
-        setSubjectsLoading(false);
+        if (!ignore) setSubjectsLoading(false);
       }
     };
 
-    fetchTeacherSubjects();
+    loadTeacherSubjects();
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
-  // ---------------------------------------------------------
-  // RESTORE SELECTED SUBJECT
-  // ---------------------------------------------------------
-
-  useEffect(() => {
-    if (!subjectId) {
-      setSelectedSubject(null);
-      return;
+  const getSemesterLabel = (semester) => {
+    if (
+      semester === null ||
+      semester === undefined ||
+      String(semester).trim() === ""
+    ) {
+      return "Semester not set";
     }
 
-    const subject = teacherSubjects.find(
-      (item) => String(item.subject_id) === String(subjectId),
-    );
+    const value = String(semester).trim();
 
-    if (!subject) {
-      return;
-    }
+    return /^semester\s/i.test(value) ? value : `Semester ${value}`;
+  };
 
-    // Find curriculum information for display/tree position
-    let curriculumSubject = null;
-    let curriculumProgramme = null;
-    let curriculumSemester = null;
+  const groupedSubjects = useMemo(() => {
+    const programs = new Map();
 
-    for (const [programme, programmeData] of Object.entries(PROGRAMMES)) {
-      for (const [semester, subjects] of Object.entries(
-        programmeData.semesters,
-      )) {
-        const match = subjects.find(
-          (item) => String(item.id) === String(subject.subject_id),
+    teacherSubjects.forEach((subject) => {
+      const program = String(subject.program || "Program not set").trim();
+
+      const semesterLabel = getSemesterLabel(subject.semester);
+      const semesterKey = `${program}__${semesterLabel}`;
+
+      if (!programs.has(program)) {
+        programs.set(program, {
+          program,
+          semesters: new Map(),
+        });
+      }
+
+      const programGroup = programs.get(program);
+
+      if (!programGroup.semesters.has(semesterKey)) {
+        const semesterNumber = Number(
+          String(subject.semester ?? "").replace(/[^0-9]/g, ""),
         );
 
-        if (match) {
-          curriculumSubject = match;
-          curriculumProgramme = programme;
-          curriculumSemester = semester;
-          break;
-        }
+        programGroup.semesters.set(semesterKey, {
+          key: semesterKey,
+          label: semesterLabel,
+          order:
+            Number.isFinite(semesterNumber) && semesterNumber > 0
+              ? semesterNumber
+              : 999,
+          subjects: [],
+        });
       }
 
-      if (curriculumSubject) {
-        break;
-      }
-    }
-
-    setSelectedSubject({
-      subjectId: subject.subject_id,
-      name: subject.name,
-      programme: curriculumProgramme,
-      semester: curriculumSemester,
+      programGroup.semesters.get(semesterKey).subjects.push(subject);
     });
-  }, [subjectId, teacherSubjects]);
 
-  // ---------------------------------------------------------
-  // SUBJECT CLICK
-  // ---------------------------------------------------------
+    return Array.from(programs.values())
+      .sort((a, b) => a.program.localeCompare(b.program))
+      .map((programGroup) => ({
+        ...programGroup,
+        semesters: Array.from(programGroup.semesters.values())
+          .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label))
+          .map((semesterGroup) => ({
+            ...semesterGroup,
+            subjects: semesterGroup.subjects.sort((a, b) =>
+              a.name.localeCompare(b.name),
+            ),
+          })),
+      }));
+  }, [teacherSubjects]);
 
-  const handleSubjectClick = (programme, semester, curriculumSubject) => {
-    /*
-     * IMPORTANT:
-     *
-     * curriculumSubject.id is the backend subject_id.
-     *
-     * Example:
-     * Physics -> bt1_phy
-     */
+  useEffect(() => {
+    if (!subjectId) return;
 
-    const subjectId = curriculumSubject.id;
-
-    if (!subjectId) {
-      console.error("[TeacherSidebar] Subject has no ID:", curriculumSubject);
-      return;
-    }
-
-    // Make sure this subject actually belongs to this teacher.
-    const backendSubject = teacherSubjects.find(
+    const activeSubject = teacherSubjects.find(
       (subject) => String(subject.subject_id) === String(subjectId),
     );
 
-    if (!backendSubject) {
-      console.error(
-        "[TeacherSidebar] Subject is not owned by this teacher:",
-        subjectId,
-      );
-      return;
-    }
+    if (!activeSubject) return;
 
-    const selected = {
-      subjectId,
-      name: backendSubject.name || curriculumSubject.name,
-      programme,
-      semester,
-    };
+    const program = String(activeSubject.program || "Program not set").trim();
 
-    // Save selected subject for UI persistence
-    localStorage.setItem("selectedSubject", JSON.stringify(selected));
+    const semesterLabel = getSemesterLabel(activeSubject.semester);
+    const semesterKey = `${program}__${semesterLabel}`;
 
-    setSelectedSubject(selected);
+    setExpandedPrograms((previous) => ({
+      ...previous,
+      [program]: true,
+    }));
 
-    // Clear old subject data immediately
+    setExpandedSemesters((previous) => ({
+      ...previous,
+      [semesterKey]: true,
+    }));
+  }, [subjectId, teacherSubjects]);
+
+  const handleSubjectClick = (subject) => {
+    localStorage.setItem(
+      "selectedSubject",
+      JSON.stringify({
+        subjectId: subject.subject_id,
+        name: subject.name,
+        program: subject.program,
+        semester: subject.semester,
+      }),
+    );
+
     setActiveSubject(null);
-
-    /*
-     * The frontend route still calls this parameter "subjectId",
-     * but the VALUE is now the backend subject_id.
-     *
-     * Example:
-     * /a3c08470-e01e-454b-8021-ec48a98c756b/bt1_phy/dashboard
-     */
-    navigate(`/${userId}/${subjectId}/dashboard`);
+    navigate(`/${userId}/${subject.subject_id}/dashboard`);
   };
-
-  // ---------------------------------------------------------
-  // FILTER CURRICULUM USING BACKEND SUBJECTS
-  // ---------------------------------------------------------
-
-  const teacherSubjectIds = new Set(
-    teacherSubjects.map((subject) => String(subject.subject_id)),
-  );
-
-  // ---------------------------------------------------------
-  // RENDER
-  // ---------------------------------------------------------
 
   return (
     <aside className={`sidebar teacher-sidebar ${isOpen ? "open" : "closed"}`}>
       <div className="sidebar-content">
         <h6 className="fw-bold mb-1">Subjects</h6>
-
-        <small className="text-muted">Select a subject to manage</small>
+        <small className="text-muted">Organized by program and semester</small>
 
         {subjectsLoading ? (
           <div className="text-muted small mt-4 px-2">Loading subjects...</div>
+        ) : loadError ? (
+          <div className="sidebar-empty-state mt-3" role="alert">
+            <strong>Could not load subjects</strong>
+            <small>{loadError}</small>
+          </div>
         ) : teacherSubjects.length === 0 ? (
-          <div className="text-muted small mt-4 px-2">No subjects found.</div>
+          <div className="sidebar-empty-state mt-4">
+            <strong>No subjects assigned</strong>
+            <small>
+              Contact the administrator if you should have subjects assigned.
+            </small>
+          </div>
         ) : (
-          <div className="list-group list-group-flush mt-3">
-            {Object.entries(PROGRAMMES).map(([programme, data]) => {
-              /*
-               * Only keep curriculum subjects that exist
-               * in the teacher's backend subject list.
-               */
-              const programmeHasSubjects = Object.values(data.semesters).some(
-                (subjects) =>
-                  subjects.some((subject) =>
-                    teacherSubjectIds.has(String(subject.id)),
-                  ),
+          <div className="list-group list-group-flush teacher-subject-tree mt-3">
+            {groupedSubjects.map((programGroup) => {
+              const programExpanded = Boolean(
+                expandedPrograms[programGroup.program],
               );
 
-              if (!programmeHasSubjects) {
-                return null;
-              }
-
               return (
-                <div key={programme} className="tree-programme">
-                  {/* PROGRAMME */}
-                  <div
-                    className="tree-programme-header"
+                <section className="tree-programme" key={programGroup.program}>
+                  <button
+                    type="button"
+                    className="tree-programme-header w-100 text-start"
                     onClick={() =>
-                      setExpandedProgrammes((prev) => ({
-                        ...prev,
-                        [programme]: !prev[programme],
+                      setExpandedPrograms((previous) => ({
+                        ...previous,
+                        [programGroup.program]: !previous[programGroup.program],
                       }))
                     }
+                    aria-expanded={programExpanded}
                   >
-                    <span>{expandedProgrammes[programme] ? "▼" : "▶"}</span>
-
-                    <span>{programme}</span>
-                  </div>
-
-                  {/* SEMESTERS */}
-                  {expandedProgrammes[programme] && (
-                    <div className="tree-semester">
-                      {Object.entries(data.semesters).map(
-                        ([semester, subjects]) => {
-                          const availableSubjects = subjects.filter((subject) =>
-                            teacherSubjectIds.has(String(subject.id)),
-                          );
-
-                          if (availableSubjects.length === 0) {
-                            return null;
-                          }
-
-                          return (
-                            <div key={semester}>
-                              {/* SEMESTER */}
-                              <div
-                                className="tree-semester-header"
-                                onClick={() =>
-                                  setExpandedSemesters((prev) => ({
-                                    ...prev,
-                                    [programme + semester]:
-                                      !prev[programme + semester],
-                                  }))
-                                }
-                              >
-                                <span>
-                                  {expandedSemesters[programme + semester]
-                                    ? "▼"
-                                    : "▶"}
-                                </span>
-
-                                <span>Semester {semester}</span>
-                              </div>
-
-                              {/* SUBJECTS */}
-                              {expandedSemesters[programme + semester] && (
-                                <div className="tree-subject-list">
-                                  {availableSubjects.map((subject) => {
-                                    const isActive =
-                                      String(selectedSubject?.subjectId) ===
-                                        String(subject.id) ||
-                                      String(subjectId) === String(subject.id);
-
-                                    return (
-                                      <div
-                                        key={subject.id}
-                                        className={`tree-subject ${
-                                          isActive ? "active" : ""
-                                        }`}
-                                        onClick={() =>
-                                          handleSubjectClick(
-                                            programme,
-                                            semester,
-                                            subject,
-                                          )
-                                        }
-                                      >
-                                        <span>•</span>
-
-                                        <span>{subject.name}</span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        },
+                    <span aria-hidden="true">
+                      {programExpanded ? "▾" : "▸"}
+                    </span>
+                    <span>{programGroup.program}</span>
+                    <span className="ms-auto teacher-tree-count">
+                      {programGroup.semesters.reduce(
+                        (total, semester) => total + semester.subjects.length,
+                        0,
                       )}
-                    </div>
-                  )}
-                </div>
+                    </span>
+                  </button>
+
+                  {programExpanded &&
+                    programGroup.semesters.map((semesterGroup) => {
+                      const semesterExpanded = Boolean(
+                        expandedSemesters[semesterGroup.key],
+                      );
+
+                      return (
+                        <div className="tree-semester" key={semesterGroup.key}>
+                          <button
+                            type="button"
+                            className="tree-semester-header w-100 text-start"
+                            onClick={() =>
+                              setExpandedSemesters((previous) => ({
+                                ...previous,
+                                [semesterGroup.key]:
+                                  !previous[semesterGroup.key],
+                              }))
+                            }
+                            aria-expanded={semesterExpanded}
+                          >
+                            <span aria-hidden="true">
+                              {semesterExpanded ? "▾" : "▸"}
+                            </span>
+                            <span>{semesterGroup.label}</span>
+                            <span className="ms-auto teacher-tree-count">
+                              {semesterGroup.subjects.length}
+                            </span>
+                          </button>
+
+                          {semesterExpanded && (
+                            <div className="tree-subject-list">
+                              {semesterGroup.subjects.map((subject) => {
+                                const active =
+                                  String(subjectId) === subject.subject_id;
+
+                                return (
+                                  <button
+                                    type="button"
+                                    key={subject.subject_id}
+                                    className={`tree-subject ${
+                                      active ? "active" : ""
+                                    }`}
+                                    onClick={() => handleSubjectClick(subject)}
+                                    aria-current={active ? "page" : undefined}
+                                    title={`${subject.name} — ${programGroup.program}, ${semesterGroup.label}`}
+                                  >
+                                    <span aria-hidden="true">•</span>
+                                    <span className="tree-subject-name">
+                                      {subject.name}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                </section>
               );
             })}
           </div>

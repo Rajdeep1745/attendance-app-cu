@@ -8,44 +8,11 @@ import "./StudentDashboard.css";
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL;
 
-const getSubjectName = (subjectId) => {
-  try {
-    // eslint-disable-next-line global-require
-    const { PROGRAMMES } = require("../../../data/programmes");
-
-    for (const [programme, programmeData] of Object.entries(
-      PROGRAMMES,
-    )) {
-      for (const [semester, subjects] of Object.entries(
-        programmeData.semesters || {},
-      )) {
-        const subject = subjects.find(
-          (item) =>
-            String(item.id) === String(subjectId),
-        );
-
-        if (subject) {
-          return {
-            name: subject.name,
-            programme,
-            semester,
-          };
-        }
-      }
-    }
-  } catch (error) {
-    console.error(
-      "Failed to resolve subject:",
-      error,
-    );
-  }
-
-  return {
-    name: subjectId,
-    programme: null,
-    semester: null,
-  };
-};
+const getSubjectName = (subjectId, details) => ({
+  name: details?.name || details?.subjectName || "Subject",
+  programme: details?.program || null,
+  semester: details?.semester || null,
+});
 
 const getStudentOverview = async (subjectId) => {
   const token = localStorage.getItem("token");
@@ -81,7 +48,7 @@ const StudentDashboard = () => {
   const [error, setError] = useState("");
 
   const subjectDetails =
-    getSubjectName(subjectId);
+    getSubjectName(subjectId, details);
 
   useEffect(() => {
     if (!subjectId) return;

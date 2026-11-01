@@ -1,33 +1,5 @@
 import { useState, useCallback } from "react";
 import SubjectContext from "./SubjectContext";
-import { PROGRAMMES } from "../../data/programmes";
-
-const findSubjectDetails = (subjectId) => {
-  if (!subjectId) {
-    return null;
-  }
-
-  for (const [programme, programmeData] of Object.entries(PROGRAMMES)) {
-    for (const [semester, subjects] of Object.entries(
-      programmeData.semesters,
-    )) {
-      const subject = subjects.find(
-        (item) => String(item.id) === String(subjectId),
-      );
-
-      if (subject) {
-        return {
-          name: subject.name,
-          programme,
-          semester,
-          subject,
-        };
-      }
-    }
-  }
-
-  return null;
-};
 
 const SubjectState = ({ children }) => {
   const [activeSubject, setActiveSubject] = useState(null);
@@ -66,9 +38,7 @@ const SubjectState = ({ children }) => {
        *
        * Match them using subject_id.
        */
-      const curriculumSubject = findSubjectDetails(
-        data.subject_id || subjectId,
-      );
+      const subjectName = data.name || data.subject_name || data.subject_id || subjectId;
 
       /*
        * Build ONE normalized activeSubject object.
@@ -89,23 +59,10 @@ const SubjectState = ({ children }) => {
   subject_id:
     data.subject_id || subjectId,
 
-  name:
-    curriculumSubject?.name ||
-    data.name ||
-    data.subject_id ||
-    subjectId,
-
-  programme:
-    curriculumSubject?.programme ||
-    null,
-
-  semester:
-    curriculumSubject?.semester ||
-    null,
-
-  subject:
-    curriculumSubject?.subject ||
-    null,
+  name: subjectName,
+  programme: data.program || null,
+  semester: data.semester || null,
+  subject: null,
 };
 
       setActiveSubject(enrichedSubject);

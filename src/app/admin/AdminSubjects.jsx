@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
+import AlertContext from "../../context/alert/AlertContext";
+import ConfirmModal from "../../components/confirm/ConfirmModal";
 
 import "./Admin.css";
 
 const AdminSubjects = () => {
   const [subjects, setSubjects] = useState([]);
   const [teachers, setTeachers] = useState([]);
+  const [academicProgrammes, setAcademicProgrammes] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -14,6 +17,19 @@ const AdminSubjects = () => {
   const [semesterFilter, setSemesterFilter] = useState("");
 
   const [teacherModal, setTeacherModal] = useState(null);
+  const [subjectEditorOpen, setSubjectEditorOpen] = useState(false);
+  const [editingSubject, setEditingSubject] = useState(null);
+  const [subjectForm, setSubjectForm] = useState({
+    subjectId: "",
+    name: "",
+    program: "",
+    semester: "",
+  });
+  const [savingSubject, setSavingSubject] = useState(false);
+  const [subjectPendingDelete, setSubjectPendingDelete] = useState(null);
+  const { showAlert } = useContext(AlertContext);
+  const programmeOptions = academicProgrammes.map((item) => item.program);
+  const semesterOptions = academicProgrammes.find((item) => item.program === subjectForm.program)?.semesters || [];
 
   const [studentsModal, setStudentsModal] = useState(null);
 
@@ -61,6 +77,11 @@ const AdminSubjects = () => {
       setSubjects(subjectsData.subjects || []);
 
       setTeachers(teachersData.teachers || []);
+
+      const academicRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}api/academic/options`);
+      const academicData = await academicRes.json();
+      if (!academicRes.ok) throw new Error(academicData.error || "Failed to load academic options");
+      setAcademicProgrammes(academicData.programmes || []);
     } catch (err) {
       console.error(err);
       setError(err.message);
@@ -185,7 +206,7 @@ const AdminSubjects = () => {
 
       closeTeacherModal();
     } catch (err) {
-      alert(err.message);
+      showAlert("Error", err.message, "danger");
     } finally {
       setSavingTeacher(false);
     }
@@ -236,9 +257,87 @@ const AdminSubjects = () => {
 
       closeTeacherModal();
     } catch (err) {
-      alert(err.message);
+      showAlert("Error", err.message, "danger");
     } finally {
       setSavingTeacher(false);
+    }
+  };
+
+  const openCreateSubject = () => {
+    setEditingSubject(null);
+    setSubjectForm({ subjectId: "", name: "", program: "", semester: "" });
+    setSubjectEditorOpen(true);
+  };
+
+  const openEditSubject = (subject) => {
+    setEditingSubject(subject);
+    setSubjectForm({
+      subjectId: subject.subject_id,
+      name: subject.name || "",
+      program: subject.program || "",
+      semester: subject.semester == null ? "" : String(subject.semester),
+    });
+    setSubjectEditorOpen(true);
+  };
+
+  const saveSubject = async (event) => {
+    event.preventDefault();
+    setSavingSubject(true);
+    try {
+      const isEdit = Boolean(editingSubject);
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/admin/subjects${isEdit ? `/${encodeURIComponent(editingSubject.subject_id)}` : ""}`,
+        {
+          method: isEdit ? "PATCH" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${adminToken}`,
+          },
+          body: JSON.stringify({
+            name: subjectForm.name,
+            program: subjectForm.program,
+            semester: subjectForm.semester,
+            subjectId: subjectForm.subjectId,
+          }),
+        },
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to save subject");
+      await loadData();
+      setSubjectEditorOpen(false);
+      setEditingSubject(null);
+    } catch (err) {
+      showAlert("Error", err.message, "danger");
+    } finally {
+      setSavingSubject(false);
+    }
+  };
+
+  const deleteSubject = async () => {
+    if (!subjectPendingDelete) return;
+    const subject = subjectPendingDelete;
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/admin/subjects/${encodeURIComponent(subject.subject_id)}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${adminToken}` },
+        },
+      );
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || "Failed to delete subject");
+      setSubjects((previous) =>
+        previous.filter((item) => item.subject_id !== subject.subject_id),
+      );
+      setSubjectPendingDelete(null);
+      showAlert(
+        "Deleted",
+        `${subject.name || "Subject"} was deleted.`,
+        "success",
+      );
+    } catch (err) {
+      showAlert("Error", err.message, "danger");
     }
   };
 
@@ -265,8 +364,13 @@ const AdminSubjects = () => {
           <p>Manage teachers and student enrollment</p>
         </div>
 
-        <div className="admin-page-count">
-          {filteredSubjects.length} subjects
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="admin-page-count">
+            {filteredSubjects.length} subjects
+          </div>
+          <button className="admin-primary-button" onClick={openCreateSubject}>
+            + Add Subject
+          </button>
         </div>
       </div>
 
@@ -364,11 +468,16 @@ const AdminSubjects = () => {
                   </div>
 
                   <div className="admin-subject-meta">
-                    <span>{subject.program}</span>
-
-                    <span className="admin-meta-dot">•</span>
-
-                    <span>Semester {subject.semester}</span>
+                    {subject.program && <span>{subject.program}</span>}
+                    {subject.program && subject.semester != null && (
+                      <span className="admin-meta-dot">•</span>
+                    )}
+                    {subject.semester != null && (
+                      <span>Semester {subject.semester}</span>
+                    )}
+                    {!subject.program && subject.semester == null && (
+                      <span>Admin managed</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -426,14 +535,152 @@ const AdminSubjects = () => {
                 </button>
 
                 <button
+                  className="admin-secondary-button"
+                  onClick={() => openEditSubject(subject)}
+                >
+                  Edit Subject
+                </button>
+                <button
                   className="admin-primary-button"
                   onClick={() => setStudentsModal(subject)}
                 >
                   Manage Students
                 </button>
+                <button
+                  className="admin-danger-button"
+                  onClick={() => setSubjectPendingDelete(subject)}
+                >
+                  Delete
+                </button>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {subjectEditorOpen && (
+        <div
+          className="admin-modal-backdrop"
+          onMouseDown={() => !savingSubject && setSubjectEditorOpen(false)}
+        >
+          <form
+            className="admin-modal admin-subject-editor-modal"
+            onSubmit={saveSubject}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="admin-modal-header">
+              <div>
+                <h2>{editingSubject ? "Edit Subject" : "Create Subject"}</h2>
+                <p>Subjects are created and managed by the admin.</p>
+              </div>
+              <button
+                type="button"
+                className="admin-modal-close"
+                onClick={() => setSubjectEditorOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="admin-subject-editor-fields">
+              <div className="admin-subject-field">
+                <label htmlFor="subject-id">Subject ID</label>
+                <input
+                  id="subject-id"
+                  required
+                  disabled={Boolean(editingSubject)}
+                  value={subjectForm.subjectId}
+                  placeholder="e.g. data_structures"
+                  onChange={(e) =>
+                    setSubjectForm({
+                      ...subjectForm,
+                      subjectId: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="admin-subject-field">
+                <label htmlFor="subject-name">Subject name</label>
+                <input
+                  id="subject-name"
+                  required
+                  value={subjectForm.name}
+                  placeholder="e.g. Data Structures"
+                  onChange={(e) =>
+                    setSubjectForm({ ...subjectForm, name: e.target.value })
+                  }
+                />
+              </div>
+              <div className="admin-subject-field">
+                <label htmlFor="subject-programme">Programme</label>
+                <select
+                  id="subject-programme"
+                  required
+                  value={subjectForm.program}
+                  onChange={(e) =>
+                    setSubjectForm({
+                      ...subjectForm,
+                      program: e.target.value,
+                      semester: "",
+                    })
+                  }
+                >
+                  {" "}
+                  <option value="" disabled>
+                    Select programme
+                  </option>
+                  {programmeOptions.map((program) => (
+                    <option key={program} value={program}>
+                      {program}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="admin-subject-field">
+                <label htmlFor="subject-semester">Semester</label>
+                <select
+                  id="subject-semester"
+                  required
+                  value={subjectForm.semester}
+                  disabled={!subjectForm.program}
+                  onChange={(e) =>
+                    setSubjectForm({ ...subjectForm, semester: e.target.value })
+                  }
+                >
+                  <option value="" disabled>
+                    Select semester
+                  </option>
+                  {semesterOptions.map((semester) => (
+                    <option key={semester} value={semester}>
+                      Semester {semester}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="admin-form-hint">
+                Students in this programme and semester will be enrolled
+                automatically.
+              </p>
+            </div>
+            <div className="admin-modal-footer">
+              <div className="admin-modal-footer-right">
+                <button
+                  type="button"
+                  className="admin-secondary-button"
+                  onClick={() => setSubjectEditorOpen(false)}
+                  disabled={savingSubject}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="admin-primary-button"
+                  disabled={savingSubject}
+                >
+                  {savingSubject ? "Saving..." : "Save Subject"}
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
       )}
 
@@ -531,6 +778,18 @@ const AdminSubjects = () => {
           }}
         />
       )}
+      <ConfirmModal
+        open={Boolean(subjectPendingDelete)}
+        title="Delete subject?"
+        message={
+          subjectPendingDelete
+            ? `Delete “${subjectPendingDelete.name || "this subject"}”? This also removes its enrollments and attendance history. This action cannot be undone.`
+            : ""
+        }
+        confirmText="Delete subject"
+        onCancel={() => setSubjectPendingDelete(null)}
+        onConfirm={deleteSubject}
+      />
     </div>
   );
 };
@@ -545,6 +804,7 @@ const AdminSubjectStudentsModal = ({
   onClose,
   onCountChange,
 }) => {
+  const { showAlert } = useContext(AlertContext);
   const [students, setStudents] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -639,7 +899,7 @@ const AdminSubjectStudentsModal = ({
 
       onCountChange(subject.subject_id, newCount);
     } catch (err) {
-      alert(err.message);
+      showAlert("Error", err.message, "danger");
     } finally {
       setSavingStudent(null);
     }
