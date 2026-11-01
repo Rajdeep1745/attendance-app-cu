@@ -44,6 +44,98 @@ const Profile = () => {
     avatar: storedUser?.avatar || "https://i.pravatar.cc/150",
   });
 
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const [passwordSaving, setPasswordSaving] = useState(false);
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+
+    if (passwordSaving) return;
+
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      showAlert(
+        "Missing fields",
+        "Please fill in all password fields.",
+        "danger",
+      );
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      showAlert(
+        "Invalid password",
+        "Your new password must be at least 8 characters long.",
+        "danger",
+      );
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showAlert(
+        "Password mismatch",
+        "The new passwords do not match.",
+        "danger",
+      );
+      return;
+    }
+
+    setPasswordSaving(true);
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}api/users/me/password`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            currentPassword,
+            newPassword,
+          }),
+        },
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to change password.");
+      }
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      showAlert(
+        "Password updated",
+        "Your password has been changed successfully.",
+        "success",
+      );
+    } catch (err) {
+      console.error("CHANGE PASSWORD ERROR:", err);
+
+      showAlert(
+        "Unable to change password",
+        err.message || "Please try again.",
+        "danger",
+      );
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -320,6 +412,90 @@ const Profile = () => {
               <button className="btn btn-primary mx-2" onClick={handleSave}>
                 Save Changes
               </button>
+
+              <div className="password-section">
+                <div className="password-section-heading">
+                  <div>
+                    <h3>Change Password</h3>
+                    <p className="text-muted">
+                      Keep your account secure by updating your password.
+                    </p>
+                  </div>
+                  <i className="fa-solid fa-shield-halved password-section-icon"></i>
+                </div>
+
+                <form onSubmit={handleChangePassword}>
+                  <div className="form-group">
+                    <label htmlFor="currentPassword">Current Password</label>
+                    <input
+                      id="currentPassword"
+                      type="password"
+                      autoComplete="current-password"
+                      value={passwordForm.currentPassword}
+                      onChange={(e) =>
+                        setPasswordForm((prev) => ({
+                          ...prev,
+                          currentPassword: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="newPassword">New Password</label>
+                    <input
+                      id="newPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      minLength={8}
+                      maxLength={128}
+                      value={passwordForm.newPassword}
+                      onChange={(e) =>
+                        setPasswordForm((prev) => ({
+                          ...prev,
+                          newPassword: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                    <small className="text-muted">
+                      Use at least 8 characters.
+                    </small>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="confirmPassword">
+                      Confirm New Password
+                    </label>
+                    <input
+                      id="confirmPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      minLength={8}
+                      maxLength={128}
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) =>
+                        setPasswordForm((prev) => ({
+                          ...prev,
+                          confirmPassword: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={passwordSaving}
+                  >
+                    {passwordSaving
+                      ? "Updating Password..."
+                      : "Update Password"}
+                  </button>
+                </form>
+              </div>
             </>
           )}
 

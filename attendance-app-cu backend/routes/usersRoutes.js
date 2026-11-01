@@ -8,6 +8,7 @@ const {
   getCurrentUser,
   updateProfile,
   updateTeacherAvatar,
+  changePassword,
 } = require("../controllers/usersController");
 
 const uploadProfileAvatar = (req, res, next) => {
@@ -34,5 +35,8 @@ router.patch(
   uploadProfileAvatar,
   updateTeacherAvatar,
 );
+
+// CHANGE PASSWORD
+router.patch("/me/password", auth, changePassword);
 
 module.exports = router;

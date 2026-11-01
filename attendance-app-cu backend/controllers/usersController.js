@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const bcrypt = require("bcryptjs");
 
 const buildInlineImageUrl = (file) =>
   `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
@@ -244,6 +245,90 @@ exports.updateTeacherAvatar = async (req, res) => {
 
     return res.status(500).json({
       error: "Failed to update teacher profile photo",
+    });
+  }
+};
+
+// ---------------------------------------------------------
+// CHANGE PASSWORD FOR THE LOGGED-IN USER
+// ---------------------------------------------------------
+
+exports.changePassword = async (req, res) => {
+  const userId = req.user.id;
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({
+      error: "Current password and new password are required",
+    });
+  }
+
+  if (typeof currentPassword !== "string" || typeof newPassword !== "string") {
+    return res.status(400).json({
+      error: "Passwords must be valid strings",
+    });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({
+      error: "New password must be at least 8 characters long",
+    });
+  }
+
+  if (newPassword.length > 128) {
+    return res.status(400).json({
+      error: "New password must not exceed 128 characters",
+    });
+  }
+
+  try {
+    const result = await db.query("SELECT password FROM users WHERE id = $1", [
+      userId,
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
+
+    const passwordMatches = await bcrypt.compare(
+      currentPassword,
+      result.rows[0].password,
+    );
+
+    if (!passwordMatches) {
+      return res.status(400).json({
+        error: "Your current password is incorrect",
+      });
+    }
+
+    const samePassword = await bcrypt.compare(
+      newPassword,
+      result.rows[0].password,
+    );
+
+    if (samePassword) {
+      return res.status(400).json({
+        error: "Your new password must differ from your current password",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await db.query("UPDATE users SET password = $1 WHERE id = $2", [
+      hashedPassword,
+      userId,
+    ]);
+
+    return res.json({
+      message: "Password changed successfully",
+    });
+  } catch (err) {
+    console.error("CHANGE PASSWORD ERROR:", err);
+
+    return res.status(500).json({
+      error: "Failed to change password",
     });
   }
 };

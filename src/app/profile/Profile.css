@@ -176,3 +176,88 @@
     height: 92px;
   }
 }
+
+.password-section {
+  margin-top: 32px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+}
+
+.password-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.password-section-heading h3 {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  font-weight: 650;
+  color: #1f2937;
+}
+
+.password-section-heading p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.password-section-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 1.2rem;
+}
+
+.password-section .form-group {
+  margin-bottom: 18px;
+}
+
+.password-section .form-group label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.password-section .form-group input {
+  display: block;
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 9px;
+  background: #fff;
+  color: #111827;
+  font-size: 0.95rem;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.password-section .form-group input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.password-section button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 576px) {
+  .password-section {
+    padding: 18px;
+  }
+}
